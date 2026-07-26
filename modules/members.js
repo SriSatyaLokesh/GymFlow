@@ -1,4 +1,4 @@
-import { addDays, byName, collections, confirmDialog, dateLabel, emptyState, escapeHtml, findName, formData, memberStatus, nameCell, optionList, pageHeader, statusClass, today, withButtonLoading } from "./utils.js";
+import { addDays, byName, collections, confirmDialog, dateLabel, emptyState, escapeHtml, findName, formData, memberStatus, nameCell, optionList, pageHeader, showMemberProfileModal, statusClass, today, withButtonLoading } from "./utils.js";
 
 function calcBmi(weightKg, heightCm) {
   const w = parseFloat(weightKg);
@@ -37,7 +37,7 @@ export const membersModule = {
           <div class="form-grid">
             <label>Full name<input name="fullName" required maxlength="100" /></label>
             <label>Mobile
-              <input name="mobile" required maxlength="20" />
+              <input name="mobile" required maxlength="10" />
               <span class="dup-warn hidden" data-dup-warn="mobile"></span>
             </label>
             <label>Email
@@ -45,7 +45,7 @@ export const membersModule = {
               <span class="dup-warn hidden" data-dup-warn="email"></span>
             </label>
             <label>WhatsApp number
-              <input name="whatsappNumber" type="tel" maxlength="20" placeholder="Same as mobile" />
+              <input name="whatsappNumber" type="tel" maxlength="10" placeholder="Same as mobile" />
             </label>
             <label>Gender
               <select name="gender">
@@ -91,7 +91,7 @@ export const membersModule = {
                 <option>Other</option>
               </select>
             </label>
-            <label>Contact phone<input name="emergencyPhone" type="tel" maxlength="20" /></label>
+            <label>Contact phone<input name="emergencyPhone" type="tel" maxlength="10" /></label>
             <div class="form-section-heading">Initial Measurements <span class="optional-tag">(optional)</span></div>
             <label>Weight kg<input name="initWeight" type="number" min="0" step="0.1" /></label>
             <label>Height cm<input name="initHeight" type="number" min="0" step="0.1" /></label>
@@ -427,6 +427,15 @@ export const membersModule = {
 
     bindFilters(root);
 
+    root.querySelectorAll("[data-view-member]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const member = context.data.members.find((item) => item.id === button.dataset.viewMember);
+        if (member) {
+          showMemberProfileModal(member, context);
+        }
+      });
+    });
+
     root.querySelectorAll("[data-edit-member]").forEach((button) => {
       button.addEventListener("click", () => {
         const member = context.data.members.find((item) => item.id === button.dataset.editMember);
@@ -693,6 +702,7 @@ function row(member, plans, trainers) {
             ? `<button class="icon-button" data-resume-member="${escapeHtml(member.id)}" title="Resume membership"><span class="material-symbols-outlined">play_circle</span></button>`
             : ""
         }
+        <button class="icon-button" data-view-member="${escapeHtml(member.id)}" title="View profile & logs"><span class="material-symbols-outlined">visibility</span></button>
         <button class="icon-button" data-edit-member="${escapeHtml(member.id)}" title="Edit"><span class="material-symbols-outlined">edit</span></button>
         <button class="icon-button danger" data-delete-member="${escapeHtml(member.id)}" title="Delete"><span class="material-symbols-outlined">delete</span></button>
       </span>

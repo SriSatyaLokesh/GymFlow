@@ -56,7 +56,7 @@ export const trainersModule = {
           <div class="panel-heading"><h2>Add Trainer</h2></div>
           <div class="form-grid">
             <label>Name<input name="name" required maxlength="100" /></label>
-            <label>Mobile<input name="mobile" required maxlength="20" /></label>
+            <label>Mobile<input name="mobile" required maxlength="10" /></label>
             <label>Email<input name="email" type="email" maxlength="100" /></label>
             <label>Specialization<input name="specialization" maxlength="80" /></label>
             <label>Experience<input name="experience" maxlength="80" /></label>

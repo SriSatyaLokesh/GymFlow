@@ -18,7 +18,12 @@ export function renderAuth(root, context) {
 
         <form id="login-form" class="stack auth-form">
           <label>Email<input name="email" type="email" autocomplete="email" required /></label>
-          <label>Password<input name="password" type="password" autocomplete="current-password" required /></label>
+          <label>Password
+            <div class="password-container">
+              <input name="password" type="password" autocomplete="current-password" required />
+              <button type="button" class="toggle-password-btn" tabindex="-1"><span class="material-symbols-outlined">visibility</span></button>
+            </div>
+          </label>
           <button class="primary-button" type="submit">Login</button>
           <button class="link-button" type="button" data-action="reset-password">Forgot password</button>
           ${context.mode === "local" ? `<button class="ghost-button" type="button" data-action="demo">Open demo workspace</button>` : ""}
@@ -35,7 +40,18 @@ export function renderAuth(root, context) {
             <label>Gym name<input name="gymName" required maxlength="80" /></label>
             <label>Your name<input name="name" autocomplete="name" required maxlength="80" /></label>
             <label>Email<input name="email" type="email" autocomplete="email" required /></label>
-            <label>Password<input name="password" type="password" minlength="6" autocomplete="new-password" required /></label>
+            <label>Password
+              <div class="password-container">
+                <input name="password" type="password" minlength="6" autocomplete="new-password" required />
+                <button type="button" class="toggle-password-btn" tabindex="-1"><span class="material-symbols-outlined">visibility</span></button>
+              </div>
+            </label>
+            <label>Confirm Password
+              <div class="password-container">
+                <input name="confirmPassword" type="password" minlength="6" autocomplete="new-password" required />
+                <button type="button" class="toggle-password-btn" tabindex="-1"><span class="material-symbols-outlined">visibility</span></button>
+              </div>
+            </label>
             <button class="primary-button" type="submit">Create owner account</button>
           </form>
 
@@ -43,7 +59,18 @@ export function renderAuth(root, context) {
             <label>Gym code<input name="gymCode" required maxlength="20" placeholder="e.g. GRIP-4821" autocomplete="off" /></label>
             <label>Your name<input name="name" autocomplete="name" required maxlength="80" /></label>
             <label>Email<input name="email" type="email" autocomplete="email" required /></label>
-            <label>Password<input name="password" type="password" minlength="6" autocomplete="new-password" required /></label>
+            <label>Password
+              <div class="password-container">
+                <input name="password" type="password" minlength="6" autocomplete="new-password" required />
+                <button type="button" class="toggle-password-btn" tabindex="-1"><span class="material-symbols-outlined">visibility</span></button>
+              </div>
+            </label>
+            <label>Confirm Password
+              <div class="password-container">
+                <input name="confirmPassword" type="password" minlength="6" autocomplete="new-password" required />
+                <button type="button" class="toggle-password-btn" tabindex="-1"><span class="material-symbols-outlined">visibility</span></button>
+              </div>
+            </label>
             <button class="primary-button" type="submit">Join gym</button>
             <p class="auth-note">Ask your gym for its join code.</p>
           </form>
@@ -52,7 +79,18 @@ export function renderAuth(root, context) {
             <label>Gym code<input name="gymCode" required maxlength="20" placeholder="e.g. GRIP-4821" autocomplete="off" /></label>
             <label>Your name<input name="name" autocomplete="name" required maxlength="80" /></label>
             <label>Email<input name="email" type="email" autocomplete="email" required /></label>
-            <label>Password<input name="password" type="password" minlength="6" autocomplete="new-password" required /></label>
+            <label>Password
+              <div class="password-container">
+                <input name="password" type="password" minlength="6" autocomplete="new-password" required />
+                <button type="button" class="toggle-password-btn" tabindex="-1"><span class="material-symbols-outlined">visibility</span></button>
+              </div>
+            </label>
+            <label>Confirm Password
+              <div class="password-container">
+                <input name="confirmPassword" type="password" minlength="6" autocomplete="new-password" required />
+                <button type="button" class="toggle-password-btn" tabindex="-1"><span class="material-symbols-outlined">visibility</span></button>
+              </div>
+            </label>
             <button class="primary-button" type="submit">Join as trainer</button>
             <p class="auth-note">Ask your gym for its join code.</p>
           </form>
@@ -129,6 +167,9 @@ function bindAuth(root, context) {
     event.preventDefault();
     await run(root, context, async () => {
       const data = Object.fromEntries(new FormData(registerForm).entries());
+      if (data.password !== data.confirmPassword) {
+        throw new Error("Passwords do not match.");
+      }
       await context.services.auth.registerOwner(data);
       context.onToast("Owner account created.");
     });
@@ -138,6 +179,9 @@ function bindAuth(root, context) {
     event.preventDefault();
     await run(root, context, async () => {
       const data = Object.fromEntries(new FormData(memberForm).entries());
+      if (data.password !== data.confirmPassword) {
+        throw new Error("Passwords do not match.");
+      }
       await context.services.auth.registerMember(data);
       context.onToast("Welcome! Your gym membership is set up.");
     });
@@ -147,6 +191,9 @@ function bindAuth(root, context) {
     event.preventDefault();
     await run(root, context, async () => {
       const data = Object.fromEntries(new FormData(trainerForm).entries());
+      if (data.password !== data.confirmPassword) {
+        throw new Error("Passwords do not match.");
+      }
       await context.services.auth.registerTrainer(data);
       context.onToast("Welcome! Your trainer profile is set up.");
     });
@@ -170,6 +217,18 @@ function bindAuth(root, context) {
       const msg = context.mode === "firebase" ? "Password reset email sent." : "Local account found. Use its saved password.";
       authMessage(root, msg, "success");
       authToast(root, msg);
+    });
+  });
+
+  // Bind toggle password visibility buttons
+  root.querySelectorAll(".toggle-password-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const input = btn.previousElementSibling;
+      if (input && (input.type === "password" || input.type === "text")) {
+        const isPassword = input.type === "password";
+        input.type = isPassword ? "text" : "password";
+        btn.querySelector(".material-symbols-outlined").textContent = isPassword ? "visibility_off" : "visibility";
+      }
     });
   });
 }
