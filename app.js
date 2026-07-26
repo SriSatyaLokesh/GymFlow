@@ -132,8 +132,23 @@ async function boot() {
     }
   });
 
-  // Local mode resolves auth synchronously; render the splash immediately
-  // for Firebase mode while the persisted session is being restored.
+  // Global listener to limit all phone number fields to 10 digits max as count
+  document.addEventListener("input", (e) => {
+    const target = e.target;
+    if (
+      target.tagName === "INPUT" && 
+      (target.type === "tel" || ["mobile", "phone", "whatsappNumber", "emergencyPhone"].includes(target.name))
+    ) {
+      let val = target.value.replace(/\D/g, "");
+      if (val.length > 10) {
+        val = val.slice(0, 10);
+      }
+      if (target.value !== val) {
+        target.value = val;
+      }
+    }
+  });
+
   render();
 }
 

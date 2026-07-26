@@ -37,7 +37,7 @@ export const membersModule = {
           <div class="form-grid">
             <label>Full name<input name="fullName" required maxlength="100" /></label>
             <label>Mobile
-              <input name="mobile" required maxlength="20" />
+              <input name="mobile" required maxlength="10" />
               <span class="dup-warn hidden" data-dup-warn="mobile"></span>
             </label>
             <label>Email
@@ -45,7 +45,7 @@ export const membersModule = {
               <span class="dup-warn hidden" data-dup-warn="email"></span>
             </label>
             <label>WhatsApp number
-              <input name="whatsappNumber" type="tel" maxlength="20" placeholder="Same as mobile" />
+              <input name="whatsappNumber" type="tel" maxlength="10" placeholder="Same as mobile" />
             </label>
             <label>Gender
               <select name="gender">
@@ -91,7 +91,7 @@ export const membersModule = {
                 <option>Other</option>
               </select>
             </label>
-            <label>Contact phone<input name="emergencyPhone" type="tel" maxlength="20" /></label>
+            <label>Contact phone<input name="emergencyPhone" type="tel" maxlength="10" /></label>
             <div class="form-section-heading">Initial Measurements <span class="optional-tag">(optional)</span></div>
             <label>Weight kg<input name="initWeight" type="number" min="0" step="0.1" /></label>
             <label>Height cm<input name="initHeight" type="number" min="0" step="0.1" /></label>

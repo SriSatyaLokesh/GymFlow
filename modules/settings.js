@@ -11,7 +11,7 @@ export const settingsModule = {
             <label>Gym name<input name="gymName" value="${escapeHtml(settings?.gymName || "")}" required /></label>
             <label>Owner name<input name="ownerName" value="${escapeHtml(settings?.ownerName || "")}" /></label>
             <label>Contact email<input name="contactEmail" type="email" value="${escapeHtml(settings?.contactEmail || "")}" /></label>
-            <label>Phone<input name="phone" value="${escapeHtml(settings?.phone || "")}" /></label>
+            <label>Phone<input name="phone" maxlength="10" value="${escapeHtml(settings?.phone || "")}" /></label>
             <label>Currency
               <select name="currency">
                 ${["INR", "USD", "EUR", "GBP"].map((currency) => `<option ${settings?.currency === currency ? "selected" : ""}>${currency}</option>`).join("")}

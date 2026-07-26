@@ -1791,3 +1791,34 @@ code { padding: 2px 6px; border-radius: 5px; background: var(--surface-strong); 
     width: 100%;
   }
 }
+
+/* Password visibility container & toggle styles */
+.password-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+.password-container input {
+  padding-right: 42px !important;
+  width: 100%;
+}
+.toggle-password-btn {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  transition: color var(--dur-fast) var(--ease-out);
+}
+.toggle-password-btn:hover {
+  color: var(--ink);
+}
+.toggle-password-btn .material-symbols-outlined {
+  font-size: 20px;
+}
