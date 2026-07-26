@@ -44,6 +44,15 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    match /public_gyms/{gymName} {
+      allow get: if true;
+      allow list: if false;
+      allow create: if signedIn()
+        && request.resource.data.gymId == uid()
+        && request.resource.data.gymName == gymName;
+      allow update, delete: if false;
+    }
+
     match /users/{userId} {
       allow read: if signedIn() && (uid() == userId || owner());
       // Self-create only. Owner mints their own gym (gymId == their uid).
