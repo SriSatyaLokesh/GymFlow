@@ -1,4 +1,4 @@
-import { collections, dateLabel, daysUntil, emptyState, escapeHtml, findName, formData, nameCell, optionList, pageHeader, today, withButtonLoading } from "./utils.js";
+import { collections, dateLabel, daysUntil, emptyState, escapeHtml, findName, formData, memberStatus, nameCell, optionList, pageHeader, today, withButtonLoading } from "./utils.js";
 
 export const attendanceModule = {
   render(context) {
@@ -165,6 +165,13 @@ function renderMemberAttendance(context) {
       ${emptyState("Membership being set up", "Once your gym finalises your membership you can check in here.")}
     `;
   }
+  const status = me.status === "Pending" ? "Pending" : memberStatus(me);
+  if (status !== "Active") {
+    return `
+      ${pageHeader("Attendance")}
+      ${emptyState("Membership not active", `Your current membership status is ${status}. Access is restricted.`)}
+    `;
+  }
   const todayStr = today();
   const mine = (context.data.attendance || [])
     .filter((record) => record.memberId === me.id)
@@ -209,6 +216,11 @@ function bindMemberAttendance(root, context) {
   const me = context.myMember;
   if (!button || !me) return;
   button.addEventListener("click", async () => {
+    const status = me.status === "Pending" ? "Pending" : memberStatus(me);
+    if (status !== "Active") {
+      context.toast(`Cannot check in: Your membership status is ${status}.`);
+      return;
+    }
     await withButtonLoading(button, async () => {
       const saved = await context.services.data.save(collections.attendance, {
         memberId: me.id,
