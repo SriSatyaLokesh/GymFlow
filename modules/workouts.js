@@ -21,7 +21,8 @@ export const workoutsModule = {
       ${pageHeader(isTrainer ? "Workout Modules" : "Workout Plans")}
       <div class="work-grid">
         <form class="panel stack" id="workout-form">
-          <div class="panel-heading"><h2>Create Module</h2></div>
+          <input type="hidden" name="id" />
+          <div class="panel-heading"><h2 data-form-heading>Create Module</h2></div>
           <div class="form-grid">
             <label>Module name<input name="name" required maxlength="100" /></label>
             <label>Goal
@@ -67,7 +68,10 @@ export const workoutsModule = {
             </div>
             <label class="wide">Notes<textarea name="notes" rows="2"></textarea></label>
           </div>
-          <button class="primary-button" type="submit">Save module</button>
+          <div class="button-row">
+            <button class="primary-button" type="submit">Save module</button>
+            <button class="ghost-button" type="reset" data-action="clear">Clear</button>
+          </div>
         </form>
         <section class="panel">
           <div class="panel-heading"><h2>Module Library</h2><span data-template-count>${templates.length} modules</span></div>
@@ -130,10 +134,54 @@ export const workoutsModule = {
       await withButtonLoading(form.querySelector("[type='submit']"), async () => {
         const payload = normalizeTemplatePayload(formData(form), context, collectStructuredExercises(form));
         const saved = await context.services.data.save(collections.workouts, payload);
-        context.toast("Workout module saved.");
+        context.toast(payload.id ? "Workout module updated." : "Workout module saved.");
         form.reset();
+        form.id.value = "";
+        root.querySelector("[data-form-heading]").textContent = "Create Module";
         resetStructuredRows(form);
         context.applyChange(collections.workouts, saved);
+      });
+    });
+
+    form?.addEventListener("reset", () => {
+      form.id.value = "";
+      root.querySelector("[data-form-heading]").textContent = "Create Module";
+      setTimeout(() => resetStructuredRows(form), 10);
+    });
+
+    root.querySelectorAll("[data-edit-template]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const template = (context.data.workout_templates || []).find((t) => t.id === button.dataset.editTemplate);
+        if (!template) return;
+        
+        form.id.value = template.id || "";
+        form.name.value = template.name || "";
+        form.goal.value = template.goal || "";
+        form.category.value = template.category || "";
+        form.difficulty.value = template.difficulty || "";
+        form.equipment.value = template.equipment || "";
+        form.durationMinutes.value = template.durationMinutes || "";
+        form.visibility.value = template.visibility || "private";
+        form.exercises.value = template.exercises || "";
+        form.notes.value = template.notes || "";
+        
+        const rowsContainer = form.querySelector("[data-exercise-rows]");
+        const structured = typeof template.exercisesStructured === "string" ? JSON.parse(template.exercisesStructured) : (template.exercisesStructured || []);
+        if (rowsContainer) {
+          if (structured.length) {
+            rowsContainer.innerHTML = structured.map(ex => exerciseRowHtml(ex)).join("");
+          } else {
+            rowsContainer.innerHTML = exerciseRowHtml();
+          }
+          // Update previews for all newly added rows
+          const list = getExercisesList();
+          rowsContainer.querySelectorAll("[data-exercise-row]").forEach((row) => {
+            updateRowPreview(row, list);
+          });
+        }
+        
+        root.querySelector("[data-form-heading]").textContent = "Edit Module";
+        form.scrollIntoView({ behavior: "smooth", block: "start" });
       });
     });
 
@@ -318,20 +366,25 @@ function collectStructuredExercises(form) {
     .filter((row) => Object.values(row).some(Boolean));
 }
 
-function exerciseRowHtml() {
+function exerciseRowHtml(ex = null) {
+  const gifUrl = ex?.gif 
+    ? `https://raw.githubusercontent.com/hasaneyldrm/exercises-dataset/main/${ex.gif}`
+    : '';
   return `
     <div class="exercise-row" data-exercise-row>
       <div style="display: flex; gap: 8px; align-items: center; width: 100%;">
-        <input data-exercise-name list="exercise-options" placeholder="Exercise name" maxlength="100" style="flex: 1;" />
-        <div data-exercise-preview style="width: 40px; height: 40px; border-radius: var(--r-sm); overflow: hidden; display: none; background: #000; border: 1px solid var(--line); flex-shrink: 0; cursor: pointer;"></div>
+        <input data-exercise-name list="exercise-options" placeholder="Exercise name" maxlength="100" style="flex: 1;" value="${escapeHtml(ex?.name || '')}" />
+        <div data-exercise-preview style="width: 40px; height: 40px; border-radius: var(--r-sm); overflow: hidden; ${gifUrl ? '' : 'display: none;'} background: #000; border: 1px solid var(--line); flex-shrink: 0; cursor: pointer;">
+          ${gifUrl ? `<img src="${gifUrl}" alt="${escapeHtml(ex.name)}" style="width: 100%; height: 100%; object-fit: cover;" />` : ''}
+        </div>
       </div>
       <div class="exercise-row-metrics">
-        <input data-exercise-sets type="number" min="0" placeholder="Sets" />
-        <input data-exercise-reps placeholder="Reps" maxlength="20" />
-        <input data-exercise-weight placeholder="Weight" maxlength="30" />
-        <input data-exercise-rest placeholder="Rest" maxlength="30" />
+        <input data-exercise-sets type="number" min="0" placeholder="Sets" value="${escapeHtml(ex?.sets || '')}" />
+        <input data-exercise-reps placeholder="Reps" maxlength="20" value="${escapeHtml(ex?.reps || '')}" />
+        <input data-exercise-weight placeholder="Weight" maxlength="30" value="${escapeHtml(ex?.weight || '')}" />
+        <input data-exercise-rest placeholder="Rest" maxlength="30" value="${escapeHtml(ex?.rest || '')}" />
       </div>
-      <input data-exercise-notes placeholder="Notes, tempo, form cues" maxlength="120" />
+      <input data-exercise-notes placeholder="Notes, tempo, form cues" maxlength="120" value="${escapeHtml(ex?.notes || '')}" />
       <div class="exercise-row-actions">
         <button class="ghost-button danger exercise-remove" type="button" data-remove-exercise-row title="Remove exercise">
           <span class="material-symbols-outlined">delete</span>
@@ -407,6 +460,9 @@ function card(template, context) {
       <div class="card-footer">
         <span>${escapeHtml(template.status || "active")}</span>
         <span class="row-actions">
+          <button class="icon-button" type="button" data-edit-template="${escapeHtml(template.id)}" title="Edit module">
+            <span class="material-symbols-outlined">edit</span>
+          </button>
           <button class="icon-button" type="button" data-clone-template="${escapeHtml(template.id)}" title="Duplicate module">
             <span class="material-symbols-outlined">content_copy</span>
           </button>

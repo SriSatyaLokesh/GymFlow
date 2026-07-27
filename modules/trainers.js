@@ -1,7 +1,8 @@
 import { byName, collections, dateLabel, emptyState, escapeHtml, findName, formData, pageHeader, statusClass, withButtonLoading } from "./utils.js";
 
 export const trainersModule = {
-  render({ data }) {
+  render(context) {
+    const { data, profile } = context;
     const trainers = [...(data.trainers || [])].sort(byName);
 
     // Compute current assignment per member (latest assignedAt wins)
@@ -48,6 +49,13 @@ export const trainersModule = {
       </section>
     `;
 
+    const isTrainer = trainers.some(t => t.email?.toLowerCase() === profile?.email?.toLowerCase() || t.uid === profile?.uid);
+    const ownerBtn = !isTrainer
+      ? `<button class="ghost-button" type="button" data-action="add-owner-as-trainer" style="width:100%; display:flex; align-items:center; justify-content:center; gap:8px; margin-top:8px;">
+          <span class="material-symbols-outlined">person_add</span> Add Owner as Trainer
+         </button>`
+      : "";
+
     return `
       ${pageHeader("Trainers")}
       <div class="work-grid">
@@ -63,6 +71,7 @@ export const trainersModule = {
             <label class="wide">Certifications<textarea name="certifications" rows="2"></textarea></label>
           </div>
           <button class="primary-button" type="submit">Save trainer</button>
+          ${ownerBtn}
         </form>
         <section class="panel">
           <div class="panel-heading"><h2>Trainer Team</h2><span>${trainers.length} trainers</span></div>
@@ -87,6 +96,29 @@ export const trainersModule = {
         context.applyChange(collections.trainers, saved);
       });
     });
+
+    root.querySelector("[data-action='add-owner-as-trainer']")?.addEventListener("click", async () => {
+      const owner = context.profile;
+      const trainerData = {
+        name: owner.name,
+        mobile: owner.mobile || context.settings?.phone || "",
+        email: owner.email,
+        uid: owner.uid,
+        specialization: "Management & Training",
+        experience: "Owner",
+        certifications: "Gym Owner",
+        status: "Active"
+      };
+
+      const btn = root.querySelector("[data-action='add-owner-as-trainer']");
+      await withButtonLoading(btn, async () => {
+        const saved = await context.services.data.save(collections.trainers, trainerData);
+        context.toast("Owner added as trainer.");
+        context.applyChange(collections.trainers, saved);
+        await context.refreshView();
+      }, "Adding...");
+    });
+
     root.querySelectorAll("[data-approve-trainer]").forEach((button) => {
       button.addEventListener("click", async () => {
         const trainer = context.data.trainers.find((item) => item.id === button.dataset.approveTrainer);
