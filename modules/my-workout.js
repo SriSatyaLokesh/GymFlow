@@ -564,8 +564,9 @@ export const myWorkoutModule = {
       weeklyScheduleDoc.schedule = scheduleObj;
       weeklyScheduleDoc.gymId = me.gymId;
 
-      await context.services.data.save(collections.workoutSchedules, weeklyScheduleDoc);
-      context.toast("Schedule updated.");
+      const saved = await context.services.data.save(collections.workoutSchedules, weeklyScheduleDoc);
+      context.toast("Workout schedule saved successfully.");
+      context.applyChange(collections.workoutSchedules, saved);
       this.editingSchedule = false;
       await context.refreshView();
     });
@@ -615,6 +616,7 @@ export const myWorkoutModule = {
         if (!confirm("Are you sure you want to delete this custom routine?")) return;
         await context.services.data.remove(collections.workoutSchedules, btn.dataset.id);
         context.toast("Routine deleted.");
+        context.applyRemoval(collections.workoutSchedules, btn.dataset.id);
         await context.refreshView();
       });
     });
@@ -658,6 +660,7 @@ export const myWorkoutModule = {
         if (!confirm("Are you sure you want to delete this completed log?")) return;
         await context.services.data.remove(collections.workoutLogs, btn.dataset.logId);
         context.toast("Workout log deleted.");
+        context.applyRemoval(collections.workoutLogs, btn.dataset.logId);
         await context.refreshView();
       });
     });
@@ -976,8 +979,9 @@ export const myWorkoutModule = {
         exercisesStructured
       };
 
-      await context.services.data.save(collections.workoutSchedules, payload);
+      const saved = await context.services.data.save(collections.workoutSchedules, payload);
       context.toast("Custom routine saved!");
+      context.applyChange(collections.workoutSchedules, saved);
       this.editingRoutine = null;
       await context.refreshView();
     });
