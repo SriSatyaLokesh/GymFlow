@@ -22,7 +22,9 @@ service cloud.firestore {
     }
 
     function owner() {
-      return signedIn() && myRole() == "owner";
+      return signedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && myRole() == "owner";
     }
 
     function sameGym() {
