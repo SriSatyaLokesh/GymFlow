@@ -1822,3 +1822,23 @@ code { padding: 2px 6px; border-radius: 5px; background: var(--surface-strong); 
 .toggle-password-btn .material-symbols-outlined {
   font-size: 20px;
 }
+
+.mobile-only-btn {
+  display: none !important;
+}
+
+@media (max-width: 1279px) {
+  .work-grid {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  .work-grid > section {
+    order: 1 !important;
+  }
+  .work-grid > form {
+    order: 2 !important;
+  }
+  .mobile-only-btn {
+    display: inline-flex !important;
+  }
+}

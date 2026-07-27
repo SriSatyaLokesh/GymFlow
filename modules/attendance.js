@@ -50,7 +50,7 @@ export const attendanceModule = {
           <button class="primary-button" type="submit"><span class="material-symbols-outlined">how_to_reg</span>Record attendance</button>
         </form>
         <section class="panel">
-          <div class="panel-heading"><h2>Recent Attendance</h2><span>${records.length} records</span></div>
+          <div class="panel-heading"><h2>Recent Attendance</h2><span>${records.length} records</span><button class="ghost-button compact mobile-only-btn" style="margin-left: auto;" data-scroll-to-form><span class="material-symbols-outlined" style="font-size:16px;">how_to_reg</span> Check In</button></div>
           ${
             records.length
               ? `<div class="data-table">

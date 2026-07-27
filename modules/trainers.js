@@ -74,7 +74,7 @@ export const trainersModule = {
           ${ownerBtn}
         </form>
         <section class="panel">
-          <div class="panel-heading"><h2>Trainer Team</h2><span>${trainers.length} trainers</span></div>
+          <div class="panel-heading"><h2>Trainer Team</h2><span>${trainers.length} trainers</span><button class="ghost-button compact mobile-only-btn" style="margin-left: auto;" data-scroll-to-form><span class="material-symbols-outlined" style="font-size:16px;">add</span> Add Trainer</button></div>
           ${
             trainers.length
               ? `<div class="card-grid">${trainers.map(card).join("")}</div>`

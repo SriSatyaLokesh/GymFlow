@@ -74,7 +74,7 @@ export const workoutsModule = {
           </div>
         </form>
         <section class="panel">
-          <div class="panel-heading"><h2>Module Library</h2><span data-template-count>${templates.length} modules</span></div>
+          <div class="panel-heading"><h2>Module Library</h2><span data-template-count>${templates.length} modules</span><button class="ghost-button compact mobile-only-btn" style="margin-left: auto;" data-scroll-to-form><span class="material-symbols-outlined" style="font-size:16px;">add</span> Create Module</button></div>
           ${
             templates.length
               ? `
