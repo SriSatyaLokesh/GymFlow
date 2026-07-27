@@ -182,7 +182,7 @@ export const CARTOON_AVATARS = [
     const eyebrows = i % 3 === 0 ? "up" : i % 3 === 1 ? "raised" : "normal";
     const eyes = i % 2 === 0 ? "happy" : "normal";
     const mouth = i % 3 === 0 ? "happy" : i % 3 === 1 ? "smile" : "smirk";
-    return `https://api.dicebear.com/7.x/lorelei/png?seed=female-gym-${i + 1}&size=96&eyebrows=${eyebrows}&eyes=${eyes}&mouth=${mouth}&frecklesProbability=0`;
+    return `https://api.dicebear.com/9.x/lorelei/svg?seed=female-gym-${i + 1}&size=96&eyebrows=${eyebrows}&eyes=${eyes}&mouth=${mouth}&frecklesProbability=0`;
   }),
   // 70 Men Avatars (happy/smiling/angry-intense, age 20+, beard probability, no sad/crying)
   ...Array.from({ length: 70 }, (_, i) => {
@@ -191,7 +191,7 @@ export const CARTOON_AVATARS = [
     const eyes = isAngry ? "normal" : (i % 2 === 0 ? "happy" : "normal");
     const mouth = isAngry ? "neutral" : (i % 3 === 0 ? "happy" : i % 3 === 1 ? "smile" : "smirk");
     const beardProb = i % 3 === 0 ? 0 : 100;
-    return `https://api.dicebear.com/7.x/lorelei/png?seed=male-gym-${i + 1}&size=96&eyebrows=${eyebrows}&eyes=${eyes}&mouth=${mouth}&frecklesProbability=0&beardProbability=${beardProb}`;
+    return `https://api.dicebear.com/9.x/lorelei/svg?seed=male-gym-${i + 1}&size=96&eyebrows=${eyebrows}&eyes=${eyes}&mouth=${mouth}&frecklesProbability=0&beardProbability=${beardProb}`;
   })
 ];
 
@@ -352,7 +352,7 @@ export function showExerciseModal(exercise) {
       </div>
       <div style="display: flex; flex-direction: column; gap: 12px; max-height: 70vh; overflow-y: auto;">
         ${gifUrl ? `
-          <div style="display: flex; justify-content: center; background: #000; border-radius: var(--r-md); overflow: hidden; max-height: 240px;">
+          <div style="display: flex; justify-content: center; background: #fff; border: 1px solid var(--line); border-radius: var(--r-md); overflow: hidden; max-height: 280px; padding: 10px;">
             <img src="${gifUrl}" alt="${escapeHtml(exercise.name)}" style="max-width: 100%; height: auto; object-fit: contain;" />
           </div>
         ` : ''}

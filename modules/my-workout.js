@@ -236,7 +236,7 @@ export const myWorkoutModule = {
     `;
 
     return `
-      <div class="work-grid" style="grid-template-columns: 1.2fr 1fr;">
+      <div class="work-grid">
         ${scheduleSection}
         ${quickStartSection}
       </div>
@@ -411,37 +411,39 @@ export const myWorkoutModule = {
                   </button>
                 </div>
                 
-                <div class="data-table">
-                  <div class="table-head" style="grid-template-columns: 40px 1.5fr 1fr 1fr 1fr 50px; text-align: center; font-size:0.8rem; font-weight:600; border-bottom:1px solid var(--line); padding-bottom:5px;">
-                    <span>Set</span>
-                    <span>Prev (Best)</span>
-                    <span>Kg</span>
-                    <span>Reps</span>
-                    <span>RPE</span>
-                    <span>Done</span>
-                  </div>
-                  <div class="active-sets-list stack" style="gap: 5px; margin-top:5px;">
-                    ${sets.map((set, setIdx) => {
-                      return `
-                        <div class="table-row active-set-row ${set.done ? "set-done" : ""}" data-set-idx="${setIdx}" style="grid-template-columns: 40px 1.5fr 1fr 1fr 1fr 50px; align-items:center; text-align:center; padding: 4px 0;">
-                          <span style="font-weight:700; opacity:0.85;">${setIdx + 1}</span>
-                          <span style="font-size:0.75rem; opacity:0.75;" class="prev-best-label">—</span>
-                          <input type="number" step="0.25" placeholder="0" class="set-weight-input" value="${set.weight || ""}" style="width:100%; text-align:center; padding:4px;" />
-                          <input type="number" placeholder="0" class="set-reps-input" value="${set.reps || ""}" style="width:100%; text-align:center; padding:4px;" />
-                          <select class="set-rpe-select" style="width:100%; text-align:center; padding:4px;">
-                            <option value="">-</option>
-                            ${[10, 9.5, 9, 8.5, 8, 7.5, 7, 6, 5, 4, 3, 2, 1].map(v => `
-                              <option value="${v}" ${Number(set.rpe) === v ? "selected" : ""}>${v}</option>
-                            `).join("")}
-                          </select>
-                          <div style="display:flex; justify-content:center;">
-                            <input type="checkbox" class="set-done-chk" ${set.done ? "checked" : ""} style="width:18px; height:18px; cursor:pointer;" />
-                          </div>
-                        </div>
-                      `;
-                    }).join("")}
-                  </div>
-                </div>
+                 <div style="width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; margin-top: 5px;">
+                   <div class="data-table" style="min-width: 420px; gap: 5px;">
+                     <div class="table-head" style="grid-template-columns: 40px 1.5fr 1fr 1fr 1fr 50px; text-align: center; font-size:0.8rem; font-weight:600; border-bottom:1px solid var(--line); padding-bottom:5px;">
+                       <span>Set</span>
+                       <span>Prev (Best)</span>
+                       <span>Kg</span>
+                       <span>Reps</span>
+                       <span>RPE</span>
+                       <span>Done</span>
+                     </div>
+                     <div class="active-sets-list stack" style="gap: 5px; margin-top:5px;">
+                       ${sets.map((set, setIdx) => {
+                         return `
+                           <div class="table-row active-set-row ${set.done ? "set-done" : ""}" data-set-idx="${setIdx}" style="grid-template-columns: 40px 1.5fr 1fr 1fr 1fr 50px; align-items:center; text-align:center; padding: 4px 0;">
+                             <span style="font-weight:700; opacity:0.85;">${setIdx + 1}</span>
+                             <span style="font-size:0.75rem; opacity:0.75;" class="prev-best-label">—</span>
+                             <input type="number" step="0.25" placeholder="0" class="set-weight-input" value="${set.weight || ""}" style="width:100%; text-align:center; padding:4px;" />
+                             <input type="number" placeholder="0" class="set-reps-input" value="${set.reps || ""}" style="width:100%; text-align:center; padding:4px;" />
+                             <select class="set-rpe-select" style="width:100%; text-align:center; padding:4px;">
+                               <option value="">-</option>
+                               ${[10, 9.5, 9, 8.5, 8, 7.5, 7, 6, 5, 4, 3, 2, 1].map(v => `
+                                 <option value="${v}" ${Number(set.rpe) === v ? "selected" : ""}>${v}</option>
+                               `).join("")}
+                             </select>
+                             <div style="display:flex; justify-content:center;">
+                               <input type="checkbox" class="set-done-chk" ${set.done ? "checked" : ""} style="width:18px; height:18px; cursor:pointer;" />
+                             </div>
+                           </div>
+                         `;
+                       }).join("")}
+                     </div>
+                   </div>
+                 </div>
                 
                 <div style="display:flex; gap:10px; margin-top:10px;">
                   <button class="ghost-button add-set-row-btn" data-ex-idx="${exIdx}" style="flex:1;">+ Add Set</button>
@@ -492,7 +494,7 @@ export const myWorkoutModule = {
                     <span class="material-symbols-outlined">delete</span> Remove
                   </button>
                 </div>
-                <div class="exercise-row-metrics" style="display:grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap:8px;">
+                <div class="exercise-row-metrics">
                   <label>Sets<input class="builder-sets" type="number" min="1" placeholder="Sets" value="${ex.sets || ""}" /></label>
                   <label>Reps<input class="builder-reps" placeholder="Reps" value="${ex.reps || ""}" /></label>
                   <label>Weight (kg)<input class="builder-weight" placeholder="Weight" value="${ex.weight || ""}" /></label>

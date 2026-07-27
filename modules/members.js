@@ -223,7 +223,7 @@ export const membersModule = {
         </form>
 
         <section class="panel">
-          <div class="panel-heading"><h2>Member Directory</h2><span data-member-count>${members.length} total</span></div>
+          <div class="panel-heading"><h2>Member Directory</h2><span data-member-count>${members.length} total</span><button class="ghost-button compact mobile-only-btn" style="margin-left: auto;" data-scroll-to-form><span class="material-symbols-outlined" style="font-size:16px;">add</span> Add Member</button></div>
           ${
             members.length
               ? `

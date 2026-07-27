@@ -43,7 +43,7 @@ export const renewalsModule = {
         </form>
 
         <section class="panel">
-          <div class="panel-heading"><h2>Renewal Queue</h2><span>${watched.length} members</span></div>
+          <div class="panel-heading"><h2>Renewal Queue</h2><span>${watched.length} members</span><button class="ghost-button compact mobile-only-btn" style="margin-left: auto;" data-scroll-to-form><span class="material-symbols-outlined" style="font-size:16px;">autorenew</span> Renew Member</button></div>
           ${
             watched.length
               ? `<div class="data-table">

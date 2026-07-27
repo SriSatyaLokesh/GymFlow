@@ -149,6 +149,20 @@ async function boot() {
     }
   });
 
+  // Global listener to handle smooth scrolling to forms from list headings on mobile/tablet
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-scroll-to-form]");
+    if (btn) {
+      const container = btn.closest(".work-grid");
+      const form = container?.querySelector("form");
+      if (form) {
+        form.scrollIntoView({ behavior: "smooth", block: "start" });
+        const firstInput = form.querySelector("input:not([type='hidden']), select, textarea");
+        firstInput?.focus();
+      }
+    }
+  });
+
   render();
 }
 

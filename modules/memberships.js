@@ -24,7 +24,7 @@ export const membershipsModule = {
           </div>
         </form>
         <section class="panel">
-          <div class="panel-heading"><h2>Plan Catalog</h2><span>${plans.length} plans</span></div>
+          <div class="panel-heading"><h2>Plan Catalog</h2><span>${plans.length} plans</span><button class="ghost-button compact mobile-only-btn" style="margin-left: auto;" data-scroll-to-form><span class="material-symbols-outlined" style="font-size:16px;">add</span> Add Plan</button></div>
           ${
             plans.length
               ? `<div class="card-grid">${plans.map((plan) => planCard(plan, currency)).join("")}</div>`
