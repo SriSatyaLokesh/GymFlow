@@ -374,8 +374,8 @@ function exerciseRowHtml(ex = null) {
     <div class="exercise-row" data-exercise-row>
       <div style="display: flex; gap: 8px; align-items: center; width: 100%;">
         <input data-exercise-name list="exercise-options" placeholder="Exercise name" maxlength="100" style="flex: 1;" value="${escapeHtml(ex?.name || '')}" />
-        <div data-exercise-preview style="width: 40px; height: 40px; border-radius: var(--r-sm); overflow: hidden; ${gifUrl ? '' : 'display: none;'} background: #000; border: 1px solid var(--line); flex-shrink: 0; cursor: pointer;">
-          ${gifUrl ? `<img src="${gifUrl}" alt="${escapeHtml(ex.name)}" style="width: 100%; height: 100%; object-fit: cover;" />` : ''}
+        <div data-exercise-preview style="width: 40px; height: 40px; border-radius: var(--r-sm); overflow: hidden; ${gifUrl ? '' : 'display: none;'} background: #fff; border: 1px solid var(--line); flex-shrink: 0; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+          ${gifUrl ? `<img src="${gifUrl}" alt="${escapeHtml(ex.name)}" style="max-width: 100%; max-height: 100%; object-fit: contain;" />` : ''}
         </div>
       </div>
       <div class="exercise-row-metrics">
