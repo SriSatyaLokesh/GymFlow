@@ -109,9 +109,8 @@ export const workoutsModule = {
               `
               : emptyState("No workout modules", "Create reusable modules first, then assign them to clients later.")
           }
-        </section>
+      </section>
       </div>
-      <datalist id="exercise-options"></datalist>
     `;
   },
   bind(root, context) {
@@ -119,10 +118,6 @@ export const workoutsModule = {
     bindStructuredRows(root);
 
     getExercises().then((list) => {
-      const datalist = root.querySelector("#exercise-options");
-      if (datalist) {
-        datalist.innerHTML = list.map((item) => `<option value="${escapeHtml(item.name)}">${escapeHtml(item.category || item.target || '')}</option>`).join("");
-      }
       // Update preview for initial rows if any
       root.querySelectorAll("[data-exercise-row]").forEach((row) => {
         updateRowPreview(row, list);
@@ -311,14 +306,98 @@ function bindStructuredRows(root) {
     rows?.insertAdjacentHTML("beforeend", exerciseRowHtml());
   });
 
-  rows?.addEventListener("input", (event) => {
+  function getOrCreateDropdown(input) {
+    const parent = input.parentElement;
+    let dropdown = parent.querySelector(".custom-dropdown");
+    if (!dropdown) {
+      dropdown = document.createElement("div");
+      dropdown.className = "custom-dropdown hidden";
+      dropdown.style.cssText = `
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 48px;
+        max-height: 200px;
+        overflow-y: auto;
+        background: var(--surface, #1e1e24);
+        border: 1px solid var(--line, #2d2d34);
+        border-radius: var(--r-sm, 4px);
+        z-index: 1000;
+        box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3);
+        margin-top: 4px;
+      `;
+      parent.appendChild(dropdown);
+    }
+    return dropdown;
+  }
+
+  function updateDropdown(input) {
+    const dropdown = getOrCreateDropdown(input);
+    const value = input.value.trim().toLowerCase();
+    const list = getExercisesList() || [];
+    const matches = list.filter((ex) => ex.name.toLowerCase().includes(value));
+
+    if (matches.length === 0) {
+      dropdown.innerHTML = `<div style="padding: 8px 12px; font-size: 0.85rem; opacity: 0.6; color: var(--text);">No exercises found</div>`;
+    } else {
+      dropdown.innerHTML = matches
+        .slice(0, 50) // limit results for speed/performance
+        .map(
+          (ex) => `
+        <div class="dropdown-item" data-value="${escapeHtml(ex.name)}" style="padding: 8px 12px; cursor: pointer; border-bottom: 1px solid var(--line-light, rgba(255,255,255,0.03)); font-size: 0.9rem; transition: background 0.15s; display: flex; flex-direction: column; gap: 2px;">
+          <strong style="color: var(--text, #fff);">${escapeHtml(ex.name)}</strong>
+          <span style="font-size: 0.75rem; opacity: 0.6; color: var(--text-muted, #a0a0a8);">${escapeHtml(ex.category || "")} &middot; ${escapeHtml(ex.equipment || "")}</span>
+        </div>
+      `
+        )
+        .join("");
+    }
+
+    dropdown.querySelectorAll(".dropdown-item").forEach((item) => {
+      item.addEventListener("mouseenter", () => {
+        item.style.background = "var(--bg-alt, rgba(255,255,255,0.05))";
+      });
+      item.addEventListener("mouseleave", () => {
+        item.style.background = "transparent";
+      });
+      item.addEventListener("click", (e) => {
+        e.stopPropagation();
+        input.value = item.dataset.value;
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+        dropdown.classList.add("hidden");
+      });
+    });
+
+    dropdown.classList.remove("hidden");
+  }
+
+  rows?.addEventListener("focusin", (event) => {
     const input = event.target.closest("[data-exercise-name]");
-    if (!input) return;
-    const row = input.closest("[data-exercise-row]");
-    if (row) {
-      updateRowPreview(row, getExercisesList());
+    if (input) {
+      updateDropdown(input);
     }
   });
+
+  rows?.addEventListener("input", (event) => {
+    const input = event.target.closest("[data-exercise-name]");
+    if (input) {
+      updateDropdown(input);
+      const row = input.closest("[data-exercise-row]");
+      if (row) {
+        updateRowPreview(row, getExercisesList());
+      }
+    }
+  });
+
+  // Global click listener to close dropdowns
+  const clickOutsideHandler = (event) => {
+    root.querySelectorAll(".custom-dropdown").forEach((dropdown) => {
+      if (!dropdown.contains(event.target) && dropdown.previousElementSibling !== event.target) {
+        dropdown.classList.add("hidden");
+      }
+    });
+  };
+  document.addEventListener("click", clickOutsideHandler);
 
   rows?.addEventListener("click", (event) => {
     const preview = event.target.closest("[data-exercise-preview]");
@@ -372,8 +451,8 @@ function exerciseRowHtml(ex = null) {
     : '';
   return `
     <div class="exercise-row" data-exercise-row>
-      <div style="display: flex; gap: 8px; align-items: center; width: 100%;">
-        <input data-exercise-name list="exercise-options" placeholder="Exercise name" maxlength="100" style="flex: 1;" value="${escapeHtml(ex?.name || '')}" />
+      <div style="display: flex; gap: 8px; align-items: center; width: 100%; position: relative;">
+        <input data-exercise-name placeholder="Exercise name" maxlength="100" style="flex: 1;" value="${escapeHtml(ex?.name || '')}" autocomplete="off" />
         <div data-exercise-preview style="width: 40px; height: 40px; border-radius: var(--r-sm); overflow: hidden; ${gifUrl ? '' : 'display: none;'} background: #fff; border: 1px solid var(--line); flex-shrink: 0; cursor: pointer; display: flex; align-items: center; justify-content: center;">
           ${gifUrl ? `<img src="${gifUrl}" alt="${escapeHtml(ex.name)}" style="max-width: 100%; max-height: 100%; object-fit: contain;" />` : ''}
         </div>
