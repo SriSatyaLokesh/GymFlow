@@ -76,6 +76,7 @@ service cloud.firestore {
           && exists(/databases/$(database)/documents/gym_codes/$(request.resource.data.gymCodeUsed))
           && get(/databases/$(database)/documents/gym_codes/$(request.resource.data.gymCodeUsed)).data.gymId
                == request.resource.data.gymId
+        )
       );
       allow update: if signedIn() && (uid() == userId || owner());
       allow delete: if owner();
