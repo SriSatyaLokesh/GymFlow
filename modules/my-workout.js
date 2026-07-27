@@ -552,22 +552,31 @@ export const myWorkoutModule = {
     const schedForm = root.querySelector("#schedule-form");
     schedForm?.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const me = context.myMember;
-      const formData = new FormData(schedForm);
-      const scheduleObj = {};
-      formData.forEach((val, key) => {
-        scheduleObj[key] = val;
-      });
+      const submitBtn = schedForm.querySelector("button[type='submit']");
+      await withButtonLoading(submitBtn, async () => {
+        try {
+          const me = context.myMember;
+          const formData = new FormData(schedForm);
+          const scheduleObj = {};
+          formData.forEach((val, key) => {
+            scheduleObj[key] = val;
+          });
 
-      const mySchedules = (context.data.workout_schedules || []).filter(s => s.memberId === me.id);
-      const weeklyScheduleDoc = mySchedules.find(s => s.type === "schedule") || { type: "schedule", memberId: me.id, gymId: me.gymId };
-      weeklyScheduleDoc.schedule = scheduleObj;
-      weeklyScheduleDoc.gymId = me.gymId;
+          const mySchedules = (context.data.workout_schedules || []).filter(s => s.memberId === me.id);
+          const weeklyScheduleDoc = mySchedules.find(s => s.type === "schedule") || { type: "schedule", memberId: me.id, gymId: me.gymId };
+          weeklyScheduleDoc.schedule = scheduleObj;
+          weeklyScheduleDoc.gymId = me.gymId;
 
-      await context.services.data.save(collections.workoutSchedules, weeklyScheduleDoc);
-      context.toast("Schedule updated.");
-      this.editingSchedule = false;
-      await context.refreshView();
+          const saved = await context.services.data.save(collections.workoutSchedules, weeklyScheduleDoc);
+          context.toast("Workout schedule saved successfully.");
+          context.applyChange(collections.workoutSchedules, saved);
+          this.editingSchedule = false;
+          await context.refreshView();
+        } catch (err) {
+          console.error("Failed to save weekly schedule:", err);
+          context.toast("Error: Failed to save schedule.");
+        }
+      }, "Saving...");
     });
 
     // Start workout from schedule day
@@ -615,6 +624,7 @@ export const myWorkoutModule = {
         if (!confirm("Are you sure you want to delete this custom routine?")) return;
         await context.services.data.remove(collections.workoutSchedules, btn.dataset.id);
         context.toast("Routine deleted.");
+        context.applyRemoval(collections.workoutSchedules, btn.dataset.id);
         await context.refreshView();
       });
     });
@@ -658,6 +668,7 @@ export const myWorkoutModule = {
         if (!confirm("Are you sure you want to delete this completed log?")) return;
         await context.services.data.remove(collections.workoutLogs, btn.dataset.logId);
         context.toast("Workout log deleted.");
+        context.applyRemoval(collections.workoutLogs, btn.dataset.logId);
         await context.refreshView();
       });
     });
@@ -976,8 +987,9 @@ export const myWorkoutModule = {
         exercisesStructured
       };
 
-      await context.services.data.save(collections.workoutSchedules, payload);
+      const saved = await context.services.data.save(collections.workoutSchedules, payload);
       context.toast("Custom routine saved!");
+      context.applyChange(collections.workoutSchedules, saved);
       this.editingRoutine = null;
       await context.refreshView();
     });

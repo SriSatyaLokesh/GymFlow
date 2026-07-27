@@ -17,7 +17,7 @@ import { myPaymentsModule } from "./modules/my-payments.js";
 import { trainerCheckinModule } from "./modules/trainer-checkin.js";
 import { trainerMembersModule } from "./modules/trainer-members.js";
 import { myWorkoutModule } from "./modules/my-workout.js";
-import { CARTOON_AVATARS, escapeHtml, getExercises } from "./modules/utils.js";
+import { CARTOON_AVATARS, escapeHtml, getExercises, memberStatus } from "./modules/utils.js";
 
 const appRoot = document.querySelector("#app");
 
@@ -172,6 +172,345 @@ async function reloadData() {
   }
 }
 
+async function seedGripGymPlansIfNeeded() {
+  if (state.profile?.role !== "owner") return;
+  const plans = state.data.membership_plans || [];
+  const hasGripGym = plans.some((p) => p.planName === "Annual Membership" || p.price === 16799);
+  if (hasGripGym) return;
+
+  const gripPlans = [
+    {
+      planName: "Monthly Membership",
+      durationDays: 30,
+      price: 1999,
+      description: "Gym access during standard operating hours",
+      benefits: "Full equipment access (cardio, strength, functional), 1 welcome session with trainer, Locker facility access"
+    },
+    {
+      planName: "3 Months Membership",
+      durationDays: 90,
+      price: 5399,
+      description: "Special timings (10:00 AM - 11:30 AM) with semi-private group attention",
+      benefits: "Training for family or friends (3-4 members), Semi-private group attention & coaching, Full equipment & locker access"
+    },
+    {
+      planName: "6 Months Membership",
+      durationDays: 180,
+      price: 9599,
+      description: "Customized workouts based on individual health type",
+      benefits: "Group timings (3 days a week), Dedicated tracking and performance testing, Close alignment with Coach Shaik Arshad"
+    },
+    {
+      planName: "Annual Membership",
+      durationDays: 395,
+      price: 16799,
+      description: "13 months total access",
+      benefits: "Save over ₹7,000/year, Ability to pause membership for up to 20 days, Customized fitness assessment"
+    }
+  ];
+
+  for (const plan of gripPlans) {
+    try {
+      const saved = await state.services.data.save("membership_plans", plan);
+      plans.push(saved);
+    } catch (e) {
+      console.error("Failed to seed plan:", plan.planName, e);
+    }
+  }
+}
+
+async function seedWorkoutTemplatesIfNeeded() {
+  if (state.profile?.role !== "owner") return;
+  let templates = state.data.workout_templates || [];
+  const hasIndividualDays = templates.some((t) => t.name.includes("BRO-DAY1") || t.name.includes("PPL-DAY1"));
+  if (hasIndividualDays) return;
+
+  // Clean up old splits if they exist to keep it clean
+  const oldSplits = templates.filter(t => 
+    t.name.includes("BRO Split") || 
+    t.name.includes("PPL") || 
+    t.name.includes("Pull, Push, Legs") ||
+    t.name.startsWith("BRO-DAY") ||
+    t.name.startsWith("PPL-DAY")
+  );
+  for (const old of oldSplits) {
+    try {
+      await state.services.data.remove("workout_templates", old.id);
+      state.data.workout_templates = state.data.workout_templates.filter(t => t.id !== old.id);
+    } catch (e) {
+      console.error("Failed to clean up old split:", old.name, e);
+    }
+  }
+
+  templates = state.data.workout_templates || [];
+
+  const defaultTemplates = [
+    // --- BRO Split ---
+    {
+      name: "BRO-DAY1 (Chest)",
+      goal: "Muscle Gain",
+      category: "Strength",
+      difficulty: "Intermediate",
+      equipment: "Barbell",
+      durationMinutes: 60,
+      visibility: "basic",
+      exercises: "1. Bench Press - 4 sets x 10 reps\n2. Incline DB Press - 3 sets x 12 reps\n3. Chest Dips - 3 sets x max reps\n4. Chest Fly - 3 sets x 15 reps\n5. Push-ups - 3 sets x max reps\n6. DB Pull-over - 3 sets x 12 reps",
+      exercisesStructured: [
+        { name: "Bench Press", sets: "4", reps: "10", weight: "60", rest: "90s", notes: "Flat barbell" },
+        { name: "Incline Dumbbell Press", sets: "3", reps: "12", weight: "22", rest: "90s", notes: "DB incline" },
+        { name: "Chest Dips", sets: "3", reps: "10", weight: "0", rest: "90s", notes: "Bodyweight or weighted" },
+        { name: "Chest Fly", sets: "3", reps: "15", weight: "12", rest: "60s", notes: "Cables or DB" },
+        { name: "Pushups", sets: "3", reps: "20", weight: "0", rest: "60s", notes: "Form focus" },
+        { name: "Dumbbell Pull-over", sets: "3", reps: "12", weight: "20", rest: "90s", notes: "Lats & chest" }
+      ],
+      createdByRole: "owner",
+      createdByUid: state.profile?.uid || state.profile?.id || "",
+      status: "active"
+    },
+    {
+      name: "BRO-DAY2 (Back)",
+      goal: "Muscle Gain",
+      category: "Strength",
+      difficulty: "Intermediate",
+      equipment: "Barbell",
+      durationMinutes: 60,
+      visibility: "basic",
+      exercises: "1. Deadlift - 4 sets x 5 reps\n2. Pull-ups - 3 sets x max reps\n3. Barbell Row - 3 sets x 10 reps\n4. Seated Cable Row - 3 sets x 12 reps\n5. DB Shrugs - 3 sets x 15 reps\n6. Back Extensions - 3 sets x 15 reps",
+      exercisesStructured: [
+        { name: "Deadlift", sets: "4", reps: "5", weight: "100", rest: "120s", notes: "Power pull" },
+        { name: "Pull-ups", sets: "3", reps: "8", weight: "0", rest: "90s", notes: "Wide grip" },
+        { name: "Barbell Row", sets: "3", reps: "10", weight: "50", rest: "90s", notes: "Bent over" },
+        { name: "Seated Cable Row", sets: "3", reps: "12", weight: "45", rest: "90s", notes: "V-bar" },
+        { name: "Dumbbell Shrugs", sets: "3", reps: "15", weight: "24", rest: "60s", notes: "Traps focus" },
+        { name: "Back Extensions", sets: "3", reps: "15", weight: "10", rest: "60s", notes: "Lower back" }
+      ],
+      createdByRole: "owner",
+      createdByUid: state.profile?.uid || state.profile?.id || "",
+      status: "active"
+    },
+    {
+      name: "BRO-DAY3 (Shoulders)",
+      goal: "Muscle Gain",
+      category: "Strength",
+      difficulty: "Intermediate",
+      equipment: "Barbell",
+      durationMinutes: 60,
+      visibility: "basic",
+      exercises: "1. Overhead Press - 4 sets x 8 reps\n2. Lateral Raise - 4 sets x 15 reps\n3. Front Raise - 3 sets x 12 reps\n4. Rear Delt Fly - 3 sets x 15 reps\n5. Face Pulls - 3 sets x 15 reps\n6. Upright Rows - 3 sets x 12 reps",
+      exercisesStructured: [
+        { name: "Overhead Press", sets: "4", reps: "8", weight: "40", rest: "90s", notes: "Standing barbell" },
+        { name: "Dumbbell Lateral Raise", sets: "4", reps: "15", weight: "10", rest: "60s", notes: "Side delts" },
+        { name: "Dumbbell Front Raise", sets: "3", reps: "12", weight: "10", rest: "60s", notes: "Front delts" },
+        { name: "Rear Delt Fly", sets: "3", reps: "15", weight: "8", rest: "60s", notes: "DB or machine" },
+        { name: "Face Pulls", sets: "3", reps: "15", weight: "15", rest: "60s", notes: "Cable rope" },
+        { name: "Barbell Upright Row", sets: "3", reps: "12", weight: "30", rest: "90s", notes: "Shoulders & traps" }
+      ],
+      createdByRole: "owner",
+      createdByUid: state.profile?.uid || state.profile?.id || "",
+      status: "active"
+    },
+    {
+      name: "BRO-DAY4 (Legs)",
+      goal: "Muscle Gain",
+      category: "Strength",
+      difficulty: "Intermediate",
+      equipment: "Barbell",
+      durationMinutes: 60,
+      visibility: "basic",
+      exercises: "1. Squats - 4 sets x 8 reps\n2. Leg Press - 3 sets x 12 reps\n3. Romanian Deadlift - 3 sets x 10 reps\n4. Leg Extensions - 3 sets x 15 reps\n5. Lying Leg Curls - 3 sets x 15 reps\n6. Standing Calf Raises - 4 sets x 15 reps",
+      exercisesStructured: [
+        { name: "Barbell Squat", sets: "4", reps: "8", weight: "80", rest: "120s", notes: "Back squats" },
+        { name: "Leg Press", sets: "3", reps: "12", weight: "120", rest: "90s", notes: "Quad focus" },
+        { name: "Romanian Deadlift", sets: "3", reps: "10", weight: "70", rest: "90s", notes: "Hamstrings" },
+        { name: "Leg Extensions", sets: "3", reps: "15", weight: "40", rest: "60s", notes: "Quads squeeze" },
+        { name: "Lying Leg Curls", sets: "3", reps: "15", weight: "30", rest: "60s", notes: "Hamstrings curl" },
+        { name: "Standing Calf Raises", sets: "4", reps: "15", weight: "40", rest: "60s", notes: "Calves burn" }
+      ],
+      createdByRole: "owner",
+      createdByUid: state.profile?.uid || state.profile?.id || "",
+      status: "active"
+    },
+    {
+      name: "BRO-DAY5 (Arms)",
+      goal: "Muscle Gain",
+      category: "Strength",
+      difficulty: "Intermediate",
+      equipment: "Barbell",
+      durationMinutes: 60,
+      visibility: "basic",
+      exercises: "1. Bicep Curl - 3 sets x 12 reps\n2. Overhead Tricep Extension - 3 sets x 12 reps\n3. Hammer Curl - 3 sets x 12 reps\n4. Tricep Pushdown - 3 sets x 12 reps\n5. Preacher Curl - 3 sets x 12 reps\n6. Bench Dips - 3 sets x 12 reps",
+      exercisesStructured: [
+        { name: "Barbell Bicep Curl", sets: "3", reps: "12", weight: "25", rest: "60s", notes: "Standing curls" },
+        { name: "Overhead Tricep Extension", sets: "3", reps: "12", weight: "18", rest: "60s", notes: "DB overhead" },
+        { name: "Hammer Curl", sets: "3", reps: "12", weight: "12", rest: "60s", notes: "Brachialis" },
+        { name: "Tricep Pushdown", sets: "3", reps: "12", weight: "20", rest: "60s", notes: "Rope or V-bar" },
+        { name: "Preacher Curl", sets: "3", reps: "12", weight: "20", rest: "60s", notes: "EZ-bar preacher" },
+        { name: "Bench Dips", sets: "3", reps: "12", weight: "0", rest: "60s", notes: "Tricep dips" }
+      ],
+      createdByRole: "owner",
+      createdByUid: state.profile?.uid || state.profile?.id || "",
+      status: "active"
+    },
+    {
+      name: "BRO-DAY6 (Core & Cardio)",
+      goal: "General Fitness",
+      category: "Cardio",
+      difficulty: "Beginner",
+      equipment: "Bodyweight",
+      durationMinutes: 60,
+      visibility: "basic",
+      exercises: "1. Hanging Leg Raise - 3 sets x 15 reps\n2. Ab Crunches - 3 sets x 15 reps\n3. Russian Twists - 3 sets x 20 reps\n4. Planks - 3 sets x 60s\n5. Row Machine - 20 mins\n6. Jump Rope - 10 mins",
+      exercisesStructured: [
+        { name: "Hanging Leg Raise", sets: "3", reps: "15", weight: "0", rest: "60s", notes: "Abs raise" },
+        { name: "Ab Crunches", sets: "3", reps: "15", weight: "0", rest: "60s", notes: "Floor crunch" },
+        { name: "Russian Twists", sets: "3", reps: "20", weight: "5", rest: "60s", notes: "DB twist" },
+        { name: "Plank", sets: "3", reps: "1", weight: "0", rest: "60s", notes: "60 seconds hold" },
+        { name: "Rowing Machine", sets: "1", reps: "1", weight: "0", rest: "0s", notes: "20 mins cardio" },
+        { name: "Jump Rope", sets: "1", reps: "1", weight: "0", rest: "0s", notes: "10 mins cardio" }
+      ],
+      createdByRole: "owner",
+      createdByUid: state.profile?.uid || state.profile?.id || "",
+      status: "active"
+    },
+    // --- PPL Split ---
+    {
+      name: "PPL-DAY1 (Pull A)",
+      goal: "Strength",
+      category: "Strength",
+      difficulty: "Intermediate",
+      equipment: "Mixed",
+      durationMinutes: 75,
+      visibility: "basic",
+      exercises: "1. Deadlift - 3 sets x 5 reps\n2. Lat Pulldown - 3 sets x 10 reps\n3. Bent Over Row - 3 sets x 10 reps\n4. Face Pulls - 3 sets x 15 reps\n5. Bicep Curl - 3 sets x 12 reps\n6. Hammer Curl - 3 sets x 12 reps",
+      exercisesStructured: [
+        { name: "Deadlift", sets: "3", reps: "5", weight: "100", rest: "120s", notes: "Main pull" },
+        { name: "Lat Pulldown", sets: "3", reps: "10", weight: "50", rest: "90s", notes: "Wide grip lat pull" },
+        { name: "Barbell Row", sets: "3", reps: "10", weight: "50", rest: "90s", notes: "Bent over row" },
+        { name: "Face Pulls", sets: "3", reps: "15", weight: "15", rest: "60s", notes: "Cable rear delt" },
+        { name: "Barbell Bicep Curl", sets: "3", reps: "12", weight: "25", rest: "60s", notes: "Biceps" },
+        { name: "Hammer Curl", sets: "3", reps: "12", weight: "12", rest: "60s", notes: "Brachialis" }
+      ],
+      createdByRole: "owner",
+      createdByUid: state.profile?.uid || state.profile?.id || "",
+      status: "active"
+    },
+    {
+      name: "PPL-DAY2 (Push A)",
+      goal: "Strength",
+      category: "Strength",
+      difficulty: "Intermediate",
+      equipment: "Mixed",
+      durationMinutes: 75,
+      visibility: "basic",
+      exercises: "1. Bench Press - 3 sets x 8 reps\n2. Overhead Press - 3 sets x 10 reps\n3. Incline DB Fly - 3 sets x 12 reps\n4. Lateral Raise - 4 sets x 15 reps\n5. Overhead Tricep Extension - 3 sets x 12 reps\n6. Tricep Pushdown - 3 sets x 12 reps",
+      exercisesStructured: [
+        { name: "Bench Press", sets: "3", reps: "8", weight: "60", rest: "90s", notes: "Flat bench" },
+        { name: "Overhead Press", sets: "3", reps: "10", weight: "40", rest: "90s", notes: "Standing OHP" },
+        { name: "Incline Dumbbell Fly", sets: "3", reps: "12", weight: "12", rest: "60s", notes: "Upper chest fly" },
+        { name: "Dumbbell Lateral Raise", sets: "4", reps: "15", weight: "10", rest: "60s", notes: "Side delts" },
+        { name: "Overhead Tricep Extension", sets: "3", reps: "12", weight: "18", rest: "60s", notes: "DB overhead" },
+        { name: "Tricep Pushdown", sets: "3", reps: "12", weight: "20", rest: "60s", notes: "Cable rope" }
+      ],
+      createdByRole: "owner",
+      createdByUid: state.profile?.uid || state.profile?.id || "",
+      status: "active"
+    },
+    {
+      name: "PPL-DAY3 (Legs A)",
+      goal: "Strength",
+      category: "Strength",
+      difficulty: "Intermediate",
+      equipment: "Mixed",
+      durationMinutes: 75,
+      visibility: "basic",
+      exercises: "1. Squats - 3 sets x 8 reps\n2. Romanian Deadlift - 3 sets x 10 reps\n3. Leg Press - 3 sets x 12 reps\n4. Leg Extensions - 3 sets x 15 reps\n5. Lying Leg Curls - 3 sets x 15 reps\n6. Standing Calf Raises - 4 sets x 15 reps",
+      exercisesStructured: [
+        { name: "Barbell Squat", sets: "3", reps: "8", weight: "80", rest: "120s", notes: "Heavy squats" },
+        { name: "Romanian Deadlift", sets: "3", reps: "10", weight: "70", rest: "90s", notes: "Hamstrings RDL" },
+        { name: "Leg Press", sets: "3", reps: "12", weight: "120", rest: "90s", notes: "Leg press" },
+        { name: "Leg Extensions", sets: "3", reps: "15", weight: "40", rest: "60s", notes: "Quads" },
+        { name: "Lying Leg Curls", sets: "3", reps: "15", weight: "30", rest: "60s", notes: "Hamstrings" },
+        { name: "Standing Calf Raises", sets: "4", reps: "15", weight: "40", rest: "60s", notes: "Calves" }
+      ],
+      createdByRole: "owner",
+      createdByUid: state.profile?.uid || state.profile?.id || "",
+      status: "active"
+    },
+    {
+      name: "PPL-DAY4 (Pull B)",
+      goal: "Strength",
+      category: "Strength",
+      difficulty: "Intermediate",
+      equipment: "Mixed",
+      durationMinutes: 75,
+      visibility: "basic",
+      exercises: "1. Pull-ups - 3 sets x max reps\n2. Seated Cable Row - 3 sets x 12 reps\n3. DB Row - 3 sets x 10 reps\n4. DB Shrugs - 3 sets x 15 reps\n5. Preacher Curl - 3 sets x 12 reps\n6. Reverse Curl - 3 sets x 12 reps",
+      exercisesStructured: [
+        { name: "Pull-ups", sets: "3", reps: "8", weight: "0", rest: "90s", notes: "Bodyweight pullups" },
+        { name: "Seated Cable Row", sets: "3", reps: "12", weight: "45", rest: "90s", notes: "Cable row pull" },
+        { name: "One-Arm Dumbbell Row", sets: "3", reps: "10", weight: "22", rest: "90s", notes: "DB row" },
+        { name: "Dumbbell Shrugs", sets: "3", reps: "15", weight: "24", rest: "60s", notes: "Traps" },
+        { name: "Preacher Curl", sets: "3", reps: "12", weight: "20", rest: "60s", notes: "Preacher curls bicep" },
+        { name: "Reverse Grip Bicep Curl", sets: "3", reps: "12", weight: "18", rest: "60s", notes: "Forearms & biceps" }
+      ],
+      createdByRole: "owner",
+      createdByUid: state.profile?.uid || state.profile?.id || "",
+      status: "active"
+    },
+    {
+      name: "PPL-DAY5 (Push B)",
+      goal: "Strength",
+      category: "Strength",
+      difficulty: "Intermediate",
+      equipment: "Mixed",
+      durationMinutes: 75,
+      visibility: "basic",
+      exercises: "1. Incline Bench Press - 3 sets x 10 reps\n2. DB Shoulder Press - 3 sets x 10 reps\n3. Chest Dips - 3 sets x max reps\n4. Cable Crossover - 3 sets x 15 reps\n5. Close Grip Bench Press - 3 sets x 12 reps\n6. Cable Overhead Extension - 3 sets x 12 reps",
+      exercisesStructured: [
+        { name: "Incline Barbell Bench Press", sets: "3", reps: "10", weight: "50", rest: "90s", notes: "Upper chest press" },
+        { name: "Dumbbell Shoulder Press", sets: "3", reps: "10", weight: "18", rest: "90s", notes: "Shoulders DB press" },
+        { name: "Chest Dips", sets: "3", reps: "10", weight: "0", rest: "90s", notes: "Triceps & chest dips" },
+        { name: "Cable Crossover", sets: "3", reps: "15", weight: "12", rest: "60s", notes: "Chest squeeze" },
+        { name: "Close Grip Bench Press", sets: "3", reps: "12", weight: "40", rest: "90s", notes: "Tricep press" },
+        { name: "Cable Overhead Tricep Extension", sets: "3", reps: "12", weight: "15", rest: "60s", notes: "Triceps extension" }
+      ],
+      createdByRole: "owner",
+      createdByUid: state.profile?.uid || state.profile?.id || "",
+      status: "active"
+    },
+    {
+      name: "PPL-DAY6 (Legs B)",
+      goal: "Strength",
+      category: "Strength",
+      difficulty: "Intermediate",
+      equipment: "Mixed",
+      durationMinutes: 75,
+      visibility: "basic",
+      exercises: "1. Hip Thrusts - 3 sets x 10 reps\n2. Goblet Squat - 3 sets x 12 reps\n3. Dumbbell Lunges - 3 sets x 12 reps\n4. Seated Leg Curls - 3 sets x 15 reps\n5. Standing Calf Raises - 4 sets x 15 reps\n6. Hanging Leg Raises - 3 sets x 15 reps",
+      exercisesStructured: [
+        { name: "Barbell Hip Thrust", sets: "3", reps: "10", weight: "80", rest: "90s", notes: "Glutes" },
+        { name: "Goblet Squats", sets: "3", reps: "12", weight: "24", rest: "90s", notes: "Quads Goblet" },
+        { name: "Dumbbell Lunges", sets: "3", reps: "12", weight: "12", rest: "90s", notes: "Legs lunges" },
+        { name: "Seated Leg Curls", sets: "3", reps: "15", weight: "30", rest: "60s", notes: "Hamstrings" },
+        { name: "Standing Calf Raises", sets: "4", reps: "15", weight: "40", rest: "60s", notes: "Calves" },
+        { name: "Hanging Leg Raise", sets: "3", reps: "15", weight: "0", rest: "60s", notes: "Core leg raise" }
+      ],
+      createdByRole: "owner",
+      createdByUid: state.profile?.uid || state.profile?.id || "",
+      status: "active"
+    }
+  ];
+
+  for (const template of defaultTemplates) {
+    try {
+      const saved = await state.services.data.save("workout_templates", template);
+      templates.push(saved);
+    } catch (e) {
+      console.error("Failed to seed template:", template.name, e);
+    }
+  }
+}
+
 // Full refresh: reload data and rebuild the whole shell. Used on initial load
 // and when shell-level data changes (e.g. gym name in the sidebar).
 async function refreshData() {
@@ -179,6 +518,8 @@ async function refreshData() {
   state.error = "";
   render();
   await reloadData();
+  await seedGripGymPlansIfNeeded();
+  await seedWorkoutTemplatesIfNeeded();
   state.loading = false;
   render();
 }
@@ -265,6 +606,106 @@ function render() {
       await state.services.auth.logout();
     });
     return;
+  }
+
+  // Member restriction checks
+  if (state.profile.role === "member") {
+    const myMembers = (state.data.members || []).filter(
+      (m) => m.uid === state.profile?.uid || (m.email && m.email.toLowerCase() === state.profile?.email?.toLowerCase())
+    );
+    const myMember = myMembers.find((m) => memberStatus(m) !== "Pending") || myMembers[0];
+
+    if (!myMember) {
+      appRoot.innerHTML = `
+        <div class="boot-screen">
+          <div class="boot-mark">GF</div>
+          <p class="boot-error" style="font-size: 1.15rem; max-width: 480px; margin: 0 auto 24px; line-height: 1.6; text-align: center;">
+            Access Restricted: Please contact the gym owner or trainer to register your account as a member.
+          </p>
+          <div class="button-row" style="justify-content: center;">
+            <button class="ghost-button" data-action="logout">Sign out</button>
+          </div>
+        </div>
+      `;
+      appRoot.querySelector("[data-action='logout']")?.addEventListener("click", async () => {
+        await state.services.auth.logout();
+        showToast("Signed out.");
+      });
+      return;
+    }
+
+    // Auto-link UID if not already done (run before early return status guards)
+    if (myMember && !myMember.uid) {
+      myMember.uid = state.profile.uid;
+      state.services.data.save("members", myMember).catch(err => {
+        console.error("Failed to link member UID:", err);
+      });
+    }
+
+    const status = memberStatus(myMember);
+
+    // Pending membership activation check
+    if (status === "Pending") {
+      appRoot.innerHTML = `
+        <div class="boot-screen" style="flex-direction: column; justify-content: center; padding: 20px;">
+          <div class="boot-mark">GF</div>
+          <div class="banner warning-banner" style="padding: 16px 20px; border-radius: 8px; background: var(--warning-bg, rgba(255, 193, 7, 0.15)); color: var(--warning, #ffc107); border: 1px solid rgba(255, 193, 7, 0.25); margin: 0 auto 24px; max-width: 480px; text-align: center; font-size: 1.05rem; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: var(--shadow-small);">
+            <span class="material-symbols-outlined" style="font-size: 24px;">warning</span>
+            <span>Your membership is pending approval. Please contact the gym administrator to activate it.</span>
+          </div>
+          <div class="button-row" style="justify-content: center; gap: 12px; margin-bottom: 20px;">
+            <button class="primary-button" data-action="refresh-activation">
+              <span class="material-symbols-outlined" style="font-size: 20px; vertical-align: middle;">refresh</span>Check Activation
+            </button>
+            <button class="ghost-button" data-action="logout">Sign out</button>
+          </div>
+          <details style="text-align: left; font-size: 0.82rem; max-width: 480px; width: 100%; margin: 10px auto 0; opacity: 0.65; background: rgba(0,0,0,0.15); border: 1px solid var(--line); border-radius: 6px; padding: 8px;">
+            <summary style="cursor: pointer; padding: 4px; font-weight: 600;">Debug Info (Show for Troubleshooting)</summary>
+            <pre style="white-space: pre-wrap; font-family: monospace; margin: 8px 0 0; padding: 8px; background: rgba(0,0,0,0.25); border-radius: 4px; max-height: 220px; overflow-y: auto;">Email: ${state.profile?.email}
+UID: ${state.profile?.uid}
+Gym ID: ${state.profile?.gymId}
+Matches in members collection: ${JSON.stringify((state.data.members || []).filter(m => m.email?.toLowerCase() === state.profile?.email?.toLowerCase() || m.uid === state.profile?.uid).map(m => ({ id: m.id, email: m.email, uid: m.uid, status: m.status, computedStatus: memberStatus(m) })), null, 2)}
+Total members listed: ${(state.data.members || []).length}</pre>
+          </details>
+        </div>
+      `;
+
+      appRoot.querySelector("[data-action='refresh-activation']")?.addEventListener("click", async () => {
+        try {
+          await refreshData();
+          showToast("Checked activation status.");
+        } catch (err) {
+          console.error(err);
+          showToast("Failed to refresh activation status.");
+        }
+      });
+
+      appRoot.querySelector("[data-action='logout']")?.addEventListener("click", async () => {
+        await state.services.auth.logout();
+        showToast("Signed out.");
+      });
+      return;
+    }
+
+    const isRestricted = status === "Paused" || status === "Suspended" || status === "Expired";
+    if (isRestricted) {
+      appRoot.innerHTML = `
+        <div class="boot-screen">
+          <div class="boot-mark">GF</div>
+          <p class="boot-error" style="font-size: 1.15rem; max-width: 480px; margin: 0 auto 24px; line-height: 1.6; text-align: center;">
+            Your subscription is paused or expired. Please renew or make a payment to continue using the application.
+          </p>
+          <div class="button-row" style="justify-content: center;">
+            <button class="ghost-button" data-action="logout">Sign out</button>
+          </div>
+        </div>
+      `;
+      appRoot.querySelector("[data-action='logout']")?.addEventListener("click", async () => {
+        await state.services.auth.logout();
+        showToast("Signed out.");
+      });
+      return;
+    }
   }
 
   // Route guard: bounce a role off a route it isn't allowed to see.
@@ -362,7 +803,10 @@ function renderView() {
 
 function makeContext() {
   // The signed-in member's / trainer's own roster id (doc linked by uid), if any.
-  const myMember = (state.data.members || []).find((m) => m.uid === state.profile?.uid) || null;
+  const myMembers = (state.data.members || []).filter(
+    (m) => m.uid === state.profile?.uid || (m.email && m.email.toLowerCase() === state.profile?.email?.toLowerCase())
+  );
+  const myMember = myMembers.find((m) => memberStatus(m) !== "Pending") || myMembers[0] || null;
   const myTrainer = (state.data.trainers || []).find((t) => t.uid === state.profile?.uid) || null;
   return {
     profile: state.profile,
@@ -489,23 +933,194 @@ function openProfileModal(context) {
   overlay.className = "modal-overlay";
   
   let selectedAvatar = context.profile.avatarUrl || "";
+  const role = context.profile.role;
+  const me = context.myMember || {};
+  const tr = context.myTrainer || {};
+
+  let roleFields = "";
+  if (role === "member") {
+    roleFields = `
+      <div class="form-grid">
+        <label>Email (Read-only)
+          <input name="email" type="email" value="${escapeHtml(context.profile.email)}" disabled style="opacity: 0.7;" />
+        </label>
+        <label>Mobile
+          <input name="mobile" required maxlength="10" value="${escapeHtml(me.mobile || "")}" />
+        </label>
+        <label>WhatsApp Number
+          <input name="whatsappNumber" maxlength="10" placeholder="Same as mobile" value="${escapeHtml(me.whatsappNumber || "")}" />
+        </label>
+        <label>Gender
+          <select name="gender">
+            <option value="Not specified" ${me.gender === "Not specified" ? "selected" : ""}>Not specified</option>
+            <option value="Female" ${me.gender === "Female" ? "selected" : ""}>Female</option>
+            <option value="Male" ${me.gender === "Male" ? "selected" : ""}>Male</option>
+            <option value="Other" ${me.gender === "Other" ? "selected" : ""}>Other</option>
+          </select>
+        </label>
+        <label>Date of Birth
+          <input name="dateOfBirth" type="date" value="${escapeHtml(me.dateOfBirth || "")}" />
+        </label>
+        <label class="wide">Address
+          <textarea name="address" rows="2">${escapeHtml(me.address || "")}</textarea>
+        </label>
+
+        <div class="form-section-heading">Emergency Contact</div>
+        <label>Contact name
+          <input name="emergencyName" maxlength="80" value="${escapeHtml(me.emergencyName || "")}" />
+        </label>
+        <label>Relationship
+          <select name="emergencyRelationship">
+            <option value="" ${!me.emergencyRelationship ? "selected" : ""}>Not specified</option>
+            <option value="Spouse" ${me.emergencyRelationship === "Spouse" ? "selected" : ""}>Spouse</option>
+            <option value="Parent" ${me.emergencyRelationship === "Parent" ? "selected" : ""}>Parent</option>
+            <option value="Sibling" ${me.emergencyRelationship === "Sibling" ? "selected" : ""}>Sibling</option>
+            <option value="Child" ${me.emergencyRelationship === "Child" ? "selected" : ""}>Child</option>
+            <option value="Friend" ${me.emergencyRelationship === "Friend" ? "selected" : ""}>Friend</option>
+            <option value="Other" ${me.emergencyRelationship === "Other" ? "selected" : ""}>Other</option>
+          </select>
+        </label>
+        <label>Contact phone
+          <input name="emergencyPhone" type="tel" maxlength="10" value="${escapeHtml(me.emergencyPhone || "")}" />
+        </label>
+
+        <div class="form-section-heading">Measurements</div>
+        <label>Weight kg
+          <input name="initWeight" type="number" min="0" step="0.1" value="${escapeHtml(me.initWeight != null ? String(me.initWeight) : "")}" />
+        </label>
+        <label>Height cm
+          <input name="initHeight" type="number" min="0" step="0.1" value="${escapeHtml(me.initHeight != null ? String(me.initHeight) : "")}" />
+        </label>
+        <label>Body fat %
+          <input name="initBodyFat" type="number" min="0" step="0.1" value="${escapeHtml(me.initBodyFat != null ? String(me.initBodyFat) : "")}" />
+        </label>
+        <label>Waist cm
+          <input name="initWaist" type="number" min="0" step="0.1" value="${escapeHtml(me.initWaist != null ? String(me.initWaist) : "")}" />
+        </label>
+        <label>Chest cm
+          <input name="initChest" type="number" min="0" step="0.1" value="${escapeHtml(me.initChest != null ? String(me.initChest) : "")}" />
+        </label>
+        <label>Hip cm
+          <input name="initHip" type="number" min="0" step="0.1" value="${escapeHtml(me.initHip != null ? String(me.initHip) : "")}" />
+        </label>
+        <label>Bicep cm
+          <input name="initBicep" type="number" min="0" step="0.1" value="${escapeHtml(me.initBicep != null ? String(me.initBicep) : "")}" />
+        </label>
+        <label>Thigh cm
+          <input name="initThigh" type="number" min="0" step="0.1" value="${escapeHtml(me.initThigh != null ? String(me.initThigh) : "")}" />
+        </label>
+        <label class="wide">Gym goal
+          <select name="gymGoal">
+            <option value="" ${!me.gymGoal ? "selected" : ""}>Not specified</option>
+            <option value="Weight Loss" ${me.gymGoal === "Weight Loss" ? "selected" : ""}>Weight Loss</option>
+            <option value="Muscle Gain" ${me.gymGoal === "Muscle Gain" ? "selected" : ""}>Muscle Gain</option>
+            <option value="General Fitness" ${me.gymGoal === "General Fitness" ? "selected" : ""}>General Fitness</option>
+            <option value="Endurance / Cardio" ${me.gymGoal === "Endurance / Cardio" ? "selected" : ""}>Endurance / Cardio</option>
+            <option value="Body Toning" ${me.gymGoal === "Body Toning" ? "selected" : ""}>Body Toning</option>
+            <option value="Flexibility / Mobility" ${me.gymGoal === "Flexibility / Mobility" ? "selected" : ""}>Flexibility / Mobility</option>
+            <option value="Rehabilitation" ${me.gymGoal === "Rehabilitation" ? "selected" : ""}>Rehabilitation</option>
+          </select>
+        </label>
+
+        <div class="form-section-heading">Background</div>
+        <label>Blood group
+          <select name="bloodGroup">
+            <option value="" ${!me.bloodGroup ? "selected" : ""}>Not specified</option>
+            <option value="A+" ${me.bloodGroup === "A+" ? "selected" : ""}>A+</option>
+            <option value="A-" ${me.bloodGroup === "A-" ? "selected" : ""}>A-</option>
+            <option value="B+" ${me.bloodGroup === "B+" ? "selected" : ""}>B+</option>
+            <option value="B-" ${me.bloodGroup === "B-" ? "selected" : ""}>B-</option>
+            <option value="O+" ${me.bloodGroup === "O+" ? "selected" : ""}>O+</option>
+            <option value="O-" ${me.bloodGroup === "O-" ? "selected" : ""}>O-</option>
+            <option value="AB+" ${me.bloodGroup === "AB+" ? "selected" : ""}>AB+</option>
+            <option value="AB-" ${me.bloodGroup === "AB-" ? "selected" : ""}>AB-</option>
+          </select>
+        </label>
+        <label>Occupation
+          <input name="occupation" maxlength="80" value="${escapeHtml(me.occupation || "")}" />
+        </label>
+        <label>Activity level
+          <select name="activityLevel">
+            <option value="" ${!me.activityLevel ? "selected" : ""}>Not specified</option>
+            <option value="Sedentary" ${me.activityLevel === "Sedentary" ? "selected" : ""}>Sedentary</option>
+            <option value="Lightly Active" ${me.activityLevel === "Lightly Active" ? "selected" : ""}>Lightly Active</option>
+            <option value="Moderately Active" ${me.activityLevel === "Moderately Active" ? "selected" : ""}>Moderately Active</option>
+            <option value="Very Active" ${me.activityLevel === "Very Active" ? "selected" : ""}>Very Active</option>
+          </select>
+        </label>
+        <label>Fitness experience
+          <select name="fitnessExperience">
+            <option value="" ${!me.fitnessExperience ? "selected" : ""}>Not specified</option>
+            <option value="Beginner" ${me.fitnessExperience === "Beginner" ? "selected" : ""}>Beginner</option>
+            <option value="Intermediate" ${me.fitnessExperience === "Intermediate" ? "selected" : ""}>Intermediate</option>
+            <option value="Advanced" ${me.fitnessExperience === "Advanced" ? "selected" : ""}>Advanced</option>
+          </select>
+        </label>
+
+        <div class="form-section-heading">Health &amp; Medical</div>
+        <label class="wide">Medical conditions
+          <textarea name="medicalConditions" rows="2">${escapeHtml(me.medicalConditions || "")}</textarea>
+        </label>
+        <label class="wide">Current medications
+          <textarea name="currentMedications" rows="2">${escapeHtml(me.currentMedications || "")}</textarea>
+        </label>
+        <label class="wide">Allergies
+          <textarea name="allergies" rows="2">${escapeHtml(me.allergies || "")}</textarea>
+        </label>
+        <label class="wide">Limitations or injuries
+          <textarea name="physicalLimitations" rows="2">${escapeHtml(me.physicalLimitations || "")}</textarea>
+        </label>
+      </div>
+    `;
+  } else if (role === "trainer") {
+    roleFields = `
+      <div class="form-grid">
+        <label>Email (Read-only)
+          <input name="email" type="email" value="${escapeHtml(context.profile.email)}" disabled style="opacity: 0.7;" />
+        </label>
+        <label>Mobile
+          <input name="mobile" required maxlength="10" value="${escapeHtml(tr.mobile || "")}" />
+        </label>
+        <label>Specialization
+          <input name="specialization" maxlength="80" value="${escapeHtml(tr.specialization || "")}" />
+        </label>
+        <label>Experience
+          <input name="experience" maxlength="80" value="${escapeHtml(tr.experience || "")}" />
+        </label>
+        <label class="wide">Certifications
+          <textarea name="certifications" rows="2">${escapeHtml(tr.certifications || "")}</textarea>
+        </label>
+      </div>
+    `;
+  } else if (role === "owner") {
+    roleFields = `
+      <div class="form-grid">
+        <label>Email (Read-only)
+          <input name="email" type="email" value="${escapeHtml(context.profile.email)}" disabled style="opacity: 0.7;" />
+        </label>
+        <label>Mobile
+          <input name="mobile" maxlength="10" value="${escapeHtml(context.profile.mobile || "")}" />
+        </label>
+      </div>
+    `;
+  }
   
   overlay.innerHTML = `
-    <div class="modal" role="dialog" aria-modal="true" style="width: min(500px, 100%);">
+    <div class="modal stack" role="dialog" aria-modal="true" style="width: min(650px, 95%); max-height: 85vh; display: flex; flex-direction: column;">
       <div class="panel-heading" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--line); padding-bottom: 10px; margin-bottom: 10px;">
         <h2 style="margin: 0; font-size: 1.35rem;">Edit Profile</h2>
         <button class="ghost-button" data-modal="close" style="min-width: unset; padding: 4px; border: none; background: transparent; cursor: pointer;" title="Close">
           <span class="material-symbols-outlined">close</span>
         </button>
       </div>
-      <form id="profile-edit-form" class="stack" style="gap: 16px;">
+      <form id="profile-edit-form" class="stack" style="gap: 16px; flex: 1; overflow-y: auto; padding: 10px 4px;">
         <label>Your Name
           <input name="name" value="${escapeHtml(context.profile.name)}" required style="width: 100%; margin-top: 6px;" />
         </label>
         
         <div>
           <label style="margin-bottom: 8px; display: block;">Choose Avatar</label>
-          <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; max-height: 240px; overflow-y: auto; padding: 8px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface-light, rgba(255,255,255,0.02));">
+          <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; max-height: 180px; overflow-y: auto; padding: 8px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface-light, rgba(255,255,255,0.02));">
             ${CARTOON_AVATARS.map((url, index) => {
               const isSelected = selectedAvatar === url;
               return `
@@ -516,8 +1131,10 @@ function openProfileModal(context) {
             }).join("")}
           </div>
         </div>
+
+        ${roleFields}
         
-        <div class="button-row modal-actions" style="margin-top: 10px;">
+        <div class="button-row modal-actions" style="margin-top: 10px; position: sticky; bottom: 0; background: var(--bg); padding-top: 10px; border-top: 1px solid var(--line);">
           <button class="ghost-button" data-modal="close" type="button">Cancel</button>
           <button class="primary-button" type="submit">Save Changes</button>
         </div>
@@ -542,8 +1159,9 @@ function openProfileModal(context) {
     overlay.remove();
   }
 
-  overlay.querySelector("[data-modal='close']").addEventListener("click", close);
-  overlay.querySelector("button[data-modal='close']").addEventListener("click", close);
+  overlay.querySelectorAll("[data-modal='close']").forEach((btn) => {
+    btn.addEventListener("click", close);
+  });
   
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -553,12 +1171,102 @@ function openProfileModal(context) {
 
     submitBtn.disabled = true;
     try {
+      const mobileVal = form.querySelector("[name='mobile']")?.value.trim() || "";
       await context.services.auth.updateProfile({
         name,
-        avatarUrl: selectedAvatar
+        avatarUrl: selectedAvatar,
+        ...(role === "owner" ? { mobile: mobileVal } : {})
       });
+
+      if (role === "member" && context.myMember) {
+        const updatedMember = {
+          ...context.myMember,
+          fullName: name,
+          avatarUrl: selectedAvatar,
+          mobile: mobileVal,
+          whatsappNumber: form.querySelector("[name='whatsappNumber']")?.value.trim() || "",
+          gender: form.querySelector("[name='gender']")?.value || "Not specified",
+          dateOfBirth: form.querySelector("[name='dateOfBirth']")?.value || "",
+          address: form.querySelector("[name='address']")?.value.trim() || "",
+          emergencyName: form.querySelector("[name='emergencyName']")?.value.trim() || "",
+          emergencyRelationship: form.querySelector("[name='emergencyRelationship']")?.value || "",
+          emergencyPhone: form.querySelector("[name='emergencyPhone']")?.value.trim() || "",
+          gymGoal: form.querySelector("[name='gymGoal']")?.value || "",
+          bloodGroup: form.querySelector("[name='bloodGroup']")?.value || "",
+          occupation: form.querySelector("[name='occupation']")?.value.trim() || "",
+          activityLevel: form.querySelector("[name='activityLevel']")?.value || "",
+          fitnessExperience: form.querySelector("[name='fitnessExperience']")?.value || "",
+          medicalConditions: form.querySelector("[name='medicalConditions']")?.value.trim() || "",
+          currentMedications: form.querySelector("[name='currentMedications']")?.value.trim() || "",
+          allergies: form.querySelector("[name='allergies']")?.value.trim() || "",
+          physicalLimitations: form.querySelector("[name='physicalLimitations']")?.value.trim() || "",
+          initWeight: form.querySelector("[name='initWeight']")?.value ? parseFloat(form.querySelector("[name='initWeight']").value) : "",
+          initHeight: form.querySelector("[name='initHeight']")?.value ? parseFloat(form.querySelector("[name='initHeight']").value) : "",
+          initBodyFat: form.querySelector("[name='initBodyFat']")?.value ? parseFloat(form.querySelector("[name='initBodyFat']").value) : "",
+          initWaist: form.querySelector("[name='initWaist']")?.value ? parseFloat(form.querySelector("[name='initWaist']").value) : "",
+          initChest: form.querySelector("[name='initChest']")?.value ? parseFloat(form.querySelector("[name='initChest']").value) : "",
+          initHip: form.querySelector("[name='initHip']")?.value ? parseFloat(form.querySelector("[name='initHip']").value) : "",
+          initBicep: form.querySelector("[name='initBicep']")?.value ? parseFloat(form.querySelector("[name='initBicep']").value) : "",
+          initThigh: form.querySelector("[name='initThigh']")?.value ? parseFloat(form.querySelector("[name='initThigh']").value) : ""
+        };
+
+        const calcBmi = (weightKg, heightCm) => {
+          const w = parseFloat(weightKg);
+          const h = parseFloat(heightCm) / 100;
+          if (!w || !h || h <= 0) return "";
+          return (w / (h * h)).toFixed(1);
+        };
+        updatedMember.initBmi = calcBmi(updatedMember.initWeight, updatedMember.initHeight);
+
+        const savedMember = await context.services.data.save("members", updatedMember);
+        context.applyChange("members", savedMember);
+
+        // Record measurements as per date for analytics
+        const todayStr = new Date().toISOString().slice(0, 10);
+        const progressRecords = context.data.progress_records || [];
+        const existingTodayRecord = progressRecords.find(r => r.memberId === context.myMember.id && r.date === todayStr);
+
+        const progressRecord = {
+          ...(existingTodayRecord || {}),
+          memberId: context.myMember.id,
+          date: todayStr,
+          weight: updatedMember.initWeight,
+          bmi: updatedMember.initBmi,
+          bodyFat: updatedMember.initBodyFat,
+          waist: updatedMember.initWaist,
+          chest: updatedMember.initChest,
+          hip: updatedMember.initHip,
+          bicep: updatedMember.initBicep,
+          thigh: updatedMember.initThigh,
+          notes: existingTodayRecord?.notes || "Profile update"
+        };
+
+        const hasMeasurements = Object.keys(progressRecord).some(key => 
+          ["weight", "bodyFat", "waist", "chest", "hip", "bicep", "thigh"].includes(key) && progressRecord[key] !== ""
+        );
+        if (hasMeasurements) {
+          const savedProgress = await context.services.data.save("progress_records", progressRecord);
+          context.applyChange("progress_records", savedProgress);
+        }
+      }
+
+      if (role === "trainer" && context.myTrainer) {
+        const updatedTrainer = {
+          ...context.myTrainer,
+          name,
+          avatarUrl: selectedAvatar,
+          mobile: mobileVal,
+          specialization: form.querySelector("[name='specialization']")?.value.trim() || "",
+          experience: form.querySelector("[name='experience']")?.value.trim() || "",
+          certifications: form.querySelector("[name='certifications']")?.value.trim() || ""
+        };
+        const savedTrainer = await context.services.data.save("trainers", updatedTrainer);
+        context.applyChange("trainers", savedTrainer);
+      }
+
       context.toast("Profile updated successfully.");
       close();
+      await context.refresh();
     } catch (error) {
       console.error(error);
       context.toast("Failed to update profile.");

@@ -176,10 +176,24 @@ export function initials(name = "") {
   return parsed || "--";
 }
 
-export const CARTOON_AVATARS = Array.from({ length: 30 }, (_, i) => {
-  // Utilizing Adventure style from Dicebear with varied seeds
-  return `https://api.dicebear.com/7.x/adventurer/svg?seed=adventurer-seed-${i + 1}`;
-});
+export const CARTOON_AVATARS = [
+  // 30 Women Avatars (happy/smiling, age 20+, no sad/crying faces)
+  ...Array.from({ length: 30 }, (_, i) => {
+    const eyebrows = i % 3 === 0 ? "up" : i % 3 === 1 ? "raised" : "normal";
+    const eyes = i % 2 === 0 ? "happy" : "normal";
+    const mouth = i % 3 === 0 ? "happy" : i % 3 === 1 ? "smile" : "smirk";
+    return `https://api.dicebear.com/7.x/lorelei/png?seed=female-gym-${i + 1}&size=96&eyebrows=${eyebrows}&eyes=${eyes}&mouth=${mouth}&frecklesProbability=0`;
+  }),
+  // 70 Men Avatars (happy/smiling/angry-intense, age 20+, beard probability, no sad/crying)
+  ...Array.from({ length: 70 }, (_, i) => {
+    const isAngry = i % 5 === 0;
+    const eyebrows = isAngry ? "angry" : (i % 3 === 0 ? "up" : "normal");
+    const eyes = isAngry ? "normal" : (i % 2 === 0 ? "happy" : "normal");
+    const mouth = isAngry ? "neutral" : (i % 3 === 0 ? "happy" : i % 3 === 1 ? "smile" : "smirk");
+    const beardProb = i % 3 === 0 ? 0 : 100;
+    return `https://api.dicebear.com/7.x/lorelei/png?seed=male-gym-${i + 1}&size=96&eyebrows=${eyebrows}&eyes=${eyes}&mouth=${mouth}&frecklesProbability=0&beardProbability=${beardProb}`;
+  })
+];
 
 export function nameCell(name, sub = "", avatarUrl = "") {
   const avatarContent = avatarUrl 
@@ -368,7 +382,7 @@ export function showExerciseModal(exercise) {
   overlay.addEventListener("click", (event) => {
     if (event.target === overlay) close();
   });
-  overlay.querySelector("[data-modal='close']").addEventListener("click", close);
+  overlay.querySelectorAll("[data-modal='close']").forEach(btn => btn.addEventListener("click", close));
   document.addEventListener("keydown", onKey);
   document.body.appendChild(overlay);
 }
@@ -390,6 +404,27 @@ export function showMemberProfileModal(member, context) {
   const trainerName = findName(trainers, member.assignedTrainer, "Unassigned");
   const avatarInitials = (member.fullName || "M").split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase() || "M";
 
+  const METRICS = [
+    { key: "weight", label: "Weight (kg)", color: "var(--teal)" },
+    { key: "bmi", label: "BMI", color: "var(--primary-strong)" },
+    { key: "bodyFat", label: "Body Fat %", color: "#c36f2d" },
+    { key: "waist", label: "Waist (cm)", color: "var(--ink-soft)" },
+    { key: "chest", label: "Chest (cm)", color: "var(--accent)" },
+    { key: "hip", label: "Hip (cm)", color: "var(--primary)" },
+    { key: "bicep", label: "Bicep (cm)", color: "var(--success)" },
+    { key: "thigh", label: "Thigh (cm)", color: "var(--warning)" },
+    { key: "height", label: "Height (cm)", color: "var(--ink-soft)" }
+  ];
+
+  const chartForMember = (records, metricKey) => {
+    const metric = METRICS.find((m) => m.key === metricKey) || METRICS[0];
+    const series = records
+      .filter((r) => r[metric.key] !== "" && r[metric.key] != null)
+      .sort((a, b) => String(a.date).localeCompare(String(b.date)))
+      .map((r) => ({ label: dateLabel(r.date), value: Number(r[metric.key]) }));
+    return trendChart(series, { color: metric.color });
+  };
+
   overlay.innerHTML = `
     <div class="modal stack" role="dialog" aria-modal="true" style="width: min(650px, 95%); max-height: 85vh; display: flex; flex-direction: column; padding: 20px;">
       <div class="panel-heading" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--line); padding-bottom: 12px; margin-bottom: 12px;">
@@ -410,6 +445,7 @@ export function showMemberProfileModal(member, context) {
       <div class="tabs-header modal-tabs" style="margin-bottom: 12px;">
         <button class="tab-btn active" data-modal-tab="info">Bio & Medical</button>
         <button class="tab-btn" data-modal-tab="logs">Workout Logs (${logs.length})</button>
+        <button class="tab-btn" data-modal-tab="progress">Progress Timeline</button>
       </div>
 
       <div style="flex: 1; overflow-y: auto; display:flex; flex-direction:column; gap: 15px;" id="modal-tab-content">
@@ -468,7 +504,7 @@ export function showMemberProfileModal(member, context) {
           </section>
         </div>
       `;
-    } else {
+    } else if (activeTab === "logs") {
       contentEl.innerHTML = `
         <div class="stack" style="gap: 12px;">
           ${logs.length 
@@ -495,6 +531,53 @@ export function showMemberProfileModal(member, context) {
           }
         </div>
       `;
+    } else if (activeTab === "progress") {
+      const records = (context.data.progress_records || [])
+        .filter((r) => r.memberId === member.id)
+        .sort((a, b) => String(b.date).localeCompare(String(a.date)));
+
+      contentEl.innerHTML = `
+        <div class="stack" style="gap: 15px;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h3 style="margin:0; font-size:1.1rem; color:var(--accent);">Trend Chart</h3>
+            <select id="modal-metric-select" style="padding:4px 8px; border-radius:var(--r-sm); border:1px solid var(--line); background:var(--bg-alt); color:var(--text);">
+              ${METRICS.map(m => `<option value="${m.key}">${m.label}</option>`).join("")}
+            </select>
+          </div>
+          <div id="modal-chart-container">
+            ${chartForMember(records, "weight")}
+          </div>
+
+          <h3 style="margin:10px 0 0 0; font-size:1.1rem; color:var(--accent);">Measurement History</h3>
+          <div class="stack" style="gap: 10px; max-height:280px; overflow-y:auto; padding-right:5px;">
+            ${records.length ? records.map(r => `
+              <div class="panel" style="padding:10px; border:1px solid var(--line); border-radius:var(--r-sm); background:var(--bg-alt); font-size:0.9rem;">
+                <div style="display:flex; justify-content:space-between; font-weight:bold; margin-bottom:6px; border-bottom:1px dashed var(--line); padding-bottom:4px;">
+                  <span>${dateLabel(r.date)}</span>
+                  <span style="font-size:0.8rem; opacity:0.8;">${escapeHtml(r.notes || "Measurement")}</span>
+                </div>
+                <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:8px;">
+                  ${r.weight ? `<span><strong>Weight:</strong> ${escapeHtml(r.weight)} kg</span>` : ""}
+                  ${r.bmi ? `<span><strong>BMI:</strong> ${escapeHtml(r.bmi)}</span>` : ""}
+                  ${r.bodyFat ? `<span><strong>Body Fat:</strong> ${escapeHtml(r.bodyFat)}%</span>` : ""}
+                  ${r.waist ? `<span><strong>Waist:</strong> ${escapeHtml(r.waist)} cm</span>` : ""}
+                  ${r.chest ? `<span><strong>Chest:</strong> ${escapeHtml(r.chest)} cm</span>` : ""}
+                  ${r.hip ? `<span><strong>Hip:</strong> ${escapeHtml(r.hip)} cm</span>` : ""}
+                  ${r.bicep ? `<span><strong>Bicep:</strong> ${escapeHtml(r.bicep)} cm</span>` : ""}
+                  ${r.thigh ? `<span><strong>Thigh:</strong> ${escapeHtml(r.thigh)} cm</span>` : ""}
+                  ${r.height ? `<span><strong>Height:</strong> ${escapeHtml(r.height)} cm</span>` : ""}
+                </div>
+              </div>
+            `).join("") : `<div class="table-empty">No measurements recorded.</div>`}
+          </div>
+        </div>
+      `;
+
+      const selectEl = contentEl.querySelector("#modal-metric-select");
+      const chartContainer = contentEl.querySelector("#modal-chart-container");
+      selectEl?.addEventListener("change", () => {
+        chartContainer.innerHTML = chartForMember(records, selectEl.value);
+      });
     }
   }
 
@@ -519,7 +602,7 @@ export function showMemberProfileModal(member, context) {
   overlay.addEventListener("click", (event) => {
     if (event.target === overlay) close();
   });
-  overlay.querySelector("[data-modal='close']").addEventListener("click", close);
+  overlay.querySelectorAll("[data-modal='close']").forEach(btn => btn.addEventListener("click", close));
   document.addEventListener("keydown", onKey);
 
   renderTab();

@@ -22,7 +22,9 @@ service cloud.firestore {
     }
 
     function owner() {
-      return signedIn() && myRole() == "owner";
+      return signedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && myRole() == "owner";
     }
 
     function sameGym() {
@@ -102,7 +104,15 @@ service cloud.firestore {
           && request.resource.data.status == "Pending"
         )
       );
-      allow update: if owner() && sameGym() && incomingSameGym();
+      allow update: if sameGym() && incomingSameGym() && (
+        owner()
+        || (
+          signedIn()
+          && (resource.data.uid == uid() || resource.data.email == request.auth.token.email)
+          && request.resource.data.uid == uid()
+          && request.resource.data.status == resource.data.status
+        )
+      );
       allow delete: if owner() && sameGym();
     }
 
