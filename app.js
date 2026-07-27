@@ -610,9 +610,10 @@ function render() {
 
   // Member restriction checks
   if (state.profile.role === "member") {
-    const myMember = (state.data.members || []).find(
+    const myMembers = (state.data.members || []).filter(
       (m) => m.uid === state.profile?.uid || (m.email && m.email.toLowerCase() === state.profile?.email?.toLowerCase())
     );
+    const myMember = myMembers.find((m) => memberStatus(m) !== "Pending") || myMembers[0];
 
     if (!myMember) {
       appRoot.innerHTML = `
@@ -794,7 +795,10 @@ function renderView() {
 
 function makeContext() {
   // The signed-in member's / trainer's own roster id (doc linked by uid), if any.
-  const myMember = (state.data.members || []).find((m) => m.uid === state.profile?.uid) || null;
+  const myMembers = (state.data.members || []).filter(
+    (m) => m.uid === state.profile?.uid || (m.email && m.email.toLowerCase() === state.profile?.email?.toLowerCase())
+  );
+  const myMember = myMembers.find((m) => memberStatus(m) !== "Pending") || myMembers[0] || null;
   const myTrainer = (state.data.trainers || []).find((t) => t.uid === state.profile?.uid) || null;
   return {
     profile: state.profile,
