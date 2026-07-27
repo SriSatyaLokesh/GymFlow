@@ -552,23 +552,31 @@ export const myWorkoutModule = {
     const schedForm = root.querySelector("#schedule-form");
     schedForm?.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const me = context.myMember;
-      const formData = new FormData(schedForm);
-      const scheduleObj = {};
-      formData.forEach((val, key) => {
-        scheduleObj[key] = val;
-      });
+      const submitBtn = schedForm.querySelector("button[type='submit']");
+      await withButtonLoading(submitBtn, async () => {
+        try {
+          const me = context.myMember;
+          const formData = new FormData(schedForm);
+          const scheduleObj = {};
+          formData.forEach((val, key) => {
+            scheduleObj[key] = val;
+          });
 
-      const mySchedules = (context.data.workout_schedules || []).filter(s => s.memberId === me.id);
-      const weeklyScheduleDoc = mySchedules.find(s => s.type === "schedule") || { type: "schedule", memberId: me.id, gymId: me.gymId };
-      weeklyScheduleDoc.schedule = scheduleObj;
-      weeklyScheduleDoc.gymId = me.gymId;
+          const mySchedules = (context.data.workout_schedules || []).filter(s => s.memberId === me.id);
+          const weeklyScheduleDoc = mySchedules.find(s => s.type === "schedule") || { type: "schedule", memberId: me.id, gymId: me.gymId };
+          weeklyScheduleDoc.schedule = scheduleObj;
+          weeklyScheduleDoc.gymId = me.gymId;
 
-      const saved = await context.services.data.save(collections.workoutSchedules, weeklyScheduleDoc);
-      context.toast("Workout schedule saved successfully.");
-      context.applyChange(collections.workoutSchedules, saved);
-      this.editingSchedule = false;
-      await context.refreshView();
+          const saved = await context.services.data.save(collections.workoutSchedules, weeklyScheduleDoc);
+          context.toast("Workout schedule saved successfully.");
+          context.applyChange(collections.workoutSchedules, saved);
+          this.editingSchedule = false;
+          await context.refreshView();
+        } catch (err) {
+          console.error("Failed to save weekly schedule:", err);
+          context.toast("Error: Failed to save schedule.");
+        }
+      }, "Saving...");
     });
 
     // Start workout from schedule day
