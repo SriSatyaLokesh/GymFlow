@@ -647,18 +647,26 @@ function render() {
     // Pending membership activation check
     if (status === "Pending") {
       appRoot.innerHTML = `
-        <div class="boot-screen">
+        <div class="boot-screen" style="flex-direction: column; justify-content: center; padding: 20px;">
           <div class="boot-mark">GF</div>
           <div class="banner warning-banner" style="padding: 16px 20px; border-radius: 8px; background: var(--warning-bg, rgba(255, 193, 7, 0.15)); color: var(--warning, #ffc107); border: 1px solid rgba(255, 193, 7, 0.25); margin: 0 auto 24px; max-width: 480px; text-align: center; font-size: 1.05rem; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: var(--shadow-small);">
             <span class="material-symbols-outlined" style="font-size: 24px;">warning</span>
             <span>Your membership is pending approval. Please contact the gym administrator to activate it.</span>
           </div>
-          <div class="button-row" style="justify-content: center; gap: 12px;">
+          <div class="button-row" style="justify-content: center; gap: 12px; margin-bottom: 20px;">
             <button class="primary-button" data-action="refresh-activation">
               <span class="material-symbols-outlined" style="font-size: 20px; vertical-align: middle;">refresh</span>Check Activation
             </button>
             <button class="ghost-button" data-action="logout">Sign out</button>
           </div>
+          <details style="text-align: left; font-size: 0.82rem; max-width: 480px; width: 100%; margin: 10px auto 0; opacity: 0.65; background: rgba(0,0,0,0.15); border: 1px solid var(--line); border-radius: 6px; padding: 8px;">
+            <summary style="cursor: pointer; padding: 4px; font-weight: 600;">Debug Info (Show for Troubleshooting)</summary>
+            <pre style="white-space: pre-wrap; font-family: monospace; margin: 8px 0 0; padding: 8px; background: rgba(0,0,0,0.25); border-radius: 4px; max-height: 220px; overflow-y: auto;">Email: ${state.profile?.email}
+UID: ${state.profile?.uid}
+Gym ID: ${state.profile?.gymId}
+Matches in members collection: ${JSON.stringify((state.data.members || []).filter(m => m.email?.toLowerCase() === state.profile?.email?.toLowerCase() || m.uid === state.profile?.uid).map(m => ({ id: m.id, email: m.email, uid: m.uid, status: m.status, computedStatus: memberStatus(m) })), null, 2)}
+Total members listed: ${(state.data.members || []).length}</pre>
+          </details>
         </div>
       `;
 
