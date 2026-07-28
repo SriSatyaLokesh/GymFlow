@@ -528,7 +528,7 @@ export const myWorkoutModule = {
                 
                  <div style="width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; margin-top: 5px;">
                    <div class="data-table" style="min-width: 420px; gap: 5px;">
-                     <div class="table-head" style="grid-template-columns: 40px 1.5fr 1fr 1fr 1fr 50px; text-align: center; font-size:0.8rem; font-weight:600; border-bottom:1px solid var(--line); padding-bottom:5px;">
+                     <div class="logger-table-head" style="grid-template-columns: 40px 1.5fr 1fr 1fr 1fr 50px; text-align: center; font-size:0.8rem; font-weight:600; border-bottom:1px solid var(--line); padding-bottom:5px;">
                        <span>Set</span>
                        <span>Prev (Best)</span>
                        <span>Kg</span>
@@ -539,7 +539,7 @@ export const myWorkoutModule = {
                      <div class="active-sets-list stack" style="gap: 5px; margin-top:5px;">
                        ${sets.map((set, setIdx) => {
                          return `
-                           <div class="table-row active-set-row ${set.done ? "set-done" : ""}" data-set-idx="${setIdx}" style="grid-template-columns: 40px 1.5fr 1fr 1fr 1fr 50px; align-items:center; text-align:center; padding: 4px 0;">
+                           <div class="logger-set-row active-set-row ${set.done ? "set-done" : ""}" data-set-idx="${setIdx}" style="grid-template-columns: 40px 1.5fr 1fr 1fr 1fr 50px; align-items:center; text-align:center; padding: 4px 0;">
                              <span style="font-weight:700; opacity:0.85;">${setIdx + 1}</span>
                              <span style="font-size:0.75rem; opacity:0.75;" class="prev-best-label">—</span>
                              <input type="number" step="0.25" placeholder="0" class="set-weight-input" value="${set.weight || ""}" style="width:100%; text-align:center; padding:4px;" />

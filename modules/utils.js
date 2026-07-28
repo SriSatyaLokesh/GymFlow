@@ -433,7 +433,7 @@ export function showMemberProfileModal(member, context) {
     <div class="modal stack" role="dialog" aria-modal="true" style="width: min(650px, 95%); max-height: 85vh; display: flex; flex-direction: column; padding: 20px;">
       <div class="panel-heading" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--line); padding-bottom: 12px; margin-bottom: 12px;">
         <div style="display:flex; gap:12px; align-items:center;">
-          <div class="avatar" style="width:44px; height:44px; border-radius:50%; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:1.1rem;">
+          <div class="avatar" style="width:44px; height:44px; border-radius:50%; background:var(--primary); color:var(--on-primary); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:1.1rem;">
             ${avatarInitials}
           </div>
           <div>
