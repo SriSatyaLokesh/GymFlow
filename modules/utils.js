@@ -396,6 +396,10 @@ export function showMemberProfileModal(member, context) {
 
   const plans = context.data.membership_plans || [];
   const trainers = context.data.trainers || [];
+  const templates = context.data.workout_templates || [];
+  const mySchedules = (context.data.workout_schedules || []).filter(s => s.memberId === member.id);
+  const customRoutines = mySchedules.filter(s => s.type === "routine");
+  const weeklyScheduleDoc = mySchedules.find(s => s.type === "schedule") || { schedule: {} };
   const logs = (context.data.workout_logs || [])
     .filter(l => l.memberId === member.id)
     .sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")));
@@ -505,30 +509,79 @@ export function showMemberProfileModal(member, context) {
         </div>
       `;
     } else if (activeTab === "logs") {
+      const weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+      const scheduleHtml = weekdays.map(day => {
+        const id = weeklyScheduleDoc.schedule?.[day];
+        let name = "Rest Day";
+        if (id) {
+          const r = customRoutines.find(cr => cr.id === id);
+          const t = templates.find(bt => bt.id === id);
+          if (r) name = r.name;
+          else if (t) name = t.name;
+        }
+        return `
+          <div style="display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px dashed var(--line);">
+            <span style="font-weight:600;">${day}</span>
+            <span style="opacity:0.85;">${escapeHtml(name)}</span>
+          </div>
+        `;
+      }).join("");
+
+      const routinesHtml = customRoutines.length
+        ? customRoutines.map(r => `
+            <div style="padding:8px; border:1px solid var(--line); border-radius:var(--r-sm); background:var(--bg); margin-bottom:6px;">
+              <strong style="font-size:0.9rem; color:var(--accent);">${escapeHtml(r.name)}</strong>
+              <div style="font-size:0.8rem; opacity:0.8; margin-top:4px; padding-left:4px; display:flex; flex-direction:column; gap:2px;">
+                ${(r.exercisesStructured || []).map(ex => `
+                  <div><strong>${escapeHtml(ex.name)}</strong>: ${ex.sets} sets x ${ex.reps} reps</div>
+                `).join("")}
+              </div>
+            </div>
+          `).join("")
+        : `<div style="text-align:center; opacity:0.7; padding:10px;">No custom routines defined.</div>`;
+
       contentEl.innerHTML = `
-        <div class="stack" style="gap: 12px;">
-          ${logs.length 
-            ? logs.map(log => `
-                <div class="panel" style="padding:12px; border:1px solid var(--line); border-radius:var(--r-md); background:var(--bg-alt);">
-                  <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--line); padding-bottom:4px; margin-bottom:8px;">
-                    <strong style="font-size:1rem; color:var(--accent);">${escapeHtml(log.routineName || "Workout")}</strong>
-                    <small style="opacity:0.8;">${dateLabel(log.date)} • ${log.durationMinutes || 0} mins</small>
+        <div class="stack" style="gap: 15px;">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 15px; border-bottom: 1px solid var(--line); padding-bottom: 15px;">
+            <div class="panel stack" style="padding: 12px; font-size: 0.85rem; background: var(--bg-alt); border-radius: var(--r-md); border:1px solid var(--line);">
+              <h4 style="margin: 0 0 10px 0; color: var(--accent); font-size: 0.95rem; border-bottom: 1px solid var(--line); padding-bottom: 4px;">Weekly Schedule</h4>
+              <div style="display: flex; flex-direction: column; gap: 4px;">
+                ${scheduleHtml}
+              </div>
+            </div>
+            <div class="panel stack" style="padding: 12px; font-size: 0.85rem; background: var(--bg-alt); border-radius: var(--r-md); border:1px solid var(--line);">
+              <h4 style="margin: 0 0 10px 0; color: var(--accent); font-size: 0.95rem; border-bottom: 1px solid var(--line); padding-bottom: 4px;">Custom Routines</h4>
+              <div style="display: flex; flex-direction: column; gap: 4px; max-height: 200px; overflow-y: auto;">
+                ${routinesHtml}
+              </div>
+            </div>
+          </div>
+
+          <h3 style="margin: 5px 0 0 0; font-size: 1.1rem; color: var(--accent);">Completed Workout Logs</h3>
+          <div class="stack" style="gap: 12px;">
+            ${logs.length 
+              ? logs.map(log => `
+                  <div class="panel" style="padding:12px; border:1px solid var(--line); border-radius:var(--r-md); background:var(--bg-alt);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--line); padding-bottom:4px; margin-bottom:8px;">
+                      <strong style="font-size:1rem; color:var(--accent);">${escapeHtml(log.routineName || "Workout")}</strong>
+                      <small style="opacity:0.8;">${dateLabel(log.date)} • ${log.durationMinutes || 0} mins</small>
+                    </div>
+                    ${log.notes ? `<p style="font-style:italic; font-size:0.85rem; margin:4px 0;">"${escapeHtml(log.notes)}"</p>` : ""}
+                    <div style="margin-top:6px; display:flex; flex-direction:column; gap:4px;">
+                      ${(log.exercises || []).map(ex => `
+                        <div style="font-size:0.85rem;">
+                          <strong>${escapeHtml(ex.name)}</strong>
+                          <span style="opacity:0.8; padding-left:6px;">
+                            ${(ex.sets || []).map((s, idx) => `${idx + 1}: ${s.weight}kg x ${s.reps}`).join(" / ")}
+                          </span>
+                        </div>
+                      `).join("")}
+                    </div>
                   </div>
-                  ${log.notes ? `<p style="font-style:italic; font-size:0.85rem; margin:4px 0;">"${escapeHtml(log.notes)}"</p>` : ""}
-                  <div style="margin-top:6px; display:flex; flex-direction:column; gap:4px;">
-                    ${(log.exercises || []).map(ex => `
-                      <div style="font-size:0.85rem;">
-                        <strong>${escapeHtml(ex.name)}</strong>
-                        <span style="opacity:0.8; padding-left:6px;">
-                          ${(ex.sets || []).map((s, idx) => `${idx + 1}: ${s.weight}kg x ${s.reps}`).join(" / ")}
-                        </span>
-                      </div>
-                    `).join("")}
-                  </div>
-                </div>
-              `).join("")
-            : `<div class="table-empty">No workouts logged yet.</div>`
-          }
+                `).join("")
+              : `<div class="table-empty">No workouts logged yet.</div>`
+            }
+          </div>
         </div>
       `;
     } else if (activeTab === "progress") {
