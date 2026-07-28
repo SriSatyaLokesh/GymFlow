@@ -1,4 +1,4 @@
-import { collections, dateLabel, emptyState, escapeHtml, findName, formData, optionList, pageHeader, showMemberProfileModal, today, withButtonLoading } from "./utils.js";
+import { collections, dateLabel, emptyState, escapeHtml, findName, formData, optionList, pageHeader, showMemberProfileModal, today, withButtonLoading, getExercisesList } from "./utils.js";
 import { canUseWorkoutTemplate, renderTemplateExercises } from "./workouts.js";
 
 export const trainerMembersModule = {
@@ -14,6 +14,7 @@ export const trainerMembersModule = {
     const myMembers = (context.data.members || []).filter((member) => member.assignedTrainer === me.id);
     const assignments = context.data.workout_assignments || [];
     const templates = (context.data.workout_templates || []).filter((template) => canUseWorkoutTemplate(template, context));
+    const exercisesList = getExercisesList().sort((a, b) => a.name.localeCompare(b.name));
 
     function currentTemplateName(member) {
       const memberAssignments = assignments.filter((assignment) => assignment.memberId === member.id);
@@ -48,6 +49,13 @@ export const trainerMembersModule = {
               <label class="wide">Exercises
                 <textarea name="exercises" rows="7" placeholder="Bench press - 3 sets x 10 reps"></textarea>
               </label>
+              <div class="wide" style="display:flex; gap:8px; align-items:center; margin-top: -5px; margin-bottom: 10px;">
+                <select id="trainer-add-exercise-select" style="flex:1; padding: 6px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--bg-alt); color: var(--text);">
+                  <option value="">Choose exercise to add...</option>
+                  ${exercisesList.map(ex => `<option value="${escapeHtml(ex.name)}">${escapeHtml(ex.name)}</option>`).join("")}
+                </select>
+                <button class="ghost-button compact" type="button" id="trainer-insert-exercise-btn" style="white-space:nowrap; padding: 6px 12px; height: 36px; display: flex; align-items: center; justify-content: center;">+ Insert</button>
+              </div>
               <label class="wide">Notes
                 <textarea name="notes" rows="2"></textarea>
               </label>
@@ -102,6 +110,34 @@ export const trainerMembersModule = {
     const templates = (context.data.workout_templates || []).filter((template) => canUseWorkoutTemplate(template, context));
     const form = root.querySelector("#session-form");
     if (form) {
+      const templateSelect = form.querySelector("select[name='templateId']");
+      const exercisesTextarea = form.querySelector("textarea[name='exercises']");
+      templateSelect?.addEventListener("change", () => {
+        const template = templates.find((t) => t.id === templateSelect.value);
+        if (template) {
+          let text = "";
+          if (template.exercisesStructured) {
+            const rawStructured = typeof template.exercisesStructured === "string" ? JSON.parse(template.exercisesStructured) : template.exercisesStructured;
+            text = (rawStructured || []).map(ex => `${ex.name} - ${ex.sets} sets x ${ex.reps} reps${ex.weight ? ` @ ${ex.weight}` : ""}`).join("\n");
+          } else if (template.exercises) {
+            text = template.exercises;
+          }
+          exercisesTextarea.value = text;
+        }
+      });
+
+      const insertSelect = form.querySelector("#trainer-add-exercise-select");
+      const insertBtn = form.querySelector("#trainer-insert-exercise-btn");
+      insertBtn?.addEventListener("click", () => {
+        const exName = insertSelect.value;
+        if (exName) {
+          const currentVal = exercisesTextarea.value.trim();
+          const appendText = `${exName} - 3 sets x 10 reps`;
+          exercisesTextarea.value = currentVal ? `${currentVal}\n${appendText}` : appendText;
+          insertSelect.value = "";
+        }
+      });
+
       form.addEventListener("submit", async (event) => {
         event.preventDefault();
         await withButtonLoading(form.querySelector("[type='submit']"), async () => {
