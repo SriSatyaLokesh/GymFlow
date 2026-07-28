@@ -2,8 +2,8 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: "Phase 11 shipped — PR #22"
-last_updated: "2026-07-28T12:10:02.761Z"
+status: "Phase 11 shipped — PR #22 (Layout fix applied)"
+last_updated: "2026-07-28T16:32:39.522Z"
 progress:
   total_phases: 7
   completed_phases: 6
@@ -49,7 +49,7 @@ progress:
 
 - **Branch:** `main`
 - **Last merged commit:** `517a3ff` — Add trainer workout module library and basic member workouts (#12)
-- **Status:** Phase 11 shipped — PR #22
+- **Status:** Phase 11 shipped — PR #22 (Layout fix applied)
 
 ## Key Architectural Facts
 
