@@ -39,7 +39,7 @@ const nav = [
   ["renewals", "Renewals", "autorenew", ["owner"]],
   ["reminders", "Reminders", "chat", ["owner"]],
   ["trainers", "Trainers", "badge", ["owner"]],
-  ["attendance", "Attendance", "how_to_reg", ALL_ROLES],
+  ["attendance", "Check-ins", "how_to_reg", ALL_ROLES],
   ["workouts", "Workouts", "fitness_center", ["owner", "trainer"]],
   ["progress", "Progress", "trending_up", ALL_ROLES],
   ["reports", "Reports", "bar_chart", ["owner"]],
@@ -149,16 +149,47 @@ async function boot() {
     }
   });
 
-  // Global listener to handle smooth scrolling to forms from list headings on mobile/tablet
+  // Global listener to handle smooth scrolling & active class toggling for forms on mobile/tablet
   document.addEventListener("click", (e) => {
     const btn = e.target.closest("[data-scroll-to-form]");
+    const editBtn = e.target.closest("[data-edit-member], [data-edit-plan], [data-edit-trainer], [data-edit-template]");
+    
     if (btn) {
       const container = btn.closest(".work-grid");
       const form = container?.querySelector("form");
       if (form) {
-        form.scrollIntoView({ behavior: "smooth", block: "start" });
-        const firstInput = form.querySelector("input:not([type='hidden']), select, textarea");
-        firstInput?.focus();
+        const isCurrentlyActive = form.classList.contains("active");
+        if (isCurrentlyActive) {
+          form.classList.remove("active");
+        } else {
+          form.classList.add("active");
+          setTimeout(() => {
+            form.scrollIntoView({ behavior: "smooth", block: "start" });
+            const firstInput = form.querySelector("input:not([type='hidden']), select, textarea");
+            firstInput?.focus();
+          }, 50);
+        }
+      }
+    } else if (editBtn) {
+      const container = editBtn.closest(".work-grid");
+      const form = container?.querySelector("form");
+      if (form) {
+        form.classList.add("active");
+        setTimeout(() => {
+          form.scrollIntoView({ behavior: "smooth", block: "start" });
+          const firstInput = form.querySelector("input:not([type='hidden']), select, textarea");
+          firstInput?.focus();
+        }, 50);
+      }
+    }
+
+    // Hide form if clicked cancel/reset
+    const cancelBtn = e.target.closest("#cancel-edit-btn, [type='reset'], button[data-cancel-form]");
+    if (cancelBtn) {
+      const container = cancelBtn.closest(".work-grid");
+      const form = container?.querySelector("form");
+      if (form) {
+        form.classList.remove("active");
       }
     }
   });

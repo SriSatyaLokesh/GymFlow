@@ -130,13 +130,13 @@ function setPlanAmount(form, context) {
 function renewalRow(member, plans, currency) {
   return `
     <div class="table-row">
-      <span>
+      <span data-label="Member">
         <strong>${escapeHtml(member.fullName)}</strong>
         <small>${escapeHtml(member.mobile || "")}</small>
       </span>
-      <span>${escapeHtml(findName(plans, member.planId))}</span>
-      <span>${dateLabel(member.endDate)} <small>${member.remaining < 0 ? `${Math.abs(member.remaining)} days overdue` : `${member.remaining} days left`}</small></span>
-      <span><mark class="status ${statusClass(member.computedStatus)}">${escapeHtml(member.computedStatus)}</mark></span>
+      <span data-label="Plan">${escapeHtml(findName(plans, member.planId))}</span>
+      <span data-label="Expiry">${dateLabel(member.endDate)} <small>${member.remaining < 0 ? `${Math.abs(member.remaining)} days overdue` : `${member.remaining} days left`}</small></span>
+      <span data-label="Status"><mark class="status ${statusClass(member.computedStatus)}">${escapeHtml(member.computedStatus)}</mark></span>
       <span class="row-actions"><button class="icon-button" data-renew-member="${escapeHtml(member.id)}">${money(plans.find((plan) => plan.id === member.planId)?.price || 0, currency)}</button></span>
     </div>
   `;

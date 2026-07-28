@@ -18,6 +18,11 @@ export const myWorkoutModule = {
       `;
     }
 
+    if (!this.selectedDay) {
+      const todayIndex = new Date().getDay();
+      this.selectedDay = todayIndex === 0 ? "Sunday" : ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][todayIndex - 1];
+    }
+
     // Check if there is an active workout in progress
     const activeWorkout = getActiveWorkout();
     if (activeWorkout) {
@@ -42,6 +47,17 @@ export const myWorkoutModule = {
       .filter((template) => template.visibility === "basic" && template.status !== "archived")
       .sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")));
 
+    const myAssignments = (context.data.workout_assignments || [])
+      .filter(a => a.memberId === me.id)
+      .sort((a, b) => String(b.assignedAt || "").localeCompare(String(a.assignedAt || "")));
+    const currentAssignment = myAssignments[0];
+    const assignedTemplate = currentAssignment 
+      ? templates.find(t => t.id === currentAssignment.templateId)
+      : null;
+
+    const todaySession = (context.data.workout_sessions || [])
+      .find(s => s.memberId === me.id && s.date === today());
+
     // Renders the main tabbed layout
     return `
       ${pageHeader("My Workout")}
@@ -57,14 +73,14 @@ export const myWorkoutModule = {
 
       <div class="tab-content">
         ${this.activeTab === "workouts" 
-          ? this.renderWorkoutsTab(context, basicTemplates, customRoutines, weeklyScheduleDoc) 
+          ? this.renderWorkoutsTab(context, basicTemplates, customRoutines, weeklyScheduleDoc, assignedTemplate, todaySession) 
           : this.renderHistoryTab(context, myLogs)}
       </div>
     `;
   },
 
   // Renders the Workouts tab (Weekly Schedule, Quick Start, Custom Routines, Gym templates)
-  renderWorkoutsTab(context, basicTemplates, customRoutines, weeklyScheduleDoc) {
+  renderWorkoutsTab(context, basicTemplates, customRoutines, weeklyScheduleDoc, assignedTemplate, todaySession) {
     const weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
     
     // Build schedule selector or display summary
@@ -106,37 +122,77 @@ export const myWorkoutModule = {
     } else {
       const scheduleItems = weekdays.map(day => {
         const id = weeklyScheduleDoc.schedule?.[day];
-        let name = "Rest Day";
-        let isGymTemplate = false;
-        if (id) {
-          const r = customRoutines.find(cr => cr.id === id);
-          const t = basicTemplates.find(bt => bt.id === id);
-          if (r) name = r.name;
-          else if (t) {
-            name = t.name;
-            isGymTemplate = true;
-          }
-        }
+        const isSelected = this.selectedDay === day;
+        const shortName = day.slice(0, 3);
         return `
-          <div class="schedule-day-row">
-            <span class="day-name">${day}</span>
-            <span class="routine-name ${id ? "has-routine" : "rest-day"}">${escapeHtml(name)}</span>
-            ${id ? `<button class="ghost-button compact start-sched-btn" data-id="${id}" data-type="${isGymTemplate ? "template" : "routine"}">Start</button>` : ""}
-          </div>
+          <button class="schedule-pill ${isSelected ? "active" : ""} ${id ? "has-routine" : ""}" 
+            data-day="${day}" type="button">
+            <span style="font-size: 0.75rem; font-weight: 600; opacity: 0.85;">${shortName}</span>
+            <div class="day-dot"></div>
+          </button>
         `;
       }).join("");
 
+      const selectedDayId = weeklyScheduleDoc.schedule?.[this.selectedDay];
+      let selectedDayDetails = "";
+      if (selectedDayId) {
+        const r = customRoutines.find(cr => cr.id === selectedDayId);
+        const t = basicTemplates.find(bt => bt.id === selectedDayId);
+        let routineName = "";
+        let exercisesHtml = "";
+        let isGymTemplate = false;
+        if (r) {
+          routineName = r.name;
+          isGymTemplate = false;
+          exercisesHtml = (r.exercisesStructured || []).map(ex => `
+            <span style="background:var(--surface-light, rgba(255,255,255,0.05)); padding:4px 8px; border-radius:var(--r-sm); font-size:0.8rem; border:1px solid var(--line);">${escapeHtml(ex.name)} (${ex.sets}x${ex.reps})</span>
+          `).join("");
+        } else if (t) {
+          routineName = t.name;
+          isGymTemplate = true;
+          const rawStructured = typeof t.exercisesStructured === "string" ? JSON.parse(t.exercisesStructured) : (t.exercisesStructured || []);
+          exercisesHtml = (rawStructured || []).map(ex => `
+            <span style="background:var(--surface-light, rgba(255,255,255,0.05)); padding:4px 8px; border-radius:var(--r-sm); font-size:0.8rem; border:1px solid var(--line);">${escapeHtml(ex.name)} (${ex.sets}x${ex.reps})</span>
+          `).join("");
+        }
+
+        selectedDayDetails = `
+          <div class="panel stack" style="padding:15px; background:var(--bg-alt); border-radius:var(--r-md); border:1px solid var(--line); gap:12px; margin-top:10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+              <div>
+                <span style="font-size:0.8rem; font-weight:700; color:var(--accent); text-transform:uppercase; letter-spacing:0.5px;">${this.selectedDay}'s Workout</span>
+                <h3 style="margin:4px 0 0 0; font-size:1.15rem;">${escapeHtml(routineName)}</h3>
+              </div>
+              <button class="primary-button compact start-sched-btn" data-id="${selectedDayId}" data-type="${isGymTemplate ? "template" : "routine"}">
+                Record Workout
+              </button>
+            </div>
+            ${exercisesHtml ? `<div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:4px;">${exercisesHtml}</div>` : ""}
+          </div>
+        `;
+      } else {
+        selectedDayDetails = `
+          <div class="panel stack" style="padding:20px; text-align:center; background:var(--bg-alt); border-radius:var(--r-md); border:1px dashed var(--line); margin-top:10px; color:var(--text-muted);">
+            <span class="material-symbols-outlined" style="font-size:32px; opacity:0.6;">bedtime</span>
+            <strong style="margin-top:8px; display:block;">${this.selectedDay} is a Rest Day</strong>
+            <p style="font-size:0.8rem; margin:4px 0 10px 0; opacity:0.8;">No routines scheduled for this day.</p>
+            <button class="ghost-button compact" id="schedule-rest-action-btn" style="margin: 0 auto;">Configure Schedule</button>
+          </div>
+        `;
+      }
+
       scheduleSection = `
-        <div class="panel stack">
-          <div class="panel-heading">
+        <div class="panel stack" style="padding: 15px; border-radius: var(--r-md);">
+          <div class="panel-heading" style="margin-bottom: 12px;">
             <h2>Weekly Schedule</h2>
             <button class="ghost-button compact" id="edit-schedule-btn">
               <span class="material-symbols-outlined" style="font-size:16px;">edit</span> Edit
             </button>
           </div>
-          <div class="schedule-grid">
+          <div class="weekly-schedule-container">
             ${scheduleItems}
           </div>
+          ${selectedDayDetails}
         </div>
       `;
     }
@@ -235,7 +291,59 @@ export const myWorkoutModule = {
       </section>
     `;
 
+    let trainerAssignedSection = "";
+    if (todaySession) {
+      trainerAssignedSection = `
+        <div class="panel stack" style="padding:15px; background:linear-gradient(135deg, var(--bg-alt) 0%, rgba(22, 163, 74, 0.05) 100%); border-radius:var(--r-md); border:2px solid var(--accent); gap:10px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+            <div>
+              <span style="font-size:0.75rem; font-weight:700; color:var(--accent); text-transform:uppercase; letter-spacing:0.5px;">Today's Assigned Workout</span>
+              <h3 style="margin:4px 0 0 0; font-size:1.2rem; color:var(--text);">Trainer's Custom Session</h3>
+            </div>
+            <button class="primary-button start-trainer-session-btn" data-id="${todaySession.id}">
+              Follow & Record
+            </button>
+          </div>
+          <div style="font-size:0.9rem; opacity:0.9; margin-top:5px; white-space:pre-line; border-top:1px solid var(--line); padding-top:8px;">
+            <strong>Exercises:</strong>
+            ${escapeHtml(todaySession.exercises)}
+          </div>
+          ${todaySession.notes ? `<div style="font-size:0.8rem; font-style:italic; opacity:0.85; margin-top:4px;">Notes: "${escapeHtml(todaySession.notes)}"</div>` : ""}
+        </div>
+      `;
+    } else if (assignedTemplate) {
+      trainerAssignedSection = `
+        <div class="panel stack" style="padding:15px; background:linear-gradient(135deg, var(--bg-alt) 0%, rgba(22, 163, 74, 0.05) 100%); border-radius:var(--r-md); border:1px solid var(--accent); gap:10px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+            <div>
+              <span style="font-size:0.75rem; font-weight:700; color:var(--accent); text-transform:uppercase; letter-spacing:0.5px;">Assigned Workout Module</span>
+              <h3 style="margin:4px 0 0 0; font-size:1.2rem; color:var(--text);">${escapeHtml(assignedTemplate.name)}</h3>
+            </div>
+            <button class="primary-button start-assigned-template-btn" data-id="${assignedTemplate.id}">
+              Follow & Record
+            </button>
+          </div>
+          <div style="margin-top:5px; border-top:1px solid var(--line); padding-top:8px;">
+            ${renderTemplateExercises(assignedTemplate)}
+          </div>
+          ${assignedTemplate.notes ? `<div style="font-size:0.8rem; font-style:italic; opacity:0.85; margin-top:4px;">Notes: "${escapeHtml(assignedTemplate.notes)}"</div>` : ""}
+        </div>
+      `;
+    } else {
+      trainerAssignedSection = `
+        <div class="panel stack" style="padding:15px; text-align:center; background:var(--bg-alt); border-radius:var(--r-md); border:1px solid var(--line); color:var(--text-muted); justify-content:center; align-items:center;">
+          <div style="display:flex; align-items:center; gap:8px; justify-content:center;">
+            <span class="material-symbols-outlined" style="font-size:22px; opacity:0.7; color:var(--accent);">assignment_late</span>
+            <span style="font-size:0.85rem; font-weight:600;">No workout assigned by your trainer today.</span>
+          </div>
+        </div>
+      `;
+    }
+
     return `
+      <div class="stack" style="gap: 15px; margin-bottom: 15px;">
+        ${trainerAssignedSection}
+      </div>
       <div class="work-grid">
         ${scheduleSection}
         ${quickStartSection}
@@ -376,24 +484,31 @@ export const myWorkoutModule = {
     // Render active workout logger
     return `
       <div class="active-workout-container stack" style="gap: 15px;">
-        <div class="active-workout-header" style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--line);">
+        <div class="active-workout-header" style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--line); flex-wrap: wrap; gap: 10px;">
           <div>
-            <h2 style="margin:0;">Active: <span id="active-routine-name">${escapeHtml(activeWorkout.routineName || "Workout")}</span></h2>
-            <span class="active-timer" id="active-timer" style="font-size:1.4rem; font-weight:700; color:var(--accent);">00:00:00</span>
+            <h2 style="margin:0;">Record: <span id="active-routine-name">${escapeHtml(activeWorkout.routineName || "Workout")}</span></h2>
           </div>
           <div style="display:flex; gap:10px;">
-            <button class="primary-button compact" id="finish-workout-btn" style="background: #16a34a; color: white;">Finish</button>
-            <button class="ghost-button danger compact" id="cancel-workout-btn">Cancel</button>
+            <button class="primary-button compact" id="finish-workout-btn" style="background: #16a34a; color: white;">Save Workout</button>
+            <button class="ghost-button danger compact" id="cancel-workout-btn">Discard</button>
           </div>
         </div>
 
-        <div class="panel stack">
-          <div class="form-grid">
-            <label class="wide">Workout Notes
-              <textarea id="active-workout-notes" rows="2" placeholder="Session notes (optional)...">${escapeHtml(activeWorkout.notes || "")}</textarea>
+        <div class="panel stack" style="padding:15px; gap:15px;">
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:15px;">
+            <label style="font-weight:600; display:flex; flex-direction:column; gap:6px;">Workout Date
+              <input type="date" id="active-workout-date" value="${activeWorkout.date || today()}" style="width:100%; padding:6px; border:1px solid var(--line); border-radius:var(--r-sm); background:var(--bg-alt); color:var(--text);" />
             </label>
-            <div class="wide" style="display:flex; align-items:center; gap:8px;">
-              <input type="checkbox" id="active-workout-public" ${activeWorkout.private ? "" : "checked"} style="cursor:pointer;" />
+            <label style="font-weight:600; display:flex; flex-direction:column; gap:6px;">Duration (minutes)
+              <input type="number" id="active-workout-duration" min="1" placeholder="e.g. 60" value="${activeWorkout.durationMinutes || "60"}" style="width:100%; padding:6px; border:1px solid var(--line); border-radius:var(--r-sm); background:var(--bg-alt); color:var(--text);" />
+            </label>
+          </div>
+          <div class="form-grid" style="margin-top:5px;">
+            <label class="wide" style="font-weight:600; display:flex; flex-direction:column; gap:6px;">Workout Notes
+              <textarea id="active-workout-notes" rows="2" placeholder="Session notes (optional)..." style="width:100%; padding:8px; border:1px solid var(--line); border-radius:var(--r-sm); background:var(--bg-alt); color:var(--text);">${escapeHtml(activeWorkout.notes || "")}</textarea>
+            </label>
+            <div class="wide" style="display:flex; align-items:center; gap:8px; margin-top:5px;">
+              <input type="checkbox" id="active-workout-public" ${activeWorkout.private ? "" : "checked"} style="cursor:pointer; width:18px; height:18px;" />
               <label for="active-workout-public" style="cursor:pointer; font-weight:500;">Share to Gym Community Feed</label>
             </div>
           </div>
@@ -413,7 +528,7 @@ export const myWorkoutModule = {
                 
                  <div style="width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; margin-top: 5px;">
                    <div class="data-table" style="min-width: 420px; gap: 5px;">
-                     <div class="table-head" style="grid-template-columns: 40px 1.5fr 1fr 1fr 1fr 50px; text-align: center; font-size:0.8rem; font-weight:600; border-bottom:1px solid var(--line); padding-bottom:5px;">
+                     <div class="logger-table-head" style="grid-template-columns: 40px 1.5fr 1fr 1fr 1fr 50px; text-align: center; font-size:0.8rem; font-weight:600; border-bottom:1px solid var(--line); padding-bottom:5px;">
                        <span>Set</span>
                        <span>Prev (Best)</span>
                        <span>Kg</span>
@@ -424,7 +539,7 @@ export const myWorkoutModule = {
                      <div class="active-sets-list stack" style="gap: 5px; margin-top:5px;">
                        ${sets.map((set, setIdx) => {
                          return `
-                           <div class="table-row active-set-row ${set.done ? "set-done" : ""}" data-set-idx="${setIdx}" style="grid-template-columns: 40px 1.5fr 1fr 1fr 1fr 50px; align-items:center; text-align:center; padding: 4px 0;">
+                           <div class="logger-set-row active-set-row ${set.done ? "set-done" : ""}" data-set-idx="${setIdx}" style="grid-template-columns: 40px 1.5fr 1fr 1fr 1fr 50px; align-items:center; text-align:center; padding: 4px 0;">
                              <span style="font-weight:700; opacity:0.85;">${setIdx + 1}</span>
                              <span style="font-size:0.75rem; opacity:0.75;" class="prev-best-label">—</span>
                              <input type="number" step="0.25" placeholder="0" class="set-weight-input" value="${set.weight || ""}" style="width:100%; text-align:center; padding:4px;" />
@@ -550,6 +665,18 @@ export const myWorkoutModule = {
       context.refreshView();
     });
 
+    root.querySelectorAll(".schedule-pill").forEach(pill => {
+      pill.addEventListener("click", () => {
+        this.selectedDay = pill.dataset.day;
+        context.refreshView();
+      });
+    });
+
+    root.querySelector("#schedule-rest-action-btn")?.addEventListener("click", () => {
+      this.editingSchedule = true;
+      context.refreshView();
+    });
+
     // Save schedule form
     const schedForm = root.querySelector("#schedule-form");
     schedForm?.addEventListener("submit", async (e) => {
@@ -653,6 +780,28 @@ export const myWorkoutModule = {
       });
     });
 
+    // Start Workout from Trainer Today's Session
+    root.querySelectorAll(".start-trainer-session-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const session = (context.data.workout_sessions || []).find(s => s.id === btn.dataset.id);
+        if (session) {
+          startWorkoutFromTrainerSession(session);
+          context.refreshView();
+        }
+      });
+    });
+
+    // Start Workout from Trainer Assigned Template
+    root.querySelectorAll(".start-assigned-template-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const t = (context.data.workout_templates || []).find(bt => bt.id === btn.dataset.id);
+        if (t) {
+          startWorkoutFromTemplate(t);
+          context.refreshView();
+        }
+      });
+    });
+
     // Repeat Log Workout Button
     root.querySelectorAll(".repeat-log-btn").forEach(btn => {
       btn.addEventListener("click", () => {
@@ -699,13 +848,22 @@ export const myWorkoutModule = {
       }).catch(() => {});
     }
 
-    // Start active timer UI refresh
-    this.startActiveTimer(root, activeWorkout.startTime);
-
     // Save notes/public status changes locally on edit
     const notesInput = root.querySelector("#active-workout-notes");
     notesInput?.addEventListener("input", () => {
       activeWorkout.notes = notesInput.value;
+      saveActiveWorkout(activeWorkout);
+    });
+
+    const dateInput = root.querySelector("#active-workout-date");
+    dateInput?.addEventListener("change", () => {
+      activeWorkout.date = dateInput.value;
+      saveActiveWorkout(activeWorkout);
+    });
+
+    const durationInput = root.querySelector("#active-workout-duration");
+    durationInput?.addEventListener("input", () => {
+      activeWorkout.durationMinutes = Number(durationInput.value) || 0;
       saveActiveWorkout(activeWorkout);
     });
 
@@ -814,7 +972,6 @@ export const myWorkoutModule = {
     // Cancel Workout
     root.querySelector("#cancel-workout-btn")?.addEventListener("click", () => {
       if (!confirm("Are you sure you want to discard this workout?")) return;
-      this.clearActiveTimer();
       clearActiveWorkout();
       context.toast("Workout discarded.");
       context.refreshView();
@@ -832,16 +989,12 @@ export const myWorkoutModule = {
       }
 
       await withButtonLoading(btn, async () => {
-        this.clearActiveTimer();
-        const durationSec = Math.floor((new Date() - new Date(activeWorkout.startTime)) / 1000);
-        const durationMins = Math.max(1, Math.round(durationSec / 60));
-
         const payload = {
           memberId: context.myMember.id,
           gymId: context.myMember.gymId,
-          date: today(),
+          date: activeWorkout.date || today(),
           routineName: activeWorkout.routineName || "Workout",
-          durationMinutes: durationMins,
+          durationMinutes: Number(activeWorkout.durationMinutes) || 60,
           notes: activeWorkout.notes || "",
           private: activeWorkout.private || false,
           exercises: finalEx.map(ex => ({
@@ -1143,6 +1296,8 @@ function clearActiveWorkout() {
 function startEmptyWorkout() {
   const active = {
     startTime: new Date().toISOString(),
+    date: today(),
+    durationMinutes: 60,
     routineName: "Freestyle Workout",
     notes: "",
     private: false,
@@ -1151,9 +1306,46 @@ function startEmptyWorkout() {
   saveActiveWorkout(active);
 }
 
+function startWorkoutFromTrainerSession(session) {
+  const lines = (session.exercises || "").split("\n").map(l => l.trim()).filter(Boolean);
+  const exercises = lines.map(line => {
+    let name = line;
+    let setsCount = 3;
+    let reps = "10";
+    let weight = "";
+    
+    const match = line.match(/^([^-(\n]+)(?:-|\()?\s*(\d+)\s*(?:sets)?\s*(?:x|sets of)?\s*(\d+)?\s*(?:reps)?\s*@?\s*(\d+\s*[a-zA-Z]+)?/i);
+    if (match) {
+      name = match[1].trim();
+      setsCount = Number(match[2]) || 3;
+      reps = match[3] ? match[3].trim() : "10";
+      weight = match[4] ? match[4].trim() : "";
+    }
+    
+    const sets = [];
+    for (let i = 0; i < setsCount; i++) {
+      sets.push({ weight: weight || "", reps: reps || "", rpe: "", done: false });
+    }
+    return { name, sets };
+  });
+
+  const active = {
+    startTime: new Date().toISOString(),
+    date: today(),
+    durationMinutes: 60,
+    routineName: "Trainer Session",
+    notes: session.notes || "",
+    private: false,
+    exercises
+  };
+  saveActiveWorkout(active);
+}
+
 function startWorkoutFromRoutine(routine) {
   const active = {
     startTime: new Date().toISOString(),
+    date: today(),
+    durationMinutes: 60,
     routineName: routine.name,
     notes: "",
     private: false,
@@ -1173,6 +1365,8 @@ function startWorkoutFromTemplate(template) {
   const rawStructured = typeof template.exercisesStructured === "string" ? JSON.parse(template.exercisesStructured) : (template.exercisesStructured || []);
   const active = {
     startTime: new Date().toISOString(),
+    date: today(),
+    durationMinutes: template.durationMinutes || 60,
     routineName: template.name,
     notes: "",
     private: false,
@@ -1191,6 +1385,8 @@ function startWorkoutFromTemplate(template) {
 function repeatWorkout(log) {
   const active = {
     startTime: new Date().toISOString(),
+    date: today(),
+    durationMinutes: log.durationMinutes || 60,
     routineName: log.routineName || "Workout",
     notes: log.notes || "",
     private: log.private || false,

@@ -232,7 +232,7 @@ function renderCommunityFeed(context) {
               return `
                 <div class="feed-item" style="display:flex; flex-direction:column; gap:8px; padding:12px; border:1px solid var(--line); border-radius:var(--r-md); background:var(--bg-alt);">
                   <div style="display:flex; gap:10px; align-items:center;">
-                    <div class="avatar-circle" style="width:36px; height:36px; border-radius:50%; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.9rem;">
+                    <div class="avatar-circle" style="width:36px; height:36px; border-radius:50%; background:var(--primary); color:var(--on-primary); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.9rem;">
                       ${initials}
                     </div>
                     <div>

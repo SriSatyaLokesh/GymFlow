@@ -683,9 +683,9 @@ function row(member, plans, trainers) {
       data-plan="${escapeHtml(member.planId || "")}"
       data-trainer="${escapeHtml(member.assignedTrainer || "")}">
       ${nameCell(member.fullName, member.mobile || member.email || "", member.avatarUrl || "")}
-      <span>${escapeHtml(findName(plans, member.planId))}</span>
-      <span>${dateLabel(member.endDate)}</span>
-      <span><mark class="status ${statusClass(status)}">${escapeHtml(status)}</mark></span>
+      <span data-label="Plan">${escapeHtml(findName(plans, member.planId))}</span>
+      <span data-label="Expiry">${dateLabel(member.endDate)}</span>
+      <span data-label="Status"><mark class="status ${statusClass(status)}">${escapeHtml(status)}</mark></span>
       <span class="row-actions">
         ${
           member.status === "Pending"
