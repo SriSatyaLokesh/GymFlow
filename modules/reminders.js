@@ -46,9 +46,9 @@ function row(member, settings) {
   return `
     <div class="table-row">
       ${nameCell(member.fullName, member.mobile || "", member.avatarUrl || "")}
-      <span>${dateLabel(member.endDate)}</span>
-      <span><mark class="status ${statusClass(member.computedStatus)}">${escapeHtml(member.computedStatus)}</mark></span>
-      <span><small>${escapeHtml(message)}</small></span>
+      <span data-label="Expiry">${dateLabel(member.endDate)}</span>
+      <span data-label="Status"><mark class="status ${statusClass(member.computedStatus)}">${escapeHtml(member.computedStatus)}</mark></span>
+      <span data-label="Message"><small>${escapeHtml(message)}</small></span>
       <span class="row-actions">
         <a class="primary-button" href="${whatsappUrl(member, message)}" target="_blank" rel="noreferrer"><span class="material-symbols-outlined">send</span>Send</a>
         <button class="icon-button" data-reminder-sent="${escapeHtml(member.id)}"><span class="material-symbols-outlined">done</span></button>

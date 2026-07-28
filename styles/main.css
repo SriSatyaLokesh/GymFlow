@@ -1948,3 +1948,173 @@ code { padding: 2px 6px; border-radius: 5px; background: var(--surface-strong); 
   border-radius: var(--r-xs);
 }
 
+/* ===================================================================
+   MOBILE OVERRIDES & PARADIGMS FOR PREMIUM UX
+   =================================================================== */
+
+/* Font Family styling fallback to Barlow Condensed / Barlow as per design system */
+h1, h2, .brand-mark, .metric strong, .auth-brand h1 {
+  font-family: 'Barlow Condensed', Montserrat, Inter, sans-serif !important;
+}
+
+body, button, input, select, textarea, .profile-chip strong {
+  font-family: 'Barlow', Inter, sans-serif;
+}
+
+/* Compact Metrics Grid on Mobile */
+@media (max-width: 767px) {
+  .metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    margin-bottom: 16px !important;
+  }
+  .metric {
+    min-height: 72px !important;
+    padding: 10px 10px 10px 14px !important;
+    gap: 4px !important;
+    border-radius: var(--r-md) !important;
+  }
+  .metric span {
+    font-size: 0.65rem !important;
+    letter-spacing: 0.05em !important;
+  }
+  .metric strong {
+    font-size: 1.35rem !important;
+  }
+}
+
+@media (max-width: 400px) {
+  .metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+  }
+  .metric {
+    min-height: 64px !important;
+    padding: 8px 8px 8px 10px !important;
+  }
+  .metric strong {
+    font-size: 1.15rem !important;
+  }
+}
+
+/* 2-Column Filters on Mobile */
+@media (max-width: 767px) {
+  .filter-bar {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    padding: 10px !important;
+    border-radius: var(--r-md) !important;
+  }
+  .filter-bar > label {
+    font-size: 0.72rem !important;
+  }
+  .filter-bar > label.wide,
+  .filter-bar > label:first-child {
+    grid-column: span 2 !important;
+  }
+}
+
+/* Responsive Tables & Lists with Data Labels on Mobile */
+@media (max-width: 767px) {
+  .data-table .table-row, 
+  .members-table .table-row, 
+  .reminder-table .table-row, 
+  .compact .table-row {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+    padding: 12px 14px !important;
+    border-left: 4px solid var(--primary) !important;
+    border-radius: var(--r-md) !important;
+    background: var(--surface) !important;
+    box-shadow: var(--shadow-card) !important;
+    margin-bottom: 8px !important;
+  }
+
+  .data-table .table-row > span[data-label],
+  .members-table .table-row > span[data-label],
+  .reminder-table .table-row > span[data-label],
+  .compact .table-row > span[data-label] {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    text-align: right !important;
+    font-size: 0.85rem !important;
+    padding: 4px 0 !important;
+    border-bottom: 1px dashed var(--line-soft) !important;
+  }
+
+  .data-table .table-row > span[data-label]::before,
+  .members-table .table-row > span[data-label]::before,
+  .reminder-table .table-row > span[data-label]::before,
+  .compact .table-row > span[data-label]::before {
+    content: attr(data-label);
+    font-weight: 700;
+    color: var(--muted);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-align: left !important;
+    flex-shrink: 0;
+    margin-right: 12px;
+  }
+
+  .data-table .table-row > .row-actions,
+  .members-table .table-row > .row-actions,
+  .reminder-table .table-row > .row-actions,
+  .compact .table-row > .row-actions {
+    display: flex !important;
+    justify-content: flex-end !important;
+    gap: 8px !important;
+    border-bottom: none !important;
+    padding-top: 6px !important;
+    margin-top: 2px !important;
+  }
+
+  .table-row > .table-note {
+    display: block !important;
+    color: var(--muted) !important;
+    font-size: 0.76rem !important;
+    margin-top: 2px !important;
+    opacity: 0.8 !important;
+  }
+}
+
+/* Active Workout Logger sets table rules on mobile */
+@media (max-width: 520px) {
+  .logger-table-head, .logger-set-row, .active-set-row {
+    grid-template-columns: 32px 1fr 1fr 1fr 1fr 40px !important;
+    gap: 4px !important;
+  }
+  .logger-table-head span {
+    font-size: 0.7rem !important;
+  }
+  .active-set-row input, .active-set-row select {
+    padding: 4px 2px !important;
+    font-size: 0.8rem !important;
+    min-height: 32px !important;
+    border-radius: var(--r-xs) !important;
+  }
+  .prev-best-label {
+    font-size: 0.7rem !important;
+  }
+}
+
+/* Modal optimizations on Mobile */
+@media (max-width: 767px) {
+  .modal {
+    padding: 16px !important;
+    max-height: 90vh !important;
+    border-radius: var(--r-md) !important;
+  }
+  .modal-tabs .tab-btn {
+    padding: 6px 8px !important;
+    font-size: 0.8rem !important;
+    gap: 4px !important;
+  }
+  .panel-heading h2 {
+    font-size: 1.1rem !important;
+  }
+}
+
+

@@ -236,8 +236,8 @@ function renderMemberAttendance(context) {
                   .map(
                     (record) => `
                       <div class="table-row" style="grid-template-columns:1fr 1fr">
-                        <span>${dateLabel(record.date)}</span>
-                        <span>${escapeHtml(record.time || "-")}</span>
+                        <span data-label="Date">${dateLabel(record.date)}</span>
+                        <span data-label="Time">${escapeHtml(record.time || "-")}</span>
                       </div>
                     `
                   )
@@ -275,10 +275,10 @@ function bindMemberAttendance(root, context) {
 function row(record, members, trainers) {
   return `
     <div class="table-row">
-      <span>${nameCell(findName(members, record.memberId), "", members.find(m => m.id === record.memberId)?.avatarUrl || "")}</span>
-      <span>${dateLabel(record.date)}</span>
-      <span>${escapeHtml(record.time || "-")}</span>
-      <span>${escapeHtml(findName(trainers, record.trainerId, "Unassigned"))}</span>
+      <span data-label="Member">${nameCell(findName(members, record.memberId), "", members.find(m => m.id === record.memberId)?.avatarUrl || "")}</span>
+      <span data-label="Date">${dateLabel(record.date)}</span>
+      <span data-label="Time">${escapeHtml(record.time || "-")}</span>
+      <span data-label="Trainer">${escapeHtml(findName(trainers, record.trainerId, "Unassigned"))}</span>
     </div>
   `;
 }
@@ -310,9 +310,9 @@ function inactiveList(members, records, days) {
           const gap = last ? -daysUntil(last) : null;
           return `
             <div class="table-row" style="grid-template-columns:1.5fr 1fr 1fr">
-              <span>${nameCell(member.fullName, member.mobile || "", member.avatarUrl || "")}</span>
-              <span>${last ? dateLabel(last) : "Never"}</span>
-              <span><mark class="status ${gap !== null && gap >= 30 ? "expired" : "expiring-soon"}">${gap !== null ? `${gap} days` : "No visits"}</mark></span>
+              <span data-label="Member">${nameCell(member.fullName, member.mobile || "", member.avatarUrl || "")}</span>
+              <span data-label="Last Check-in">${last ? dateLabel(last) : "Never"}</span>
+              <span data-label="Days Inactive"><mark class="status ${gap !== null && gap >= 30 ? "expired" : "expiring-soon"}">${gap !== null ? `${gap} days` : "No visits"}</mark></span>
             </div>
           `;
         })

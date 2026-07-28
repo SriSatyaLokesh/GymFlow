@@ -37,10 +37,10 @@ export const trainersModule = {
                 </div>
                 ${currentAssignments.map(a => `
                   <div class="table-row" style="grid-template-columns:1fr 1fr 1fr auto">
-                    <span>${escapeHtml(findName(members, a.memberId, "—"))}</span>
-                    <span>${escapeHtml(findName(trainers, a.trainerId, "—"))}</span>
-                    <span>${escapeHtml(findName(templates, a.templateId, "—"))}</span>
-                    <span>${escapeHtml(dateLabel(a.assignedAt))}</span>
+                    <span data-label="Member">${escapeHtml(findName(members, a.memberId, "—"))}</span>
+                    <span data-label="Trainer">${escapeHtml(findName(trainers, a.trainerId, "—"))}</span>
+                    <span data-label="Template">${escapeHtml(findName(templates, a.templateId, "—"))}</span>
+                    <span data-label="Assigned">${escapeHtml(dateLabel(a.assignedAt))}</span>
                   </div>
                 `).join("")}
               </div>`

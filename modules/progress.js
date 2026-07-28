@@ -127,10 +127,10 @@ function renderMemberProgress(context) {
                 .map(
                   (record) => `
                     <div class="table-row" style="grid-template-columns:1fr 0.7fr 0.7fr 1.4fr">
-                      <span>${dateLabel(record.date)}</span>
-                      <span>${escapeHtml(record.weight || "-")}</span>
-                      <span>${escapeHtml(record.bmi || "-")}</span>
-                      <span><small>${escapeHtml(record.notes || "")}</small></span>
+                      <span data-label="Date">${dateLabel(record.date)}</span>
+                      <span data-label="Weight">${escapeHtml(record.weight || "-")} kg</span>
+                      <span data-label="BMI">${escapeHtml(record.bmi || "-")}</span>
+                      <span data-label="Notes"><small>${escapeHtml(record.notes || "")}</small></span>
                     </div>
                   `
                 )
@@ -166,11 +166,11 @@ function chartFor(records, memberId, metricKey) {
 function row(record, members) {
   return `
     <div class="table-row">
-      <span>${nameCell(findName(members, record.memberId), "", members.find(m => m.id === record.memberId)?.avatarUrl || "")}</span>
-      <span>${dateLabel(record.date)}</span>
-      <span>${escapeHtml(record.weight || "-")}</span>
-      <span>${escapeHtml(record.bmi || "-")}</span>
-      <span><small>${escapeHtml(record.notes || "")}</small></span>
+      <span data-label="Member">${nameCell(findName(members, record.memberId), "", members.find(m => m.id === record.memberId)?.avatarUrl || "")}</span>
+      <span data-label="Date">${dateLabel(record.date)}</span>
+      <span data-label="Weight">${escapeHtml(record.weight || "-")} kg</span>
+      <span data-label="BMI">${escapeHtml(record.bmi || "-")}</span>
+      <span data-label="Notes"><small>${escapeHtml(record.notes || "")}</small></span>
     </div>
   `;
 }
