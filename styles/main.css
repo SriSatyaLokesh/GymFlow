@@ -1911,6 +1911,7 @@ code { padding: 2px 6px; border-radius: 5px; background: var(--surface-strong); 
   }
   .work-grid > form.panel.active {
     display: flex !important;
+    flex-direction: column !important;
     animation: slideDown 0.25s ease-out;
   }
 }
