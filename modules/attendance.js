@@ -11,15 +11,34 @@ export const attendanceModule = {
     const trainers = data.trainers || [];
     const now = new Date();
     const todayStr = today();
+    const yesterdayStr = isoOffset(-1);
     const weekStart = isoOffset(-6); // rolling 7-day window
     const monthStr = todayStr.slice(0, 7);
+
+    this.activeFilter = this.activeFilter || "all";
+
+    let filteredRecords = records;
+    if (this.activeFilter === "today") {
+      filteredRecords = records.filter((r) => r.date === todayStr);
+    } else if (this.activeFilter === "yesterday") {
+      filteredRecords = records.filter((r) => r.date === yesterdayStr);
+    } else if (this.activeFilter === "this-week") {
+      filteredRecords = records.filter((r) => r.date >= weekStart);
+    }
+
+    // Sort check-ins: most recent first
+    filteredRecords = [...filteredRecords].sort((a, b) => {
+      const dateTimeA = String(a.date || "") + "T" + String(a.time || "00:00");
+      const dateTimeB = String(b.date || "") + "T" + String(b.time || "00:00");
+      return dateTimeB.localeCompare(dateTimeA);
+    });
 
     const todayCount = records.filter((r) => r.date === todayStr).length;
     const weekCount = records.filter((r) => r.date >= weekStart).length;
     const monthCount = records.filter((r) => String(r.date || "").startsWith(monthStr)).length;
 
     return `
-      ${pageHeader("Attendance")}
+      ${pageHeader("Check-ins")}
       <div class="metric-grid">
         <article class="metric"><span>Today</span><strong>${todayCount}</strong></article>
         <article class="metric"><span>Last 7 Days</span><strong>${weekCount}</strong></article>
@@ -50,14 +69,26 @@ export const attendanceModule = {
           <button class="primary-button" type="submit"><span class="material-symbols-outlined">how_to_reg</span>Record attendance</button>
         </form>
         <section class="panel">
-          <div class="panel-heading"><h2>Recent Attendance</h2><span>${records.length} records</span><button class="ghost-button compact mobile-only-btn" style="margin-left: auto;" data-scroll-to-form><span class="material-symbols-outlined" style="font-size:16px;">how_to_reg</span> Check In</button></div>
+          <div class="panel-heading" style="flex-wrap: wrap; gap: 8px;">
+            <h2>Recent Check-ins</h2>
+            <span>${filteredRecords.length} records</span>
+            <button class="ghost-button compact mobile-only-btn" style="margin-left: auto;" data-scroll-to-form>
+              <span class="material-symbols-outlined" style="font-size:16px;">how_to_reg</span> Check In
+            </button>
+          </div>
+          <div class="attendance-filters" style="display: flex; gap: 8px; padding: 10px 15px; border-bottom: 1px solid var(--line); overflow-x: auto; background: var(--bg-alt);">
+            <button class="tab-btn compact ${this.activeFilter === "today" ? "active" : ""}" data-filter="today" style="padding: 6px 12px; font-size: 0.8rem; border-radius: var(--r-sm); border: 1px solid ${this.activeFilter === "today" ? "var(--accent)" : "var(--line)"}; background: ${this.activeFilter === "today" ? "var(--accent)" : "var(--surface)"}; color: ${this.activeFilter === "today" ? "#fff" : "var(--text)"}; cursor: pointer; font-weight: 600;">Today</button>
+            <button class="tab-btn compact ${this.activeFilter === "yesterday" ? "active" : ""}" data-filter="yesterday" style="padding: 6px 12px; font-size: 0.8rem; border-radius: var(--r-sm); border: 1px solid ${this.activeFilter === "yesterday" ? "var(--accent)" : "var(--line)"}; background: ${this.activeFilter === "yesterday" ? "var(--accent)" : "var(--surface)"}; color: ${this.activeFilter === "yesterday" ? "#fff" : "var(--text)"}; cursor: pointer; font-weight: 600;">Yesterday</button>
+            <button class="tab-btn compact ${this.activeFilter === "this-week" ? "active" : ""}" data-filter="this-week" style="padding: 6px 12px; font-size: 0.8rem; border-radius: var(--r-sm); border: 1px solid ${this.activeFilter === "this-week" ? "var(--accent)" : "var(--line)"}; background: ${this.activeFilter === "this-week" ? "var(--accent)" : "var(--surface)"}; color: ${this.activeFilter === "this-week" ? "#fff" : "var(--text)"}; cursor: pointer; font-weight: 600;">This Week</button>
+            <button class="tab-btn compact ${this.activeFilter === "all" ? "active" : ""}" data-filter="all" style="padding: 6px 12px; font-size: 0.8rem; border-radius: var(--r-sm); border: 1px solid ${this.activeFilter === "all" ? "var(--accent)" : "var(--line)"}; background: ${this.activeFilter === "all" ? "var(--accent)" : "var(--surface)"}; color: ${this.activeFilter === "all" ? "#fff" : "var(--text)"}; cursor: pointer; font-weight: 600;">All</button>
+          </div>
           ${
-            records.length
+            filteredRecords.length
               ? `<div class="data-table">
                   <div class="table-head"><span>Member</span><span>Date</span><span>Time</span><span>Trainer</span></div>
-                  ${records.slice(0, 12).map((record) => row(record, members, trainers)).join("")}
+                  ${filteredRecords.slice(0, 50).map((record) => row(record, members, trainers)).join("")}
                 </div>`
-              : emptyState("No attendance yet", "Record check-ins to track daily and weekly activity.")
+              : emptyState("No check-ins found", "No check-in records match the selected filter.")
           }
         </section>
       </div>
@@ -80,6 +111,14 @@ export const attendanceModule = {
       bindMemberAttendance(root, context);
       return;
     }
+
+    root.querySelectorAll(".attendance-filters button[data-filter]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        this.activeFilter = btn.dataset.filter;
+        context.refreshView();
+      });
+    });
+
     const form = root.querySelector("#attendance-form");
     const memberSearch = form.querySelector("[data-member-search]");
     const memberIdField = form.querySelector("[name='memberId']");
@@ -161,14 +200,14 @@ function renderMemberAttendance(context) {
   const me = context.myMember;
   if (!me) {
     return `
-      ${pageHeader("Attendance")}
+      ${pageHeader("Check-ins")}
       ${emptyState("Membership being set up", "Once your gym finalises your membership you can check in here.")}
     `;
   }
   const status = me.status === "Pending" ? "Pending" : memberStatus(me);
   if (status !== "Active") {
     return `
-      ${pageHeader("Attendance")}
+      ${pageHeader("Check-ins")}
       ${emptyState("Membership not active", `Your current membership status is ${status}. Access is restricted.`)}
     `;
   }
@@ -179,7 +218,7 @@ function renderMemberAttendance(context) {
   const checkedInToday = mine.some((record) => record.date === todayStr);
 
   return `
-    ${pageHeader("Attendance")}
+    ${pageHeader("Check-ins")}
     <div class="work-grid">
       <section class="panel stack">
         <div class="panel-heading"><h2>Check In</h2></div>
