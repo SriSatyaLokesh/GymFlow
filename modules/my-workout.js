@@ -47,6 +47,17 @@ export const myWorkoutModule = {
       .filter((template) => template.visibility === "basic" && template.status !== "archived")
       .sort((a, b) => String(a.name || "").localeCompare(String(b.name || "")));
 
+    const myAssignments = (context.data.workout_assignments || [])
+      .filter(a => a.memberId === me.id)
+      .sort((a, b) => String(b.assignedAt || "").localeCompare(String(a.assignedAt || "")));
+    const currentAssignment = myAssignments[0];
+    const assignedTemplate = currentAssignment 
+      ? templates.find(t => t.id === currentAssignment.templateId)
+      : null;
+
+    const todaySession = (context.data.workout_sessions || [])
+      .find(s => s.memberId === me.id && s.date === today());
+
     // Renders the main tabbed layout
     return `
       ${pageHeader("My Workout")}
@@ -62,14 +73,14 @@ export const myWorkoutModule = {
 
       <div class="tab-content">
         ${this.activeTab === "workouts" 
-          ? this.renderWorkoutsTab(context, basicTemplates, customRoutines, weeklyScheduleDoc) 
+          ? this.renderWorkoutsTab(context, basicTemplates, customRoutines, weeklyScheduleDoc, assignedTemplate, todaySession) 
           : this.renderHistoryTab(context, myLogs)}
       </div>
     `;
   },
 
   // Renders the Workouts tab (Weekly Schedule, Quick Start, Custom Routines, Gym templates)
-  renderWorkoutsTab(context, basicTemplates, customRoutines, weeklyScheduleDoc) {
+  renderWorkoutsTab(context, basicTemplates, customRoutines, weeklyScheduleDoc, assignedTemplate, todaySession) {
     const weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
     
     // Build schedule selector or display summary
@@ -280,7 +291,59 @@ export const myWorkoutModule = {
       </section>
     `;
 
+    let trainerAssignedSection = "";
+    if (todaySession) {
+      trainerAssignedSection = `
+        <div class="panel stack" style="padding:15px; background:linear-gradient(135deg, var(--bg-alt) 0%, rgba(22, 163, 74, 0.05) 100%); border-radius:var(--r-md); border:2px solid var(--accent); gap:10px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+            <div>
+              <span style="font-size:0.75rem; font-weight:700; color:var(--accent); text-transform:uppercase; letter-spacing:0.5px;">Today's Assigned Workout</span>
+              <h3 style="margin:4px 0 0 0; font-size:1.2rem; color:var(--text);">Trainer's Custom Session</h3>
+            </div>
+            <button class="primary-button start-trainer-session-btn" data-id="${todaySession.id}">
+              Follow & Record
+            </button>
+          </div>
+          <div style="font-size:0.9rem; opacity:0.9; margin-top:5px; white-space:pre-line; border-top:1px solid var(--line); padding-top:8px;">
+            <strong>Exercises:</strong>
+            ${escapeHtml(todaySession.exercises)}
+          </div>
+          ${todaySession.notes ? `<div style="font-size:0.8rem; font-style:italic; opacity:0.85; margin-top:4px;">Notes: "${escapeHtml(todaySession.notes)}"</div>` : ""}
+        </div>
+      `;
+    } else if (assignedTemplate) {
+      trainerAssignedSection = `
+        <div class="panel stack" style="padding:15px; background:linear-gradient(135deg, var(--bg-alt) 0%, rgba(22, 163, 74, 0.05) 100%); border-radius:var(--r-md); border:1px solid var(--accent); gap:10px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+            <div>
+              <span style="font-size:0.75rem; font-weight:700; color:var(--accent); text-transform:uppercase; letter-spacing:0.5px;">Assigned Workout Module</span>
+              <h3 style="margin:4px 0 0 0; font-size:1.2rem; color:var(--text);">${escapeHtml(assignedTemplate.name)}</h3>
+            </div>
+            <button class="primary-button start-assigned-template-btn" data-id="${assignedTemplate.id}">
+              Follow & Record
+            </button>
+          </div>
+          <div style="margin-top:5px; border-top:1px solid var(--line); padding-top:8px;">
+            ${renderTemplateExercises(assignedTemplate)}
+          </div>
+          ${assignedTemplate.notes ? `<div style="font-size:0.8rem; font-style:italic; opacity:0.85; margin-top:4px;">Notes: "${escapeHtml(assignedTemplate.notes)}"</div>` : ""}
+        </div>
+      `;
+    } else {
+      trainerAssignedSection = `
+        <div class="panel stack" style="padding:15px; text-align:center; background:var(--bg-alt); border-radius:var(--r-md); border:1px solid var(--line); color:var(--text-muted); justify-content:center; align-items:center;">
+          <div style="display:flex; align-items:center; gap:8px; justify-content:center;">
+            <span class="material-symbols-outlined" style="font-size:22px; opacity:0.7; color:var(--accent);">assignment_late</span>
+            <span style="font-size:0.85rem; font-weight:600;">No workout assigned by your trainer today.</span>
+          </div>
+        </div>
+      `;
+    }
+
     return `
+      <div class="stack" style="gap: 15px; margin-bottom: 15px;">
+        ${trainerAssignedSection}
+      </div>
       <div class="work-grid">
         ${scheduleSection}
         ${quickStartSection}
@@ -708,6 +771,28 @@ export const myWorkoutModule = {
 
     // Start Workout from Gym Template
     root.querySelectorAll(".start-template-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const t = (context.data.workout_templates || []).find(bt => bt.id === btn.dataset.id);
+        if (t) {
+          startWorkoutFromTemplate(t);
+          context.refreshView();
+        }
+      });
+    });
+
+    // Start Workout from Trainer Today's Session
+    root.querySelectorAll(".start-trainer-session-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const session = (context.data.workout_sessions || []).find(s => s.id === btn.dataset.id);
+        if (session) {
+          startWorkoutFromTrainerSession(session);
+          context.refreshView();
+        }
+      });
+    });
+
+    // Start Workout from Trainer Assigned Template
+    root.querySelectorAll(".start-assigned-template-btn").forEach(btn => {
       btn.addEventListener("click", () => {
         const t = (context.data.workout_templates || []).find(bt => bt.id === btn.dataset.id);
         if (t) {
@@ -1217,6 +1302,41 @@ function startEmptyWorkout() {
     notes: "",
     private: false,
     exercises: []
+  };
+  saveActiveWorkout(active);
+}
+
+function startWorkoutFromTrainerSession(session) {
+  const lines = (session.exercises || "").split("\n").map(l => l.trim()).filter(Boolean);
+  const exercises = lines.map(line => {
+    let name = line;
+    let setsCount = 3;
+    let reps = "10";
+    let weight = "";
+    
+    const match = line.match(/^([^-(\n]+)(?:-|\()?\s*(\d+)\s*(?:sets)?\s*(?:x|sets of)?\s*(\d+)?\s*(?:reps)?\s*@?\s*(\d+\s*[a-zA-Z]+)?/i);
+    if (match) {
+      name = match[1].trim();
+      setsCount = Number(match[2]) || 3;
+      reps = match[3] ? match[3].trim() : "10";
+      weight = match[4] ? match[4].trim() : "";
+    }
+    
+    const sets = [];
+    for (let i = 0; i < setsCount; i++) {
+      sets.push({ weight: weight || "", reps: reps || "", rpe: "", done: false });
+    }
+    return { name, sets };
+  });
+
+  const active = {
+    startTime: new Date().toISOString(),
+    date: today(),
+    durationMinutes: 60,
+    routineName: "Trainer Session",
+    notes: session.notes || "",
+    private: false,
+    exercises
   };
   saveActiveWorkout(active);
 }

@@ -30,12 +30,20 @@ export const trainerMembersModule = {
           <form class="panel stack" id="session-form">
             <div class="panel-heading"><h2>Write Today's Session</h2></div>
             <div class="form-grid">
-              <label class="wide">Client
-                <select name="memberId" required>
-                  <option value="">Select client...</option>
-                  ${optionList(myMembers, "fullName")}
-                </select>
-              </label>
+              <div class="wide stack" style="gap: 6px;">
+                <label style="font-weight: 600;">Clients</label>
+                <div class="client-check-list" style="max-height: 150px; overflow-y: auto; border: 1px solid var(--line); border-radius: var(--r-sm); padding: 8px; background: var(--bg-alt); display: flex; flex-direction: column; gap: 8px;">
+                  ${myMembers.length 
+                    ? myMembers.map(m => `
+                      <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.9rem; user-select: none;">
+                        <input type="checkbox" name="memberIds" value="${escapeHtml(m.id)}" style="width:18px; height:18px; cursor:pointer;" />
+                        <span>${escapeHtml(m.fullName)}</span>
+                      </label>
+                    `).join("")
+                    : `<span style="font-size:0.85rem; color:var(--text-muted);">No clients assigned to you.</span>`
+                  }
+                </div>
+              </div>
               <label>Date
                 <input type="date" name="date" value="${escapeHtml(today())}" />
               </label>
@@ -140,17 +148,32 @@ export const trainerMembersModule = {
 
       form.addEventListener("submit", async (event) => {
         event.preventDefault();
+        const memberIds = Array.from(form.querySelectorAll("input[name='memberIds']:checked")).map(input => input.value);
+        if (!memberIds.length) {
+          context.toast("Select at least one client.");
+          return;
+        }
         await withButtonLoading(form.querySelector("[type='submit']"), async () => {
-          const payload = formData(form);
-          payload.trainerId = me.id;
-          if (!payload.date) payload.date = today();
-          const saved = await context.services.data.save(collections.workoutSessions, payload);
-          context.toast("Today's session saved.");
+          const rawPayload = formData(form);
+          
+          const savedSessions = await Promise.all(memberIds.map(async (memberId) => {
+            const payload = {
+              memberId,
+              trainerId: me.id,
+              date: rawPayload.date || today(),
+              templateId: rawPayload.templateId || "",
+              exercises: rawPayload.exercises || "",
+              notes: rawPayload.notes || ""
+            };
+            return await context.services.data.save(collections.workoutSessions, payload);
+          }));
+
+          context.toast(`Session saved for ${memberIds.length} clients.`);
           form.reset();
           const dateInput = form.querySelector("[name='date']");
           if (dateInput) dateInput.value = today();
           updatePreview(root, templates, "session", "");
-          context.applyChange(collections.workoutSessions, saved);
+          savedSessions.forEach(saved => context.applyChange(collections.workoutSessions, saved));
         });
       });
     }
