@@ -161,6 +161,8 @@ function renderMemberProgress(context) {
     const badges = context.data.badges || [];
     const unlockedBadgeIds = me.unlockedBadges || [];
     const personalRecords = me.personalRecords || {};
+    const myLogsCount = (context.data.workout_logs || []).filter(l => l.memberId === me.id).length;
+    const currentStreak = me.currentStreak || 0;
 
     const badgesHtml = `
       <section class="panel">
@@ -168,16 +170,51 @@ function renderMemberProgress(context) {
           <h2>My Badges</h2>
           <span>${unlockedBadgeIds.length} / ${badges.length} unlocked</span>
         </div>
-        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; margin-top: 15px;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr)); gap: 15px; margin-top: 15px;">
           ${badges.map(badge => {
             const isUnlocked = unlockedBadgeIds.includes(badge.id);
-            return `
-              <div style="${getBadgeCss(badge.id, isUnlocked)}">
-                <span class="material-symbols-outlined" style="font-size: 2.2rem; ${isUnlocked ? 'color: inherit;' : 'color: var(--text-muted);'}">${badge.icon}</span>
-                <div style="text-align: left;">
-                  <strong style="font-size: 0.95rem; color: inherit;">${escapeHtml(badge.name)}</strong>
-                  <div style="font-size: 0.75rem; color: inherit; opacity: 0.85;">${escapeHtml(badge.description)}</div>
+            let progressHtml = "";
+            if (!isUnlocked) {
+              let currentVal = 0;
+              let threshold = badge.threshold;
+              let unit = "";
+              if (badge.type === "streak") {
+                currentVal = currentStreak;
+                unit = "days";
+              } else if (badge.type === "workout_count") {
+                currentVal = myLogsCount;
+                unit = "workouts";
+              } else if (badge.type === "pr") {
+                currentVal = Object.keys(personalRecords).length;
+                unit = "PR";
+              } else if (badge.type === "pr_weight") {
+                currentVal = Math.max(...Object.values(personalRecords).map(Number), 0);
+                unit = "kg";
+              }
+              const pct = Math.min(100, Math.round((currentVal / threshold) * 100));
+              progressHtml = `
+                <div style="margin-top: 8px; width: 100%;">
+                  <div style="display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--text-muted); margin-bottom: 2px;">
+                    <span>Progress</span>
+                    <span>${currentVal}/${threshold} ${unit}</span>
+                  </div>
+                  <div style="width: 100%; height: 5px; background: var(--line); border-radius: 3px; overflow: hidden;">
+                    <div style="width: ${pct}%; height: 100%; background: var(--text-muted); border-radius: 3px;"></div>
+                  </div>
                 </div>
+              `;
+            }
+
+            return `
+              <div style="${getBadgeCss(badge.id, isUnlocked)} flex-direction: column; align-items: flex-start; gap: 8px; box-sizing: border-box;">
+                <div style="display: flex; gap: 12px; align-items: center; width: 100%;">
+                  <span class="material-symbols-outlined" style="font-size: 2.2rem; ${isUnlocked ? 'color: inherit;' : 'color: var(--text-muted);'}">${badge.icon}</span>
+                  <div style="text-align: left; flex: 1;">
+                    <strong style="font-size: 0.95rem; color: inherit; display: block;">${escapeHtml(badge.name)}</strong>
+                    <div style="font-size: 0.75rem; color: inherit; opacity: 0.85; line-height: 1.2;">${escapeHtml(badge.description)}</div>
+                  </div>
+                </div>
+                ${progressHtml}
               </div>
             `;
           }).join("")}

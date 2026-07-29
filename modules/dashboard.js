@@ -385,7 +385,7 @@ function renderLeaderboardPanel(context) {
   let filterControls = "";
   if (activeTab === "weight") {
     filterControls = `
-      <div style="display: flex; gap: 10px; margin-bottom: 12px; background: var(--bg-alt); padding: 10px; border-radius: var(--r-sm); border: 1px solid var(--line); flex-wrap: wrap;">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 12px; background: var(--bg-alt); padding: 10px; border-radius: var(--r-sm); border: 1px solid var(--line);">
         <label style="display: flex; align-items: center; gap: 6px; font-size: 0.85rem;">
           Gender:
           <select id="leaderboard-gender-select" style="padding: 4px 8px; border-radius: var(--r-sm); background: var(--bg); border: 1px solid var(--line); color: var(--text);">
@@ -416,7 +416,7 @@ function renderLeaderboardPanel(context) {
         <span>Rankings & Achievements</span>
       </div>
 
-      <div class="tabs-header" style="margin-bottom: 12px; border-bottom: 1px solid var(--line); justify-content: flex-start; gap: 8px;">
+      <div class="tabs-header" style="margin-bottom: 12px; border-bottom: 1px solid var(--line); justify-content: flex-start; gap: 8px; overflow-x: auto; white-space: nowrap; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; scrollbar-width: none; display: flex; padding-bottom: 4px;">
         ${tabButton("points", "emoji_events", "Points")}
         ${tabButton("consistency", "local_fire_department", "Consistency")}
         ${tabButton("weight", "fitness_center", "Weight Class")}

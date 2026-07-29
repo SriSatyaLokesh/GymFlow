@@ -638,6 +638,8 @@ export function showMemberProfileModal(member, context) {
       const unlockedBadgeIds = member.unlockedBadges || [];
       const personalRecords = member.personalRecords || {};
       const prList = Object.entries(personalRecords);
+      const myLogsCount = logs.length;
+      const currentStreak = member.currentStreak || 0;
 
       contentEl.innerHTML = `
         <div class="stack" style="gap: 15px;">
@@ -650,16 +652,51 @@ export function showMemberProfileModal(member, context) {
 
           <section class="stack" style="gap: 8px;">
             <h3 style="margin:0; border-bottom: 1px solid var(--line); padding-bottom:4px; font-size: 1rem; color:var(--accent);">Unlocked Badges (${unlockedBadgeIds.length} / ${badges.length})</h3>
-            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; margin-top: 5px;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr)); gap: 10px; margin-top: 5px;">
               ${badges.map(badge => {
                 const isUnlocked = unlockedBadgeIds.includes(badge.id);
-                return `
-                  <div style="${getBadgeCss(badge.id, isUnlocked)}">
-                    <span class="material-symbols-outlined" style="font-size: 2.2rem; ${isUnlocked ? 'color: inherit;' : 'color: var(--text-muted);'}">${badge.icon}</span>
-                    <div style="text-align: left;">
-                      <strong style="font-size: 0.85rem; color: inherit;">${escapeHtml(badge.name)}</strong>
-                      <div style="font-size: 0.7rem; color: inherit; opacity: 0.85;">${escapeHtml(badge.description)}</div>
+                let progressHtml = "";
+                if (!isUnlocked) {
+                  let currentVal = 0;
+                  let threshold = badge.threshold;
+                  let unit = "";
+                  if (badge.type === "streak") {
+                    currentVal = currentStreak;
+                    unit = "days";
+                  } else if (badge.type === "workout_count") {
+                    currentVal = myLogsCount;
+                    unit = "workouts";
+                  } else if (badge.type === "pr") {
+                    currentVal = Object.keys(personalRecords).length;
+                    unit = "PR";
+                  } else if (badge.type === "pr_weight") {
+                    currentVal = Math.max(...Object.values(personalRecords).map(Number), 0);
+                    unit = "kg";
+                  }
+                  const pct = Math.min(100, Math.round((currentVal / threshold) * 100));
+                  progressHtml = `
+                    <div style="margin-top: 8px; width: 100%;">
+                      <div style="display: flex; justify-content: space-between; font-size: 0.65rem; color: var(--text-muted); margin-bottom: 2px;">
+                        <span>Progress</span>
+                        <span>${currentVal}/${threshold} ${unit}</span>
+                      </div>
+                      <div style="width: 100%; height: 4px; background: var(--line); border-radius: 2px; overflow: hidden;">
+                        <div style="width: ${pct}%; height: 100%; background: var(--text-muted); border-radius: 2px;"></div>
+                      </div>
                     </div>
+                  `;
+                }
+
+                return `
+                  <div style="${getBadgeCss(badge.id, isUnlocked)} flex-direction: column; align-items: flex-start; gap: 6px; box-sizing: border-box;">
+                    <div style="display: flex; gap: 10px; align-items: center; width: 100%;">
+                      <span class="material-symbols-outlined" style="font-size: 2.2rem; ${isUnlocked ? 'color: inherit;' : 'color: var(--text-muted);'}">${badge.icon}</span>
+                      <div style="text-align: left; flex: 1;">
+                        <strong style="font-size: 0.85rem; color: inherit; display: block;">${escapeHtml(badge.name)}</strong>
+                        <div style="font-size: 0.7rem; color: inherit; opacity: 0.85; line-height: 1.25;">${escapeHtml(badge.description)}</div>
+                      </div>
+                    </div>
+                    ${progressHtml}
                   </div>
                 `;
               }).join("")}
