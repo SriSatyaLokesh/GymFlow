@@ -1,3 +1,4 @@
+import { execSync } from "child_process";
 import { dashboardModule } from "../modules/dashboard.js";
 import { membersModule } from "../modules/members.js";
 import { membershipsModule } from "../modules/memberships.js";
@@ -330,5 +331,8 @@ const edgeCaseMembersHtml = membersModule.render(edgeCaseContext);
 if (!edgeCaseMembersHtml.includes("Unassigned") || !edgeCaseMembersHtml.includes("Pending")) {
   throw new Error("UX Validation Failed: Members list did not gracefully handle null/empty fields.");
 }
+
+console.log("-> Running gamification unit tests...");
+execSync("node scripts/test-gamification.mjs", { stdio: "inherit" });
 
 console.log("Smoke render and enhanced complex UX verification tests completed successfully!");
