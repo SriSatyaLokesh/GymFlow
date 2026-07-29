@@ -18,7 +18,7 @@ GymFlow is a zero-cost, self-hosted gym management PWA. Phases build out the ful
 - [x] **Phase 10: Trainer Workout Module Library** — Trainers create reusable modules, publish Basic workouts for members, assign later to clients
 - [x] **Phase 10.1: Enhanced Member Intake Form & BMI Visual Meter** ⚡ URGENT NEXT — Full real-world intake fields, color-coded BMI horizontal meter, real-time duplicate phone/email detection, WhatsApp notification opt-in (completed 2026-07-23)
 - [x] **Phase 11: Member Workout Logging & Exercise Library (Hevy-Style)** — Unrestricted workout logging, routine scheduling, last-week duplication, gym feed dashboard, search, and trainer/owner check. (completed 2026-07-28)
-- [ ] **Phase 12: Implement PBL gamification strategy (points, badges, leaderboard, PRs, milestones)** — Gamify member workouts using points, custom badges, leaderboards per weight/gender/consistency, and PR milestones.
+- [x] **Phase 12: Implement PBL gamification strategy (points, badges, leaderboard, PRs, milestones)** — Gamify member workouts using points, custom badges, leaderboards per weight/gender/consistency, and PR milestones. (completed 2026-07-29)
 - [ ] **Phase 13: Analytics & Insights** — Revenue trends, member growth, attendance heatmap, forecasting
 - [ ] **Phase 14: Multi-Branch Support** — Branch entity, per-branch scoping, cross-branch dashboard
 
@@ -325,7 +325,7 @@ Plans:
 
 Plans:
 
-- [ ] 12-01: TBD
+- [x] 12-01: TBD
 
 ### Phase 13: Analytics & Insights
 
@@ -378,6 +378,6 @@ Plans:
 | 10 | Trainer Workout Module Library | 1/1 | Complete | — |
 | 10.1 | Enhanced Member Intake Form & BMI Visual Meter | 3/3 | Complete    | 2026-07-23 |
 | 11 | Member Workout Logging & Exercise Library (Hevy-Style) | 1/1 | Complete    | 2026-07-28 |
-| 12 | Implement PBL gamification strategy (points, badges, leaderboard, PRs, milestones) | 0/1 | Not started | — |
+| 12 | Implement PBL gamification strategy (points, badges, leaderboard, PRs, milestones) | 1/1 | Complete    | 2026-07-29 |
 | 13 | Analytics & Insights | 0/1 | Not started | — |
 | 14 | Multi-Branch Support | 0/1 | Not started | — |

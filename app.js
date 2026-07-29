@@ -94,7 +94,8 @@ const collectionNames = [
   "membership_pauses",
   "exercise_library",
   "workout_logs",
-  "workout_schedules"
+  "workout_schedules",
+  "badges"
 ];
 
 const state = {

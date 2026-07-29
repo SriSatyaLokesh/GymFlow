@@ -1,4 +1,4 @@
-import { collections, dateLabel, emptyState, escapeHtml, findName, pageHeader, today, getExercises, getExercisesList, showExerciseModal, withButtonLoading } from "./utils.js";
+import { collections, dateLabel, emptyState, escapeHtml, findName, pageHeader, today, getExercises, getExercisesList, showExerciseModal, withButtonLoading, awardPointsAndBadges } from "./utils.js";
 import { renderTemplateExercises } from "./workouts.js";
 // Page state persisted in-memory on the singleton module object
 export const myWorkoutModule = {
@@ -1009,8 +1009,8 @@ export const myWorkoutModule = {
 
         const saved = await context.services.data.save(collections.workoutLogs, payload);
         clearActiveWorkout();
-        context.toast("Workout logged successfully!");
         context.applyChange(collections.workoutLogs, saved);
+        await awardPointsAndBadges(context, "workout", { workout: payload });
         this.activeTab = "history";
         await context.refreshView();
       }, "Saving...");
