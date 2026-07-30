@@ -4,7 +4,7 @@ name: "phone-number-based-login-and-whatsapp-invitation-links"
 created: 2026-07-30
 verified: 2026-07-30T12:53:00Z
 status: passed
-score: 5/5 tasks verified
+score: 6/6 tasks verified
 overrides_applied: 0
 human_verification: []
 ---
@@ -24,6 +24,7 @@ human_verification: []
 | 3 | Login and member register forms convert phone entries to synthetic emails | passed | Verified in smoke-test.mjs rendering checks |
 | 4 | Onboarding landing query params (?invite=&phone=&code=) pre-fill forms and activate join tab | passed | Verified in smoke-test.mjs rendering checks |
 | 5 | WhatsApp invitation links are generated and prompted on member save | passed | Verified in smoke-test.mjs rendering checks |
+| 6 | Profile settings page renders as a full page tab and saves successfully for all roles | passed | Verified in smoke-test.mjs rendering checks |
 
 ## Result
 

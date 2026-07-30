@@ -5,9 +5,11 @@ status: complete
 completed: "2026-07-30"
 files_changed:
   - lib/firebase-init.js
+  - app.js
   - modules/auth.js
   - modules/members.js
   - modules/utils.js
+  - modules/profile.js
   - scripts/test-phone-auth.mjs
 ---
 
@@ -15,12 +17,17 @@ files_changed:
 
 ## What was built
 
-Implemented a password-based phone authentication system and an onboarding flow featuring WhatsApp invitations. Under the hood, phone sign-ins are mapped to synthetic email addresses (`[normalized_phone]@gymflow.app`) to avoid third-party SMS OTP carrier fees. Gym owners can add members, auto-trigger pre-formatted WhatsApp invite messages, and members can set their own passwords on a pre-filled, readonly onboarding landing registration screen.
+Implemented a password-based phone authentication system and an onboarding flow featuring WhatsApp invitations. Under the hood, phone sign-ins are mapped to synthetic email addresses (`[normalized_phone]@gymflow.app`) to avoid third-party SMS OTP carrier fees. Gym owners can add members, auto-trigger pre-formatted WhatsApp invite messages, and members can set their own passwords on a pre-filled, readonly onboarding landing registration screen. Also refactored the edit profile interface from a modal popup into a dedicated tab/page route (`#/profile`) accessible to all user roles (owners, trainers, and members).
 
 ## Changes
 
 ### `lib/firebase-init.js`
 - Added raw phone-to-synthetic-email mapping checks to `login` and `resetPassword` methods in both Firebase (live) and local storage (demo) mode services.
+
+### `app.js`
+- Registered the `profile` tab and `profileModule` as a standard route.
+- Redirected the profile chip click handler in the layout shell to navigate to `#/profile` instead of launching a modal.
+- Removed the deprecated `openProfileModal` function definition.
 
 ### `modules/auth.js`
 - Updated the login input field label to "Email or Phone Number" and input type to `text`.
@@ -36,6 +43,9 @@ Implemented a password-based phone authentication system and an onboarding flow 
 ### `modules/utils.js`
 - Implemented `normalizePhone10(value)` helper to format raw user inputs to their last 10 digits.
 
+### `modules/profile.js` [NEW]
+- Created a dedicated page module for editing name, cartoon avatar, and role-specific configurations (emergency contacts, body metrics, limitations, occupation, specialization, and certifications) as a tab view.
+
 ### `scripts/test-phone-auth.mjs` [NEW]
 - Added a dedicated unit test suite verifying phone normalization and synthetic email mapping rules.
 
@@ -44,3 +54,4 @@ Implemented a password-based phone authentication system and an onboarding flow 
 - [x] Added `scripts/test-phone-auth.mjs` verifying phone number normalization and synthetic mapping against various formatting permutations.
 - [x] Smoke tested app rendering and routing using `node scripts/smoke-test.mjs` with zero regressions.
 - [x] Checked normalization logic with numbers like `+91 98765-43210` or `09876543210` mapping to `9876543210@gymflow.app`.
+- [x] Verified profile tab page renders and saves correctly for all roles.
