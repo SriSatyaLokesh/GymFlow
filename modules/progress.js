@@ -194,12 +194,12 @@ function renderMemberProgress(context) {
               const pct = Math.min(100, Math.round((currentVal / threshold) * 100));
               progressHtml = `
                 <div style="margin-top: 8px; width: 100%;">
-                  <div style="display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--text-muted); margin-bottom: 2px;">
+                  <div style="display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--muted); margin-bottom: 2px;">
                     <span>Progress</span>
                     <span>${currentVal}/${threshold} ${unit}</span>
                   </div>
-                  <div style="width: 100%; height: 5px; background: var(--line); border-radius: 3px; overflow: hidden;">
-                    <div style="width: ${pct}%; height: 100%; background: var(--text-muted); border-radius: 3px;"></div>
+                  <div class="nm-progress-track">
+                    <div class="nm-progress-bar" style="width: ${pct}%;"></div>
                   </div>
                 </div>
               `;

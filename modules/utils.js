@@ -836,12 +836,12 @@ export function showMemberProfileModal(member, context) {
                   const pct = Math.min(100, Math.round((currentVal / threshold) * 100));
                   progressHtml = `
                     <div style="margin-top: 8px; width: 100%;">
-                      <div style="display: flex; justify-content: space-between; font-size: 0.65rem; color: var(--text-muted); margin-bottom: 2px;">
+                      <div style="display: flex; justify-content: space-between; font-size: 0.65rem; color: var(--muted); margin-bottom: 2px;">
                         <span>Progress</span>
                         <span>${currentVal}/${threshold} ${unit}</span>
                       </div>
-                      <div style="width: 100%; height: 4px; background: var(--line); border-radius: 2px; overflow: hidden;">
-                        <div style="width: ${pct}%; height: 100%; background: var(--text-muted); border-radius: 2px;"></div>
+                      <div class="nm-progress-track" style="height: 5px;">
+                        <div class="nm-progress-bar" style="width: ${pct}%;"></div>
                       </div>
                     </div>
                   `;
@@ -1127,7 +1127,7 @@ export function showCelebrationModal(newlyUnlockedBadges = [], newlyHitPRs = [])
 
 export function getBadgeCss(badgeId, isUnlocked) {
   if (!isUnlocked) {
-    return `background: var(--bg-alt); opacity: 0.45; filter: grayscale(100%); border: 1px dashed var(--line); color: var(--text-muted); padding: 12px 18px; border-radius: var(--r-md); display: flex; gap: 12px; align-items: center; text-align: left; transition: all 0.3s ease;`;
+    return `background: var(--bg); box-shadow: var(--nm-inset); border: 1px solid var(--line-soft); opacity: 0.55; color: var(--muted); padding: 16px 20px; border-radius: var(--r-md); display: flex; gap: 12px; align-items: center; text-align: left; transition: all 0.3s ease;`;
   }
   
   const levels = {
@@ -1142,13 +1142,13 @@ export function getBadgeCss(badgeId, isUnlocked) {
 
   const level = levels[badgeId] || "bronze";
   if (level === "gold") {
-    return `background: linear-gradient(135deg, #FFE082 0%, #FFB300 50%, #FF8F00 100%); color: #3E2723; box-shadow: 0 4px 15px rgba(255, 179, 0, 0.45); border: 2px solid #FFE57F; padding: 12px 18px; border-radius: var(--r-md); display: flex; gap: 12px; align-items: center; text-align: left; transition: all 0.3s ease; font-weight: 600;`;
+    return `background: linear-gradient(135deg, #FFF9C4 0%, #FBC02D 50%, #F57F17 100%); color: #3E2723; box-shadow: var(--nm-glow-gold); border: 1px solid #FFEE58; padding: 16px 20px; border-radius: var(--r-md); display: flex; gap: 12px; align-items: center; text-align: left; transition: all 0.3s ease; font-weight: 600;`;
   }
   if (level === "silver") {
-    return `background: linear-gradient(135deg, #ECEFF1 0%, #90A4AE 50%, #546E7A 100%); color: #263238; box-shadow: 0 4px 15px rgba(144, 164, 174, 0.45); border: 2px solid #CFD8DC; padding: 12px 18px; border-radius: var(--r-md); display: flex; gap: 12px; align-items: center; text-align: left; transition: all 0.3s ease; font-weight: 600;`;
+    return `background: linear-gradient(135deg, #ECEFF1 0%, #CFD8DC 50%, #78909C 100%); color: #263238; box-shadow: var(--nm-glow-silver); border: 1px solid #ECEFF1; padding: 16px 20px; border-radius: var(--r-md); display: flex; gap: 12px; align-items: center; text-align: left; transition: all 0.3s ease; font-weight: 600;`;
   }
   // bronze
-  return `background: linear-gradient(135deg, #FFCCBC 0%, #D84315 50%, #BF360C 100%); color: #FFF; box-shadow: 0 4px 15px rgba(216, 67, 21, 0.45); border: 2px solid #FF8A65; padding: 12px 18px; border-radius: var(--r-md); display: flex; gap: 12px; align-items: center; text-align: left; transition: all 0.3s ease; font-weight: 600;`;
+  return `background: linear-gradient(135deg, #FFE0B2 0%, #FFB74D 50%, #E65100 100%); color: #3E2723; box-shadow: var(--nm-glow-bronze); border: 1px solid #FFCC80; padding: 16px 20px; border-radius: var(--r-md); display: flex; gap: 12px; align-items: center; text-align: left; transition: all 0.3s ease; font-weight: 600;`;
 }
 
 export function cmToFeetInches(cm) {
