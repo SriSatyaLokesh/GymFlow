@@ -161,6 +161,11 @@ export function normalizePhone(value = "") {
   return String(value).replace(/[^\d+]/g, "");
 }
 
+export function normalizePhone10(value = "") {
+  const digits = String(value).replace(/\D/g, "");
+  return digits.slice(-10);
+}
+
 export function whatsappUrl(member, message) {
   const phone = normalizePhone(member.mobile);
   return `https://wa.me/${encodeURIComponent(phone)}?text=${encodeURIComponent(message)}`;
@@ -177,28 +182,183 @@ export function initials(name = "") {
   return parsed || "--";
 }
 
-export const CARTOON_AVATARS = [
-  // 30 Women Avatars (happy/smiling, age 20+, no sad/crying faces)
-  ...Array.from({ length: 30 }, (_, i) => {
-    const eyebrows = i % 3 === 0 ? "up" : i % 3 === 1 ? "raised" : "normal";
-    const eyes = i % 2 === 0 ? "happy" : "normal";
-    const mouth = i % 3 === 0 ? "happy" : i % 3 === 1 ? "smile" : "smirk";
-    return `https://api.dicebear.com/9.x/lorelei/svg?seed=female-gym-${i + 1}&size=96&eyebrows=${eyebrows}&eyes=${eyes}&mouth=${mouth}&frecklesProbability=0`;
-  }),
-  // 70 Men Avatars (happy/smiling/angry-intense, age 20+, beard probability, no sad/crying)
-  ...Array.from({ length: 70 }, (_, i) => {
-    const isAngry = i % 5 === 0;
-    const eyebrows = isAngry ? "angry" : (i % 3 === 0 ? "up" : "normal");
-    const eyes = isAngry ? "normal" : (i % 2 === 0 ? "happy" : "normal");
-    const mouth = isAngry ? "neutral" : (i % 3 === 0 ? "happy" : i % 3 === 1 ? "smile" : "smirk");
-    const beardProb = i % 3 === 0 ? 0 : 100;
-    return `https://api.dicebear.com/9.x/lorelei/svg?seed=male-gym-${i + 1}&size=96&eyebrows=${eyebrows}&eyes=${eyes}&mouth=${mouth}&frecklesProbability=0&beardProbability=${beardProb}`;
-  })
-];
+function getInlineAvatar(index) {
+  const gradients = [
+    ["#ff9068", "#fd746c"], // 1. Warm Coral
+    ["#11998e", "#38ef7d"], // 2. Mint Green
+    ["#00c6ff", "#0072ff"], // 3. Neon Cyan
+    ["#8a2387", "#e94057"], // 4. Berry Blast
+    ["#f12711", "#f5af19"], // 5. Sunfire
+    ["#7f00ff", "#e100ff"], // 6. Electric Violet
+    ["#3a7bd5", "#3a6073"], // 7. Cool Blue
+    ["#f9d423", "#ff4e50"], // 8. Peach Orange
+    ["#4568dc", "#b06ab8"], // 9. Lavender
+    ["#0575e6", "#00f260"], // 10. Ocean Green
+    ["#34e89e", "#0f3443"], // 11. Deep Forest
+    ["#1d2671", "#c33764"]  // 12. Deep Space
+  ];
+  
+  const [c1, c2] = gradients[index % gradients.length];
+  
+  let path = "";
+  if (index === 0) {
+    // 1. Male Gym Goer
+    path = `
+      <circle cx="50" cy="35" r="14" fill="#ffffff" fill-opacity="0.9" />
+      <path d="M 22,78 C 22,60 34,54 50,54 C 66,54 78,60 78,78 Z" fill="#ffffff" fill-opacity="0.9" />
+    `;
+  } else if (index === 1) {
+    // 2. Female Gym Goer
+    path = `
+      <circle cx="50" cy="20" r="7" fill="#ffffff" fill-opacity="0.9" />
+      <circle cx="50" cy="36" r="13" fill="#ffffff" fill-opacity="0.9" />
+      <path d="M 24,78 C 24,60 36,55 50,55 C 64,55 76,60 76,78 Z" fill="#ffffff" fill-opacity="0.9" />
+      <path d="M 45,23 C 43,26 40,26 38,23 C 40,20 43,20 45,23 Z" fill="#ffffff" fill-opacity="0.9" />
+    `;
+  } else if (index === 2) {
+    // 3. Weightlifter
+    path = `
+      <line x1="15" y1="28" x2="85" y2="28" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-opacity="0.9" />
+      <rect x="8" y="18" width="6" height="20" rx="2" fill="#ffffff" fill-opacity="0.9" />
+      <rect x="86" y="18" width="6" height="20" rx="2" fill="#ffffff" fill-opacity="0.9" />
+      <circle cx="50" cy="38" r="10" fill="#ffffff" fill-opacity="0.9" />
+      <path d="M 32,28 L 42,42 L 58,42 L 68,28" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.9" />
+      <path d="M 38,46 L 38,65 L 62,65 L 62,46 Z" fill="#ffffff" fill-opacity="0.9" />
+      <path d="M 38,65 L 34,80 M 62,65 L 66,80" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-opacity="0.9" />
+    `;
+  } else if (index === 3) {
+    // 4. Runner
+    path = `
+      <circle cx="56" cy="22" r="8" fill="#ffffff" fill-opacity="0.9" />
+      <path d="M 48,34 L 58,40 L 45,55 L 38,48 L 44,38 L 48,34" fill="#ffffff" fill-opacity="0.9" />
+      <path d="M 45,55 L 62,65 L 56,80" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.9" />
+      <path d="M 45,55 L 34,62 L 36,78" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.9" />
+    `;
+  } else if (index === 4) {
+    // 5. Flexing Arm
+    path = `
+      <path d="M 20,70 C 25,60 30,55 45,55 C 55,55 60,60 65,55 C 70,50 68,40 76,40 C 82,40 85,45 82,55 C 78,65 65,75 45,75 C 30,75 25,70 20,70 Z M 52,50 C 50,42 55,38 60,40 C 62,45 56,48 52,50 Z" fill="#ffffff" fill-opacity="0.9" />
+    `;
+  } else if (index === 5) {
+    // 6. Yoga Pose
+    path = `
+      <circle cx="50" cy="25" r="9" fill="#ffffff" fill-opacity="0.9" />
+      <path d="M 50,38 L 40,55 L 30,50 L 32,42 L 50,38" fill="#ffffff" fill-opacity="0.9" />
+      <path d="M 50,38 L 60,55 L 70,50 L 68,42 L 50,38" fill="#ffffff" fill-opacity="0.9" />
+      <path d="M 50,38 L 50,60 L 35,75 L 50,80 L 65,75 L 50,60" fill="#ffffff" fill-opacity="0.9" />
+    `;
+  } else if (index === 6) {
+    // 7. Kettlebell
+    path = `
+      <circle cx="50" cy="60" r="18" fill="#ffffff" fill-opacity="0.9" />
+      <path d="M 38,45 C 38,32 62,32 62,45" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" stroke-opacity="0.9" />
+      <circle cx="50" cy="60" r="6" fill="${c1}" />
+    `;
+  } else if (index === 7) {
+    // 8. Weight Plate
+    path = `
+      <circle cx="50" cy="50" r="26" fill="#ffffff" fill-opacity="0.9" />
+      <circle cx="50" cy="50" r="18" fill="none" stroke="${c2}" stroke-width="2" />
+      <circle cx="50" cy="50" r="6" fill="${c1}" />
+      <line x1="28" y1="50" x2="38" y2="50" stroke="${c2}" stroke-width="2" />
+      <line x1="62" y1="50" x2="72" y2="50" stroke="${c2}" stroke-width="2" />
+      <line x1="50" y1="28" x2="50" y2="38" stroke="${c2}" stroke-width="2" />
+      <line x1="50" y1="62" x2="50" y2="72" stroke="${c2}" stroke-width="2" />
+    `;
+  } else if (index === 8) {
+    // 9. Stopwatch
+    path = `
+      <circle cx="50" cy="53" r="22" fill="#ffffff" fill-opacity="0.9" />
+      <circle cx="50" cy="53" r="18" fill="none" stroke="${c1}" stroke-width="2" />
+      <path d="M 50,53 L 50,42 L 58,50" fill="none" stroke="${c2}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+      <rect x="45" y="24" width="10" height="5" rx="1.5" fill="#ffffff" fill-opacity="0.9" />
+      <line x1="32" y1="36" x2="38" y2="40" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-opacity="0.9" />
+      <line x1="68" y1="36" x2="62" y2="40" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-opacity="0.9" />
+    `;
+  } else if (index === 9) {
+    // 10. Heart Pulse
+    path = `
+      <path d="M 20,50 L 35,50 L 42,28 L 50,72 L 56,42 L 62,55 L 68,50 L 80,50" fill="none" stroke="#ffffff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.9" />
+    `;
+  } else if (index === 10) {
+    // 11. Trophy
+    path = `
+      <path d="M 32,32 L 68,32 L 65,58 C 65,65 58,72 50,72 C 42,72 35,65 35,58 Z" fill="#ffffff" fill-opacity="0.9" />
+      <path d="M 35,40 C 26,40 26,50 35,50 M 65,40 C 74,40 74,50 65,50" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" stroke-opacity="0.9" />
+      <rect x="42" y="72" width="16" height="5" fill="#ffffff" fill-opacity="0.9" />
+      <path d="M 36,77 H 64 V 81 H 36 Z" fill="#ffffff" fill-opacity="0.9" />
+    `;
+  } else if (index === 11) {
+    // 12. Gym Shield
+    path = `
+      <path d="M 50,20 L 76,26 V 54 C 76,70 65,80 50,84 C 35,80 24,70 24,54 V 26 Z" fill="#ffffff" fill-opacity="0.9" />
+      <path d="M 35,46 H 65 M 32,54 H 68" stroke="${c1}" stroke-width="4.5" stroke-linecap="round" />
+    `;
+  }
+  
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100%">
+      <defs>
+        <linearGradient id="g_${index}" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="${c1}" />
+          <stop offset="100%" stop-color="${c2}" />
+        </linearGradient>
+      </defs>
+      <circle cx="50" cy="50" r="48" fill="url(#g_${index})" />
+      ${path}
+    </svg>
+  `;
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg.trim())}`;
+}
+
+export const CARTOON_AVATARS = Array.from({ length: 12 }, (_, i) => getInlineAvatar(i));
+
+export function getAvatarUrl(avatarUrl) {
+  if (!avatarUrl) return "";
+  if (avatarUrl.startsWith("emoji:")) {
+    const parts = avatarUrl.split(":");
+    const emoji = parts[1] || "👤";
+    const bg = parts[2] || "#3a7bd5,#3a6073";
+    const colors = bg.split(",");
+    const c1 = colors[0];
+    const c2 = colors[1] || colors[0];
+    
+    let fill = `url(#eg)`;
+    let defs = `
+      <defs>
+        <linearGradient id="eg" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="${c1}" />
+          <stop offset="100%" stop-color="${c2}" />
+        </linearGradient>
+      </defs>
+    `;
+    if (bg === "#ffffff") {
+      fill = "#ffffff";
+      defs = "";
+    } else if (bg === "#000000") {
+      fill = "#000000";
+      defs = "";
+    } else if (colors.length === 1) {
+      fill = c1;
+      defs = "";
+    }
+    
+    const svg = `
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+        ${defs}
+        <circle cx="50" cy="50" r="48" fill="${fill}" />
+        <text x="50" y="50" font-size="48" text-anchor="middle" dominant-baseline="central" font-family="system-ui, -apple-system, sans-serif">${emoji}</text>
+      </svg>
+    `;
+    return `data:image/svg+xml;utf8,${encodeURIComponent(svg.trim())}`;
+  }
+  return avatarUrl;
+}
 
 export function nameCell(name, sub = "", avatarUrl = "") {
-  const avatarContent = avatarUrl 
-    ? `<img src="${escapeHtml(avatarUrl)}" alt="" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;" />`
+  const resolvedUrl = getAvatarUrl(avatarUrl);
+  const avatarContent = resolvedUrl 
+    ? `<img src="${escapeHtml(resolvedUrl)}" alt="" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;" />`
     : escapeHtml(initials(name));
 
   return `
@@ -989,5 +1149,258 @@ export function getBadgeCss(badgeId, isUnlocked) {
   }
   // bronze
   return `background: linear-gradient(135deg, #FFCCBC 0%, #D84315 50%, #BF360C 100%); color: #FFF; box-shadow: 0 4px 15px rgba(216, 67, 21, 0.45); border: 2px solid #FF8A65; padding: 12px 18px; border-radius: var(--r-md); display: flex; gap: 12px; align-items: center; text-align: left; transition: all 0.3s ease; font-weight: 600;`;
+}
+
+export function cmToFeetInches(cm) {
+  if (cm == null || cm === "") return { feet: "", inches: "" };
+  const val = parseFloat(cm);
+  if (isNaN(val) || val <= 0) return { feet: "", inches: "" };
+  const totalInches = val / 2.54;
+  const feet = Math.floor(totalInches / 12);
+  const inches = Math.round(totalInches % 12);
+  if (inches === 12) {
+    return { feet: feet + 1, inches: 0 };
+  }
+  return { feet, inches };
+}
+
+export function feetInchesToCm(feet, inches) {
+  const f = parseInt(feet, 10);
+  const i = parseInt(inches, 10);
+  if (isNaN(f) && isNaN(i)) return "";
+  const feetVal = isNaN(f) ? 0 : f;
+  const inchesVal = isNaN(i) ? 0 : i;
+  if (feetVal <= 0 && inchesVal <= 0) return "";
+  const totalInches = (feetVal * 12) + inchesVal;
+  return parseFloat((totalInches * 2.54).toFixed(1));
+}
+
+export function calcBmi(weightKg, heightCm) {
+  const w = parseFloat(weightKg);
+  const h = parseFloat(heightCm) / 100;
+  if (!w || !h || h <= 0) return "";
+  return (w / (h * h)).toFixed(1);
+}
+
+export function bmiCategory(bmi, gender) {
+  const v = parseFloat(bmi);
+  if (!v) return null;
+  // WHO Asian / Indian consensus thresholds (WHO Expert Consultation 2004 + ICMR guidelines)
+  // For Indians, overweight risk starts at 23 (vs 25 globally) and obese at 25 (vs 30 globally).
+  // Females carry ~6-8% more body fat at the same BMI, so healthy ceiling is 22.0 vs 22.9 for males.
+  const healthyMax = (gender === "Female") ? 22.0 : 22.9;
+  if (v < 18.5)        return { label: "Underweight",   color: "var(--warning, #d97706)" };
+  if (v <= healthyMax) return { label: "Healthy",        color: "var(--success, #16a34a)" };
+  if (v < 25)          return { label: "Overweight",     color: "var(--warning, #f59e0b)" };
+  if (v < 30)          return { label: "Obese Class 1",  color: "var(--danger,  #dc2626)" };
+  if (v < 35)          return { label: "Obese Class 2",  color: "var(--danger,  #b91c1c)" };
+  return { label: "Obese Class 3",  color: "var(--danger,  #7f1d1d)" };
+}
+
+export function renderSharedMemberFields(member = {}) {
+  const { feet, inches } = cmToFeetInches(member.initHeight);
+  
+  return `
+    <label>WhatsApp Number
+      <input name="whatsappNumber" type="tel" maxlength="10" value="${escapeHtml(member.whatsappNumber || "")}" placeholder="Same as mobile" />
+    </label>
+    <label>Gender
+      <select name="gender">
+        <option value="Not specified" ${member.gender === "Not specified" ? "selected" : ""}>Not specified</option>
+        <option value="Female" ${member.gender === "Female" ? "selected" : ""}>Female</option>
+        <option value="Male" ${member.gender === "Male" ? "selected" : ""}>Male</option>
+        <option value="Other" ${member.gender === "Other" ? "selected" : ""}>Other</option>
+      </select>
+    </label>
+    <label>Date of Birth
+      <input name="dateOfBirth" type="date" value="${escapeHtml(member.dateOfBirth || "")}" />
+    </label>
+    <label class="wide">Address
+      <textarea name="address" rows="2">${escapeHtml(member.address || "")}</textarea>
+    </label>
+
+    <div class="form-section-heading wide">Emergency Contact</div>
+    <label>Contact name
+      <input name="emergencyName" maxlength="80" value="${escapeHtml(member.emergencyName || "")}" />
+    </label>
+    <label>Relationship
+      <select name="emergencyRelationship">
+        <option value="" ${!member.emergencyRelationship ? "selected" : ""}>Not specified</option>
+        <option value="Spouse" ${member.emergencyRelationship === "Spouse" ? "selected" : ""}>Spouse</option>
+        <option value="Parent" ${member.emergencyRelationship === "Parent" ? "selected" : ""}>Parent</option>
+        <option value="Sibling" ${member.emergencyRelationship === "Sibling" ? "selected" : ""}>Sibling</option>
+        <option value="Child" ${member.emergencyRelationship === "Child" ? "selected" : ""}>Child</option>
+        <option value="Friend" ${member.emergencyRelationship === "Friend" ? "selected" : ""}>Friend</option>
+        <option value="Other" ${member.emergencyRelationship === "Other" ? "selected" : ""}>Other</option>
+      </select>
+    </label>
+    <label>Contact phone
+      <input name="emergencyPhone" type="tel" maxlength="10" value="${escapeHtml(member.emergencyPhone || "")}" />
+    </label>
+
+    <div class="form-section-heading wide">Initial Measurements</div>
+    <label>Weight kg
+      <input name="initWeight" type="number" min="0" step="0.1" value="${escapeHtml(member.initWeight != null ? String(member.initWeight) : "")}" />
+    </label>
+    
+    <label>Height (Feet)
+      <select name="heightFeet">
+        <option value="" ${feet === "" ? "selected" : ""}>Select</option>
+        ${[3,4,5,6,7,8].map(f => `<option value="${f}" ${feet === f ? "selected" : ""}>${f} ft</option>`).join("")}
+      </select>
+    </label>
+    <label>Height (Inches)
+      <select name="heightInches">
+        <option value="" ${inches === "" ? "selected" : ""}>Select</option>
+        ${[0,1,2,3,4,5,6,7,8,9,10,11].map(i => `<option value="${i}" ${inches === i ? "selected" : ""}>${i} in</option>`).join("")}
+      </select>
+    </label>
+    
+    <!-- Hidden input to store converted height in cm -->
+    <input type="hidden" name="initHeight" value="${escapeHtml(member.initHeight != null ? String(member.initHeight) : "")}" />
+
+    <!-- Obesity Meter -->
+    <div class="bmi-meter-wrapper wide hidden" data-bmi-meter>
+      <div class="bmi-meter-header">
+        <span class="bmi-meter-value" data-bmi-number>—</span>
+        <span class="bmi-unit">BMI</span>
+        <span class="bmi-meter-category" data-bmi-category></span>
+      </div>
+      <div class="bmi-meter-bar" aria-hidden="true">
+        <div class="bmi-zone bmi-zone--uw"  title="Underweight < 18.5"></div>
+        <div class="bmi-zone bmi-zone--ok"  title="Healthy 18.5–22.9"></div>
+        <div class="bmi-zone bmi-zone--ow"  title="Overweight 23–24.9"></div>
+        <div class="bmi-zone bmi-zone--ob1" title="Obese I 25–29.9"></div>
+        <div class="bmi-zone bmi-zone--ob2" title="Obese II 30–34.9"></div>
+        <div class="bmi-zone bmi-zone--ob3" title="Obese III ≥ 35"></div>
+        <div class="bmi-cursor" data-bmi-cursor></div>
+      </div>
+      <input type="hidden" name="initBmi" data-bmi-hidden value="${escapeHtml(member.initBmi || "")}" />
+    </div>
+
+    <label>Body fat %
+      <input name="initBodyFat" type="number" min="0" step="0.1" value="${escapeHtml(member.initBodyFat != null ? String(member.initBodyFat) : "")}" />
+    </label>
+    <label>Waist cm
+      <input name="initWaist" type="number" min="0" step="0.1" value="${escapeHtml(member.initWaist != null ? String(member.initWaist) : "")}" />
+    </label>
+    <label>Chest cm
+      <input name="initChest" type="number" min="0" step="0.1" value="${escapeHtml(member.initChest != null ? String(member.initChest) : "")}" />
+    </label>
+    <label>Hip cm
+      <input name="initHip" type="number" min="0" step="0.1" value="${escapeHtml(member.initHip != null ? String(member.initHip) : "")}" />
+    </label>
+    <label>Bicep cm
+      <input name="initBicep" type="number" min="0" step="0.1" value="${escapeHtml(member.initBicep != null ? String(member.initBicep) : "")}" />
+    </label>
+    <label>Thigh cm
+      <input name="initThigh" type="number" min="0" step="0.1" value="${escapeHtml(member.initThigh != null ? String(member.initThigh) : "")}" />
+    </label>
+    
+    <label class="wide">Gym goal
+      <select name="gymGoal">
+        <option value="" ${!member.gymGoal ? "selected" : ""}>Not specified</option>
+        <option value="Weight Loss" ${member.gymGoal === "Weight Loss" ? "selected" : ""}>Weight Loss</option>
+        <option value="Muscle Gain" ${member.gymGoal === "Muscle Gain" ? "selected" : ""}>Muscle Gain</option>
+        <option value="General Fitness" ${member.gymGoal === "General Fitness" ? "selected" : ""}>General Fitness</option>
+        <option value="Endurance / Cardio" ${member.gymGoal === "Endurance / Cardio" ? "selected" : ""}>Endurance / Cardio</option>
+        <option value="Body Toning" ${member.gymGoal === "Body Toning" ? "selected" : ""}>Body Toning</option>
+        <option value="Flexibility / Mobility" ${member.gymGoal === "Flexibility / Mobility" ? "selected" : ""}>Flexibility / Mobility</option>
+        <option value="Rehabilitation" ${member.gymGoal === "Rehabilitation" ? "selected" : ""}>Rehabilitation</option>
+      </select>
+    </label>
+
+    <div class="form-section-heading wide">Background</div>
+    <label>Blood group
+      <select name="bloodGroup">
+        <option value="" ${!member.bloodGroup ? "selected" : ""}>Not specified</option>
+        <option value="A+" ${member.bloodGroup === "A+" ? "selected" : ""}>A+</option>
+        <option value="A-" ${member.bloodGroup === "A-" ? "selected" : ""}>A-</option>
+        <option value="B+" ${member.bloodGroup === "B+" ? "selected" : ""}>B+</option>
+        <option value="B-" ${member.bloodGroup === "B-" ? "selected" : ""}>B-</option>
+        <option value="O+" ${member.bloodGroup === "O+" ? "selected" : ""}>O+</option>
+        <option value="O-" ${member.bloodGroup === "O-" ? "selected" : ""}>O-</option>
+        <option value="AB+" ${member.bloodGroup === "AB+" ? "selected" : ""}>AB+</option>
+        <option value="AB-" ${member.bloodGroup === "AB-" ? "selected" : ""}>AB-</option>
+      </select>
+    </label>
+    <label>Occupation
+      <input name="occupation" maxlength="80" value="${escapeHtml(member.occupation || "")}" />
+    </label>
+    <label>Activity level
+      <select name="activityLevel">
+        <option value="" ${!member.activityLevel ? "selected" : ""}>Not specified</option>
+        <option value="Sedentary" ${member.activityLevel === "Sedentary" ? "selected" : ""}>Sedentary</option>
+        <option value="Lightly Active" ${member.activityLevel === "Lightly Active" ? "selected" : ""}>Lightly Active</option>
+        <option value="Moderately Active" ${member.activityLevel === "Moderately Active" ? "selected" : ""}>Moderately Active</option>
+        <option value="Very Active" ${member.activityLevel === "Very Active" ? "selected" : ""}>Very Active</option>
+      </select>
+    </label>
+    <label>Fitness experience
+      <select name="fitnessExperience">
+        <option value="" ${!member.fitnessExperience ? "selected" : ""}>Not specified</option>
+        <option value="Beginner" ${member.fitnessExperience === "Beginner" ? "selected" : ""}>Beginner</option>
+        <option value="Intermediate" ${member.fitnessExperience === "Intermediate" ? "selected" : ""}>Intermediate</option>
+        <option value="Advanced" ${member.fitnessExperience === "Advanced" ? "selected" : ""}>Advanced</option>
+      </select>
+    </label>
+
+    <div class="form-section-heading wide">Health &amp; Medical</div>
+    <label class="wide">Medical conditions
+      <textarea name="medicalConditions" rows="2">${escapeHtml(member.medicalConditions || "")}</textarea>
+    </label>
+    <label class="wide">Current medications
+      <textarea name="currentMedications" rows="2">${escapeHtml(member.currentMedications || "")}</textarea>
+    </label>
+    <label class="wide">Allergies
+      <textarea name="allergies" rows="2">${escapeHtml(member.allergies || "")}</textarea>
+    </label>
+    <label class="wide">Limitations or injuries
+      <textarea name="physicalLimitations" rows="2">${escapeHtml(member.physicalLimitations || "")}</textarea>
+    </label>
+  `;
+}
+
+export function bindSharedBmiEvents(form) {
+  const bmiMeter      = form.querySelector("[data-bmi-meter]");
+  const bmiNumber     = form.querySelector("[data-bmi-number]");
+  const bmiCatEl      = form.querySelector("[data-bmi-category]");
+  const bmiCursor     = form.querySelector("[data-bmi-cursor]");
+  const bmiHidden     = form.querySelector("[data-bmi-hidden]");
+  const heightHidden  = form.querySelector("[name='initHeight']");
+
+  function updateBmi() {
+    const feet = form.heightFeet?.value || "";
+    const inches = form.heightInches?.value || "";
+    const cm = feetInchesToCm(feet, inches);
+    
+    if (heightHidden) heightHidden.value = cm || "";
+
+    const val = calcBmi(form.initWeight?.value || "", cm);
+    if (bmiHidden) bmiHidden.value = val;
+
+    if (!val) {
+      if (bmiMeter) bmiMeter.classList.add("hidden");
+      return;
+    }
+
+    if (bmiMeter) bmiMeter.classList.remove("hidden");
+
+    const cat = bmiCategory(val, form.gender?.value || "Not specified");
+    if (bmiNumber)  { bmiNumber.textContent = val; bmiNumber.style.color = cat ? cat.color : ""; }
+    if (bmiCatEl)   { bmiCatEl.textContent = cat ? cat.label : ""; bmiCatEl.style.color = cat ? cat.color : ""; }
+
+    // Cursor position: linear scale BMI 10–40 (30-unit range)
+    const pct = Math.min(Math.max((parseFloat(val) - 10) / 30 * 100, 0), 100);
+    if (bmiCursor) bmiCursor.style.left = `${pct}%`;
+  }
+
+  form.initWeight?.addEventListener("input", updateBmi);
+  form.heightFeet?.addEventListener("change", updateBmi);
+  form.heightInches?.addEventListener("change", updateBmi);
+  form.gender?.addEventListener("change", updateBmi);
+  
+  // Initial run
+  updateBmi();
 }
 

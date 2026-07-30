@@ -1,26 +1,4 @@
-import { addDays, byName, collections, confirmDialog, dateLabel, emptyState, escapeHtml, findName, formData, memberStatus, nameCell, optionList, pageHeader, showMemberProfileModal, statusClass, today, withButtonLoading } from "./utils.js";
-
-function calcBmi(weightKg, heightCm) {
-  const w = parseFloat(weightKg);
-  const h = parseFloat(heightCm) / 100;
-  if (!w || !h || h <= 0) return "";
-  return (w / (h * h)).toFixed(1);
-}
-
-function bmiCategory(bmi, gender) {
-  const v = parseFloat(bmi);
-  if (!v) return null;
-  // WHO Asian / Indian consensus thresholds (WHO Expert Consultation 2004 + ICMR guidelines)
-  // For Indians, overweight risk starts at 23 (vs 25 globally) and obese at 25 (vs 30 globally).
-  // Females carry ~6-8% more body fat at the same BMI, so healthy ceiling is 22.0 vs 22.9 for males.
-  const healthyMax = (gender === "Female") ? 22.0 : 22.9;
-  if (v < 18.5)        return { label: "Underweight",   color: "var(--warning, #d97706)" };
-  if (v <= healthyMax) return { label: "Healthy",        color: "var(--success, #16a34a)" };
-  if (v < 25)          return { label: "Overweight",     color: "var(--warning, #f59e0b)" };
-  if (v < 30)          return { label: "Obese Class 1",  color: "var(--danger,  #dc2626)" };
-  if (v < 35)          return { label: "Obese Class 2",  color: "var(--danger,  #b91c1c)" };
-                       return { label: "Obese Class 3",  color: "var(--danger,  #7f1d1d)" };
-}
+import { addDays, byName, collections, confirmDialog, dateLabel, emptyState, escapeHtml, findName, formData, memberStatus, nameCell, normalizePhone10, optionList, pageHeader, showMemberProfileModal, statusClass, today, withButtonLoading, cmToFeetInches, feetInchesToCm, calcBmi, bmiCategory, renderSharedMemberFields, bindSharedBmiEvents } from "./utils.js";
 
 export const membersModule = {
   render({ data }) {
@@ -77,121 +55,7 @@ export const membersModule = {
                 <option>Suspended</option>
               </select>
             </label>
-            <label class="wide">Address<textarea name="address" rows="2"></textarea></label>
-            <div class="form-section-heading">Emergency Contact <span class="optional-tag">(optional)</span></div>
-            <label>Contact name<input name="emergencyName" maxlength="80" /></label>
-            <label>Relationship
-              <select name="emergencyRelationship">
-                <option value="">Not specified</option>
-                <option>Spouse</option>
-                <option>Parent</option>
-                <option>Sibling</option>
-                <option>Child</option>
-                <option>Friend</option>
-                <option>Other</option>
-              </select>
-            </label>
-            <label>Contact phone<input name="emergencyPhone" type="tel" maxlength="10" /></label>
-            <div class="form-section-heading">Initial Measurements <span class="optional-tag">(optional)</span></div>
-            <label>Weight kg<input name="initWeight" type="number" min="0" step="0.1" /></label>
-            <label>Height cm<input name="initHeight" type="number" min="0" step="0.1" /></label>
-            <div class="bmi-meter-wrapper wide hidden" data-bmi-meter>
-              <div class="bmi-meter-header">
-                <span class="bmi-meter-value" data-bmi-number>—</span>
-                <span class="bmi-unit">BMI</span>
-                <span class="bmi-meter-category" data-bmi-category></span>
-              </div>
-              <div class="bmi-meter-bar" aria-hidden="true">
-                <div class="bmi-zone bmi-zone--uw"  title="Underweight < 18.5"></div>
-                <div class="bmi-zone bmi-zone--ok"  title="Healthy 18.5–22.9"></div>
-                <div class="bmi-zone bmi-zone--ow"  title="Overweight 23–24.9"></div>
-                <div class="bmi-zone bmi-zone--ob1" title="Obese I 25–29.9"></div>
-                <div class="bmi-zone bmi-zone--ob2" title="Obese II 30–34.9"></div>
-                <div class="bmi-zone bmi-zone--ob3" title="Obese III ≥ 35"></div>
-                <div class="bmi-cursor" data-bmi-cursor></div>
-              </div>
-              <input type="hidden" name="initBmi" data-bmi-hidden />
-            </div>
-            <label>Body fat %<input name="initBodyFat" type="number" min="0" step="0.1" /></label>
-            <label>Waist cm<input name="initWaist" type="number" min="0" step="0.1" /></label>
-            <label>Chest cm<input name="initChest" type="number" min="0" step="0.1" /></label>
-            <label>Hip cm<input name="initHip" type="number" min="0" step="0.1" /></label>
-            <label>Bicep cm<input name="initBicep" type="number" min="0" step="0.1" /></label>
-            <label>Thigh cm<input name="initThigh" type="number" min="0" step="0.1" /></label>
-            <label class="wide">Gym goal
-              <select name="gymGoal">
-                <option value="">Not specified</option>
-                <option>Weight Loss</option>
-                <option>Muscle Gain</option>
-                <option>General Fitness</option>
-                <option>Endurance / Cardio</option>
-                <option>Body Toning</option>
-                <option>Flexibility / Mobility</option>
-                <option>Rehabilitation</option>
-              </select>
-            </label>
-            <div class="form-section-heading">Background <span class="optional-tag">(optional)</span></div>
-            <label>Blood group
-              <select name="bloodGroup">
-                <option value="">Not specified</option>
-                <option>A+</option>
-                <option>A-</option>
-                <option>B+</option>
-                <option>B-</option>
-                <option>O+</option>
-                <option>O-</option>
-                <option>AB+</option>
-                <option>AB-</option>
-              </select>
-            </label>
-            <label>Occupation<input name="occupation" maxlength="80" /></label>
-            <label>Activity level before joining
-              <select name="activityLevel">
-                <option value="">Not specified</option>
-                <option>Sedentary</option>
-                <option>Lightly Active</option>
-                <option>Moderately Active</option>
-                <option>Very Active</option>
-              </select>
-            </label>
-            <label>Fitness experience
-              <select name="fitnessExperience">
-                <option value="">Not specified</option>
-                <option>Beginner</option>
-                <option>Intermediate</option>
-                <option>Advanced</option>
-              </select>
-            </label>
-            <label>How did you hear about us?
-              <select name="referredBy">
-                <option value="">Not specified</option>
-                <option>Walk-in</option>
-                <option>Social Media</option>
-                <option>Friend / Family</option>
-                <option>Online Search</option>
-                <option>Trainer Referral</option>
-                <option>Other</option>
-              </select>
-            </label>
-            <details class="form-section-details wide">
-              <summary class="form-section-heading" style="cursor:pointer;list-style:none;">
-                Health &amp; Medical <span class="optional-tag">(optional — tap to expand)</span>
-              </summary>
-              <div class="form-grid" style="margin-top:10px;">
-                <label class="wide">Medical conditions / health history
-                  <textarea name="medicalConditions" rows="2" placeholder="e.g. Diabetes, Hypertension"></textarea>
-                </label>
-                <label class="wide">Current medications
-                  <textarea name="currentMedications" rows="2" placeholder="e.g. Metformin 500mg"></textarea>
-                </label>
-                <label class="wide">Known allergies
-                  <textarea name="allergies" rows="2" placeholder="e.g. Penicillin, Peanuts"></textarea>
-                </label>
-                <label class="wide">Physical limitations or injuries
-                  <textarea name="physicalLimitations" rows="2" placeholder="e.g. Lower back pain, knee surgery (2024)"></textarea>
-                </label>
-              </div>
-            </details>
+            ${renderSharedMemberFields()}
           </div>
           <label class="wide checkbox-label">
             <input type="checkbox" name="whatsappOptIn" value="true" />
@@ -287,34 +151,7 @@ export const membersModule = {
       if (plan) form.endDate.value = addDays(form.startDate.value, plan.durationDays);
     });
 
-    const bmiMeter    = form.querySelector("[data-bmi-meter]");
-    const bmiNumber   = form.querySelector("[data-bmi-number]");
-    const bmiCatEl    = form.querySelector("[data-bmi-category]");
-    const bmiCursor   = form.querySelector("[data-bmi-cursor]");
-    const bmiHidden   = form.querySelector("[data-bmi-hidden]");
-
-    function updateBmi() {
-      const val = calcBmi(form.initWeight.value, form.initHeight.value);
-      if (bmiHidden) bmiHidden.value = val;
-
-      if (!val) {
-        if (bmiMeter) bmiMeter.classList.add("hidden");
-        return;
-      }
-
-      if (bmiMeter) bmiMeter.classList.remove("hidden");
-
-      const cat = bmiCategory(val, form.gender.value);
-      if (bmiNumber)  { bmiNumber.textContent = val; bmiNumber.style.color = cat ? cat.color : ""; }
-      if (bmiCatEl)   { bmiCatEl.textContent = cat ? cat.label : ""; bmiCatEl.style.color = cat ? cat.color : ""; }
-
-      // Cursor position: linear scale BMI 10–40 (30-unit range)
-      const pct = Math.min(Math.max((parseFloat(val) - 10) / 30 * 100, 0), 100);
-      if (bmiCursor) bmiCursor.style.left = `${pct}%`;
-    }
-    form.initWeight?.addEventListener("input", updateBmi);
-    form.initHeight?.addEventListener("input", updateBmi);
-    form.gender?.addEventListener("change", updateBmi);
+    bindSharedBmiEvents(form);
 
     // ── Duplicate detection ─────────────────────────────────────────────────
     const dupWarnMobile = form.querySelector('[data-dup-warn="mobile"]');
@@ -334,10 +171,10 @@ export const membersModule = {
     }
 
     form.mobile?.addEventListener("blur", () => {
-      const val    = form.mobile.value.trim();
+      const val    = normalizePhone10(form.mobile.value);
       const editId = form.elements['id']?.value || "";
       const match  = val
-        ? context.data.members.find(m => m.mobile?.trim() === val && m.id !== editId)
+        ? context.data.members.find(m => normalizePhone10(m.mobile) === val && m.id !== editId)
         : null;
       showDupWarn(dupWarnMobile, match);
     });
@@ -387,6 +224,17 @@ export const membersModule = {
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
       const payload = formData(form);
+      if (payload.mobile) {
+        payload.mobile = normalizePhone10(payload.mobile);
+      }
+      if (payload.whatsappNumber) {
+        payload.whatsappNumber = normalizePhone10(payload.whatsappNumber);
+      } else if (payload.mobile) {
+        payload.whatsappNumber = payload.mobile;
+      }
+      if (!payload.email && payload.mobile) {
+        payload.email = `${payload.mobile}@gymflow.app`;
+      }
       payload.whatsappOptIn = payload.whatsappOptIn === "true";
       payload.privateLeaderboard = payload.privateLeaderboard === "true";
       if (payload.endDate && payload.startDate && payload.endDate < payload.startDate) {
@@ -430,6 +278,25 @@ export const membersModule = {
         form.joinDate.value = today();
         form.startDate.value = today();
         context.applyChange(collections.members, saved);
+        if (isNew) {
+          setTimeout(async () => {
+            const ok = await confirmDialog({
+              title: `Invite ${saved.fullName}?`,
+              body: `Would you like to send a WhatsApp invitation to join GymFlow now?`,
+              confirmText: "Send Invite",
+              danger: false
+            });
+            if (ok) {
+              const gymName = context.settings?.gymName || "our Gym";
+              const gymCode = context.settings?.gymCode || "";
+              const appUrl = window.location.origin + window.location.pathname;
+              const normalizedMob = normalizePhone10(saved.mobile);
+              const inviteText = `Hello ${saved.fullName}! Welcome to ${gymName}.\n\nTo register and access your workouts, schedules, and consistency points, please open the GymFlow App and set your password:\n${appUrl}#register?invite=${saved.id}&phone=${normalizedMob}&code=${gymCode}`;
+              const waUrl = `https://wa.me/${encodeURIComponent(normalizedMob)}?text=${encodeURIComponent(inviteText)}`;
+              window.open(waUrl, "_blank", "noopener,noreferrer");
+            }
+          }, 100);
+        }
       });
     });
 
@@ -441,6 +308,20 @@ export const membersModule = {
         if (member) {
           showMemberProfileModal(member, context);
         }
+      });
+    });
+
+    root.querySelectorAll("[data-invite-member]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const member = context.data.members.find((item) => item.id === button.dataset.inviteMember);
+        if (!member) return;
+        const gymName = context.settings?.gymName || "our Gym";
+        const gymCode = context.settings?.gymCode || "";
+        const appUrl = window.location.origin + window.location.pathname;
+        const normalizedMob = normalizePhone10(member.mobile);
+        const inviteText = `Hello ${member.fullName}! Welcome to ${gymName}.\n\nTo register and access your workouts, schedules, and consistency points, please open the GymFlow App and set your password:\n${appUrl}#register?invite=${member.id}&phone=${normalizedMob}&code=${gymCode}`;
+        const waUrl = `https://wa.me/${encodeURIComponent(normalizedMob)}?text=${encodeURIComponent(inviteText)}`;
+        window.open(waUrl, "_blank", "noopener,noreferrer");
       });
     });
 
@@ -457,7 +338,10 @@ export const membersModule = {
         if (form.elements.privateLeaderboard) {
           form.elements.privateLeaderboard.checked = !!member.privateLeaderboard;
         }
-        updateBmi();
+        const { feet, inches } = cmToFeetInches(member.initHeight);
+        if (form.heightFeet) form.heightFeet.value = feet != null ? String(feet) : "";
+        if (form.heightInches) form.heightInches.value = inches != null ? String(inches) : "";
+        form.heightFeet?.dispatchEvent(new Event("change"));
         root.querySelector(".panel-heading h2").textContent = "Edit Member";
         form.scrollIntoView({ behavior: "smooth", block: "start" });
       });
@@ -698,6 +582,11 @@ function row(member, plans, trainers) {
       <span data-label="Expiry">${dateLabel(member.endDate)}</span>
       <span data-label="Status"><mark class="status ${statusClass(status)}">${escapeHtml(status)}</mark></span>
       <span class="row-actions">
+        ${
+          !member.uid
+            ? `<button class="icon-button" data-invite-member="${escapeHtml(member.id)}" title="Send WhatsApp Invite" style="color: var(--success, #16a34a);"><span class="material-symbols-outlined">send</span></button>`
+            : ""
+        }
         ${
           member.status === "Pending"
             ? `<button class="icon-button" data-approve-member="${escapeHtml(member.id)}" title="Approve"><span class="material-symbols-outlined">check_circle</span></button>`

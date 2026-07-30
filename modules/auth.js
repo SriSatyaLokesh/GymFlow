@@ -1,6 +1,13 @@
-import { escapeHtml } from "./utils.js";
+import { escapeHtml, normalizePhone10 } from "./utils.js";
 
 export function renderAuth(root, context) {
+  const hash = location.hash || "";
+  const params = new URLSearchParams(hash.substring(hash.indexOf("?") + 1));
+  const inviteId = params.get("invite") || "";
+  const phoneVal = params.get("phone") || "";
+  const codeVal = params.get("code") || "";
+  const isInvite = !!inviteId;
+
   root.innerHTML = `
     <main class="auth-layout">
       <section class="auth-visual">
@@ -12,12 +19,12 @@ export function renderAuth(root, context) {
       </section>
       <section class="auth-panel">
         <div class="auth-tabs">
-          <button class="active" data-auth-tab="login">Login</button>
-          <button data-auth-tab="register">Register</button>
+          <button class="${isInvite ? "" : "active"}" data-auth-tab="login">Login</button>
+          <button class="${isInvite ? "active" : ""}" data-auth-tab="register">Register</button>
         </div>
 
-        <form id="login-form" class="stack auth-form">
-          <label>Email<input name="email" type="email" autocomplete="email" required /></label>
+        <form id="login-form" class="stack auth-form ${isInvite ? "hidden" : ""}">
+          <label>Email or Phone Number<input name="email" type="text" autocomplete="username" required /></label>
           <label>Password
             <div class="password-container">
               <input name="password" type="password" autocomplete="current-password" required />
@@ -29,14 +36,14 @@ export function renderAuth(root, context) {
           ${context.mode === "local" ? `<button class="ghost-button" type="button" data-action="demo">Open demo workspace</button>` : ""}
         </form>
 
-        <div id="register-panel" class="stack hidden">
+        <div id="register-panel" class="stack ${isInvite ? "" : "hidden"}">
           <div class="auth-tabs sub">
-            <button class="active" data-register-mode="owner" type="button">Register a gym</button>
-            <button data-register-mode="member" type="button">Join as member</button>
+            <button class="${isInvite ? "" : "active"}" data-register-mode="owner" type="button">Register a gym</button>
+            <button class="${isInvite ? "active" : ""}" data-register-mode="member" type="button">Join as member</button>
             <button data-register-mode="trainer" type="button">Join as trainer</button>
           </div>
 
-          <form id="register-form" class="stack auth-form">
+          <form id="register-form" class="stack auth-form ${isInvite ? "hidden" : ""}">
             <label>Gym name<input name="gymName" required maxlength="80" /></label>
             <label>Your name<input name="name" autocomplete="name" required maxlength="80" /></label>
             <label>Email<input name="email" type="email" autocomplete="email" required /></label>
@@ -55,10 +62,22 @@ export function renderAuth(root, context) {
             <button class="primary-button" type="submit">Create owner account</button>
           </form>
 
-          <form id="member-register-form" class="stack auth-form hidden">
-            <label>Gym code<input name="gymCode" required maxlength="20" placeholder="e.g. GRIP-4821" autocomplete="off" /></label>
+          <form id="member-register-form" class="stack auth-form ${isInvite ? "" : "hidden"}">
+            <input name="invite" type="hidden" value="${escapeHtml(inviteId)}" />
+            <label>Gym code
+              <input name="gymCode" 
+                     value="${escapeHtml(codeVal)}" 
+                     ${isInvite ? "readonly tabindex='-1' style='opacity: 0.7; pointer-events: none;'" : ""} 
+                     required maxlength="20" placeholder="e.g. GRIP-4821" autocomplete="off" />
+            </label>
             <label>Your name<input name="name" autocomplete="name" required maxlength="80" /></label>
-            <label>Email<input name="email" type="email" autocomplete="email" required /></label>
+            <label>${isInvite ? "Phone Number" : "Email"}
+              <input name="email" 
+                     type="${isInvite ? "text" : "email"}" 
+                     value="${escapeHtml(phoneVal)}" 
+                     ${isInvite ? "readonly tabindex='-1' style='opacity: 0.7; pointer-events: none;'" : ""} 
+                     autocomplete="email" required />
+            </label>
             <label>Password
               <div class="password-container">
                 <input name="password" type="password" minlength="6" autocomplete="new-password" required />
@@ -72,7 +91,7 @@ export function renderAuth(root, context) {
               </div>
             </label>
             <button class="primary-button" type="submit">Join gym</button>
-            <p class="auth-note">Ask your gym for its join code.</p>
+            <p class="auth-note">${isInvite ? "Complete your registration to activate your gym membership." : "Ask your gym for its join code."}</p>
           </form>
 
           <form id="trainer-register-form" class="stack auth-form hidden">
@@ -158,7 +177,12 @@ function bindAuth(root, context) {
     event.preventDefault();
     await run(root, context, async () => {
       const data = Object.fromEntries(new FormData(loginForm).entries());
-      await context.services.auth.login(data.email, data.password);
+      let username = String(data.email || "").trim();
+      const digitsOnly = username.replace(/\D/g, "");
+      if (digitsOnly.length >= 10 && !username.includes("@")) {
+        username = `${digitsOnly.slice(-10)}@gymflow.app`;
+      }
+      await context.services.auth.login(username, data.password);
       context.onToast("Welcome back.");
     });
   });
@@ -181,6 +205,11 @@ function bindAuth(root, context) {
       const data = Object.fromEntries(new FormData(memberForm).entries());
       if (data.password !== data.confirmPassword) {
         throw new Error("Passwords do not match.");
+      }
+      let emailVal = String(data.email || "").trim();
+      const digitsOnly = emailVal.replace(/\D/g, "");
+      if (digitsOnly.length >= 10 && !emailVal.includes("@")) {
+        data.email = `${digitsOnly.slice(-10)}@gymflow.app`;
       }
       await context.services.auth.registerMember(data);
       context.onToast("Welcome! Your gym membership is set up.");
