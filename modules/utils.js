@@ -183,21 +183,13 @@ export function initials(name = "") {
 }
 
 export const CARTOON_AVATARS = [
-  // 30 Women Avatars (happy/smiling, age 20+, no sad/crying faces)
+  // 30 Women Avatars
   ...Array.from({ length: 30 }, (_, i) => {
-    const eyebrows = i % 3 === 0 ? "up" : i % 3 === 1 ? "raised" : "normal";
-    const eyes = i % 2 === 0 ? "happy" : "normal";
-    const mouth = i % 3 === 0 ? "happy" : i % 3 === 1 ? "smile" : "smirk";
-    return `https://api.dicebear.com/9.x/lorelei/svg?seed=female-gym-${i + 1}&size=96&eyebrows=${eyebrows}&eyes=${eyes}&mouth=${mouth}&frecklesProbability=0`;
+    return `https://avatar.iran.liara.run/public/girl?username=female-gym-${i + 1}`;
   }),
-  // 70 Men Avatars (happy/smiling/angry-intense, age 20+, beard probability, no sad/crying)
+  // 70 Men Avatars
   ...Array.from({ length: 70 }, (_, i) => {
-    const isAngry = i % 5 === 0;
-    const eyebrows = isAngry ? "angry" : (i % 3 === 0 ? "up" : "normal");
-    const eyes = isAngry ? "normal" : (i % 2 === 0 ? "happy" : "normal");
-    const mouth = isAngry ? "neutral" : (i % 3 === 0 ? "happy" : i % 3 === 1 ? "smile" : "smirk");
-    const beardProb = i % 3 === 0 ? 0 : 100;
-    return `https://api.dicebear.com/9.x/lorelei/svg?seed=male-gym-${i + 1}&size=96&eyebrows=${eyebrows}&eyes=${eyes}&mouth=${mouth}&frecklesProbability=0&beardProbability=${beardProb}`;
+    return `https://avatar.iran.liara.run/public/boy?username=male-gym-${i + 1}`;
   })
 ];
 
