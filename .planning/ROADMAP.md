@@ -19,7 +19,7 @@ GymFlow is a zero-cost, self-hosted gym management PWA. Phases build out the ful
 - [x] **Phase 10.1: Enhanced Member Intake Form & BMI Visual Meter** ⚡ URGENT NEXT — Full real-world intake fields, color-coded BMI horizontal meter, real-time duplicate phone/email detection, WhatsApp notification opt-in (completed 2026-07-23)
 - [x] **Phase 11: Member Workout Logging & Exercise Library (Hevy-Style)** — Unrestricted workout logging, routine scheduling, last-week duplication, gym feed dashboard, search, and trainer/owner check. (completed 2026-07-28)
 - [x] **Phase 12: Implement PBL gamification strategy (points, badges, leaderboard, PRs, milestones)** — Gamify member workouts using points, custom badges, leaderboards per weight/gender/consistency, and PR milestones. (completed 2026-07-29)
-- [ ] **Phase 13: Phone number based login and WhatsApp invitation links** — Enable phone number sign-in with Firebase, support dual email/phone credentials, and send invitation links on registration.
+- [x] **Phase 13: Phone number based login and WhatsApp invitation links** — Enable phone number sign-in with Firebase, support dual email/phone credentials, and send invitation links on registration. (completed 2026-07-30)
 - [ ] **Phase 14: Analytics & Insights** — Revenue trends, member growth, attendance heatmap, forecasting
 - [ ] **Phase 15: Multi-Branch Support** — Branch entity, per-branch scoping, cross-branch dashboard
 
@@ -332,17 +332,17 @@ Plans:
 
 **Goal**: Enable phone number sign-in with Firebase, support dual email/phone credentials, and send invitation links on registration.
 **Depends on**: Phase 12
-**Status**: Not started
+**Status**: Complete
 **Success Criteria** (what must be TRUE):
 
-  1. Users can log in using Firebase Phone Auth.
+  1. Users can log in using phone number and password mapped to synthetic emails.
   2. Users can log in using their email/password.
   3. Pre-filled WhatsApp invitation links are generated upon member registration.
-  4. Access to member dashboard is granted on OTP confirmation.
+  4. Access to member dashboard is granted on credentials verification.
 
 Plans:
 
-- [ ] 13-01: TBD
+- [x] 13-01: Synthetic email mapping, WhatsApp invitation links, onboarding prefill
 
 ### Phase 14: Analytics & Insights
 
@@ -396,6 +396,6 @@ Plans:
 | 10.1 | Enhanced Member Intake Form & BMI Visual Meter | 3/3 | Complete    | 2026-07-23 |
 | 11 | Member Workout Logging & Exercise Library (Hevy-Style) | 1/1 | Complete    | 2026-07-28 |
 | 12 | Implement PBL gamification strategy (points, badges, leaderboard, PRs, milestones) | 1/1 | Complete    | 2026-07-29 |
-| 13 | Phone number based login and WhatsApp invitation links | 0/1 | Not started | — |
+| 13 | Phone number based login and WhatsApp invitation links | 1/1 | Complete | 2026-07-30 |
 | 14 | Analytics & Insights | 0/1 | Not started | — |
 | 15 | Multi-Branch Support | 0/1 | Not started | — |

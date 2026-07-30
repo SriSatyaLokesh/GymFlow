@@ -1,4 +1,4 @@
-import { addDays, byName, collections, confirmDialog, dateLabel, emptyState, escapeHtml, findName, formData, memberStatus, nameCell, optionList, pageHeader, showMemberProfileModal, statusClass, today, withButtonLoading } from "./utils.js";
+import { addDays, byName, collections, confirmDialog, dateLabel, emptyState, escapeHtml, findName, formData, memberStatus, nameCell, normalizePhone10, optionList, pageHeader, showMemberProfileModal, statusClass, today, withButtonLoading } from "./utils.js";
 
 function calcBmi(weightKg, heightCm) {
   const w = parseFloat(weightKg);
@@ -334,10 +334,10 @@ export const membersModule = {
     }
 
     form.mobile?.addEventListener("blur", () => {
-      const val    = form.mobile.value.trim();
+      const val    = normalizePhone10(form.mobile.value);
       const editId = form.elements['id']?.value || "";
       const match  = val
-        ? context.data.members.find(m => m.mobile?.trim() === val && m.id !== editId)
+        ? context.data.members.find(m => normalizePhone10(m.mobile) === val && m.id !== editId)
         : null;
       showDupWarn(dupWarnMobile, match);
     });
@@ -387,6 +387,17 @@ export const membersModule = {
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
       const payload = formData(form);
+      if (payload.mobile) {
+        payload.mobile = normalizePhone10(payload.mobile);
+      }
+      if (payload.whatsappNumber) {
+        payload.whatsappNumber = normalizePhone10(payload.whatsappNumber);
+      } else if (payload.mobile) {
+        payload.whatsappNumber = payload.mobile;
+      }
+      if (!payload.email && payload.mobile) {
+        payload.email = `${payload.mobile}@gymflow.app`;
+      }
       payload.whatsappOptIn = payload.whatsappOptIn === "true";
       payload.privateLeaderboard = payload.privateLeaderboard === "true";
       if (payload.endDate && payload.startDate && payload.endDate < payload.startDate) {
@@ -430,6 +441,25 @@ export const membersModule = {
         form.joinDate.value = today();
         form.startDate.value = today();
         context.applyChange(collections.members, saved);
+        if (isNew) {
+          setTimeout(async () => {
+            const ok = await confirmDialog({
+              title: `Invite ${saved.fullName}?`,
+              body: `Would you like to send a WhatsApp invitation to join GymFlow now?`,
+              confirmText: "Send Invite",
+              danger: false
+            });
+            if (ok) {
+              const gymName = context.settings?.gymName || "our Gym";
+              const gymCode = context.settings?.gymCode || "";
+              const appUrl = window.location.origin + window.location.pathname;
+              const normalizedMob = normalizePhone10(saved.mobile);
+              const inviteText = `Hello ${saved.fullName}! Welcome to ${gymName}.\n\nTo register and access your workouts, schedules, and consistency points, please open the GymFlow App and set your password:\n${appUrl}#register?invite=${saved.id}&phone=${normalizedMob}&code=${gymCode}`;
+              const waUrl = `https://wa.me/${encodeURIComponent(normalizedMob)}?text=${encodeURIComponent(inviteText)}`;
+              window.open(waUrl, "_blank", "noopener,noreferrer");
+            }
+          }, 100);
+        }
       });
     });
 
@@ -441,6 +471,20 @@ export const membersModule = {
         if (member) {
           showMemberProfileModal(member, context);
         }
+      });
+    });
+
+    root.querySelectorAll("[data-invite-member]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const member = context.data.members.find((item) => item.id === button.dataset.inviteMember);
+        if (!member) return;
+        const gymName = context.settings?.gymName || "our Gym";
+        const gymCode = context.settings?.gymCode || "";
+        const appUrl = window.location.origin + window.location.pathname;
+        const normalizedMob = normalizePhone10(member.mobile);
+        const inviteText = `Hello ${member.fullName}! Welcome to ${gymName}.\n\nTo register and access your workouts, schedules, and consistency points, please open the GymFlow App and set your password:\n${appUrl}#register?invite=${member.id}&phone=${normalizedMob}&code=${gymCode}`;
+        const waUrl = `https://wa.me/${encodeURIComponent(normalizedMob)}?text=${encodeURIComponent(inviteText)}`;
+        window.open(waUrl, "_blank", "noopener,noreferrer");
       });
     });
 
@@ -698,6 +742,11 @@ function row(member, plans, trainers) {
       <span data-label="Expiry">${dateLabel(member.endDate)}</span>
       <span data-label="Status"><mark class="status ${statusClass(status)}">${escapeHtml(status)}</mark></span>
       <span class="row-actions">
+        ${
+          !member.uid
+            ? `<button class="icon-button" data-invite-member="${escapeHtml(member.id)}" title="Send WhatsApp Invite" style="color: var(--success, #16a34a);"><span class="material-symbols-outlined">send</span></button>`
+            : ""
+        }
         ${
           member.status === "Pending"
             ? `<button class="icon-button" data-approve-member="${escapeHtml(member.id)}" title="Approve"><span class="material-symbols-outlined">check_circle</span></button>`

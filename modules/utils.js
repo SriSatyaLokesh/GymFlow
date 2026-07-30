@@ -161,6 +161,11 @@ export function normalizePhone(value = "") {
   return String(value).replace(/[^\d+]/g, "");
 }
 
+export function normalizePhone10(value = "") {
+  const digits = String(value).replace(/\D/g, "");
+  return digits.slice(-10);
+}
+
 export function whatsappUrl(member, message) {
   const phone = normalizePhone(member.mobile);
   return `https://wa.me/${encodeURIComponent(phone)}?text=${encodeURIComponent(message)}`;
