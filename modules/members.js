@@ -197,6 +197,10 @@ export const membersModule = {
             <input type="checkbox" name="whatsappOptIn" value="true" />
             Consent to WhatsApp reminders about membership &amp; renewals
           </label>
+          <label class="wide checkbox-label">
+            <input type="checkbox" name="privateLeaderboard" value="true" />
+            Hide me from leaderboards (Private Profile)
+          </label>
           <div class="button-row">
             <button class="primary-button" type="submit">Save member</button>
             <button class="ghost-button" type="reset" data-action="clear">Clear</button>
@@ -358,6 +362,9 @@ export const membersModule = {
         if (form.elements.whatsappOptIn) {
           form.elements.whatsappOptIn.checked = !!member.whatsappOptIn;
         }
+        if (form.elements.privateLeaderboard) {
+          form.elements.privateLeaderboard.checked = !!member.privateLeaderboard;
+        }
         updateBmi();
         root.querySelector(".panel-heading h2").textContent = "Edit Member";
         form.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -381,6 +388,7 @@ export const membersModule = {
       event.preventDefault();
       const payload = formData(form);
       payload.whatsappOptIn = payload.whatsappOptIn === "true";
+      payload.privateLeaderboard = payload.privateLeaderboard === "true";
       if (payload.endDate && payload.startDate && payload.endDate < payload.startDate) {
         context.toast("End date can't be before the start date.");
         return;
@@ -445,6 +453,9 @@ export const membersModule = {
         });
         if (form.elements.whatsappOptIn) {
           form.elements.whatsappOptIn.checked = !!member.whatsappOptIn;
+        }
+        if (form.elements.privateLeaderboard) {
+          form.elements.privateLeaderboard.checked = !!member.privateLeaderboard;
         }
         updateBmi();
         root.querySelector(".panel-heading h2").textContent = "Edit Member";

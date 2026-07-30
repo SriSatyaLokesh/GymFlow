@@ -1,4 +1,4 @@
-import { collections, dateLabel, daysUntil, emptyState, escapeHtml, findName, formData, memberStatus, nameCell, optionList, pageHeader, today, withButtonLoading } from "./utils.js";
+import { collections, dateLabel, daysUntil, emptyState, escapeHtml, findName, formData, memberStatus, nameCell, optionList, pageHeader, today, withButtonLoading, awardPointsAndBadges } from "./utils.js";
 
 export const attendanceModule = {
   render(context) {
@@ -266,8 +266,8 @@ function bindMemberAttendance(root, context) {
         date: today(),
         time: new Date().toTimeString().slice(0, 5)
       });
-      context.toast("Checked in. Have a great session!");
       context.applyChange(collections.attendance, saved);
+      await awardPointsAndBadges(context, "checkin");
     }, "Checking in...");
   });
 }

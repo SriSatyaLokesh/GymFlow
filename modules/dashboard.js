@@ -1,6 +1,9 @@
 import { dateLabel, daysUntil, escapeHtml, memberStatus, money, pageHeader, statusClass } from "./utils.js";
 
 export const dashboardModule = {
+  activeLeaderboardTab: "points",
+  selectedGender: null,
+  selectedWeightClass: null,
   render(context) {
     if (context.profile?.role === "member") {
       return renderMemberDashboard(context);
@@ -62,7 +65,30 @@ export const dashboardModule = {
         </section>
       </div>
       ${renderCommunityFeed(context)}
+      ${renderLeaderboardPanel(context)}
     `;
+  },
+  bind(root, context) {
+    // Bind leaderboard tab clicks
+    root.querySelectorAll("[data-leaderboard-tab]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        this.activeLeaderboardTab = btn.dataset.leaderboardTab;
+        context.refreshView();
+      });
+    });
+
+    // Bind dropdown changes
+    const genderSelect = root.querySelector("#leaderboard-gender-select");
+    genderSelect?.addEventListener("change", () => {
+      this.selectedGender = genderSelect.value;
+      context.refreshView();
+    });
+
+    const weightSelect = root.querySelector("#leaderboard-weight-select");
+    weightSelect?.addEventListener("change", () => {
+      this.selectedWeightClass = weightSelect.value;
+      context.refreshView();
+    });
   }
 };
 
@@ -118,6 +144,7 @@ function renderMemberDashboard(context) {
       }
     </section>
     ${renderCommunityFeed(context)}
+    ${renderLeaderboardPanel(context)}
   `;
 }
 
@@ -161,6 +188,7 @@ function renderTrainerDashboard(context) {
       }
     </section>
     ${renderCommunityFeed(context)}
+    ${renderLeaderboardPanel(context)}
   `;
 }
 
@@ -263,6 +291,176 @@ function renderCommunityFeed(context) {
            </div>`
         : `<div class="table-empty">No workouts shared in the community feed yet.</div>`
       }
+    </section>
+  `;
+}
+
+function renderLeaderboardPanel(context) {
+  const activeTab = dashboardModule.activeLeaderboardTab || "points";
+  const gymId = context.profile?.gymId || context.myMember?.gymId || "";
+  const sameGymMembers = (context.data.members || []).filter(m => m.gymId === gymId && m.status !== "Pending" && !m.privateLeaderboard);
+
+  const getWeight = (memberId) => {
+    const records = (context.data.progress_records || []).filter(r => r.memberId === memberId);
+    if (records.length === 0) return 0;
+    const sorted = [...records].sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")));
+    return Number(sorted[0].weight || 0);
+  };
+
+  const rankedList = sameGymMembers.map(m => {
+    const weight = getWeight(m.id);
+    let weightClass = "Under 65kg";
+    if (weight >= 85) weightClass = "85kg+";
+    else if (weight >= 75) weightClass = "75-85kg";
+    else if (weight >= 65) weightClass = "65-75kg";
+
+    const currentMonth = new Date().toISOString().slice(0, 7);
+    const monthlyCheckins = (context.data.attendance || [])
+      .filter(r => r.memberId === m.id && String(r.date || "").startsWith(currentMonth)).length;
+
+    return {
+      id: m.id,
+      fullName: m.fullName,
+      points: Number(m.points || 0),
+      streak: Number(m.currentStreak || 0),
+      monthlyCheckins,
+      gender: m.gender || "Not specified",
+      weight,
+      weightClass
+    };
+  });
+
+  // Default filter initialization
+  if (context.profile?.role === "member" && context.myMember) {
+    if (!dashboardModule.selectedGender) {
+      dashboardModule.selectedGender = context.myMember.gender || "All";
+    }
+    if (!dashboardModule.selectedWeightClass) {
+      const memberWeight = getWeight(context.myMember.id);
+      if (memberWeight >= 85) dashboardModule.selectedWeightClass = "85kg+";
+      else if (memberWeight >= 75) dashboardModule.selectedWeightClass = "75-85kg";
+      else if (memberWeight >= 65) dashboardModule.selectedWeightClass = "65-75kg";
+      else if (memberWeight > 0) dashboardModule.selectedWeightClass = "Under 65kg";
+      else dashboardModule.selectedWeightClass = "All";
+    }
+  } else {
+    dashboardModule.selectedGender ||= "All";
+    dashboardModule.selectedWeightClass ||= "All";
+  }
+
+  let filteredRanked = [...rankedList];
+  let displayValueKey = "points";
+  let displayUnit = "pts";
+
+  if (activeTab === "points") {
+    filteredRanked.sort((a, b) => b.points - a.points || a.fullName.localeCompare(b.fullName));
+    displayValueKey = "points";
+    displayUnit = "pts";
+  } else if (activeTab === "consistency") {
+    filteredRanked.sort((a, b) => b.streak - a.streak || b.monthlyCheckins - a.monthlyCheckins || a.fullName.localeCompare(b.fullName));
+    displayValueKey = "streak";
+    displayUnit = "days streak";
+  } else if (activeTab === "weight") {
+    const genderFilter = dashboardModule.selectedGender;
+    const weightFilter = dashboardModule.selectedWeightClass;
+
+    if (genderFilter !== "All") {
+      filteredRanked = filteredRanked.filter(m => m.gender === genderFilter);
+    }
+    if (weightFilter !== "All") {
+      filteredRanked = filteredRanked.filter(m => m.weightClass === weightFilter);
+    }
+
+    filteredRanked.sort((a, b) => b.points - a.points || a.fullName.localeCompare(b.fullName));
+    displayValueKey = "points";
+    displayUnit = "pts";
+  }
+
+  const tabButton = (tabId, icon, label) => `
+    <button class="tab-btn ${activeTab === tabId ? "active" : ""}" data-leaderboard-tab="${tabId}" style="padding: 8px 16px; font-size: 0.85rem; display: flex; align-items: center; gap: 6px;">
+      <span class="material-symbols-outlined" style="font-size: 1.1rem;">${icon}</span> ${label}
+    </button>
+  `;
+
+  let filterControls = "";
+  if (activeTab === "weight") {
+    filterControls = `
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 12px; background: var(--bg-alt); padding: 10px; border-radius: var(--r-sm); border: 1px solid var(--line);">
+        <label style="display: flex; align-items: center; gap: 6px; font-size: 0.85rem;">
+          Gender:
+          <select id="leaderboard-gender-select" style="padding: 4px 8px; border-radius: var(--r-sm); background: var(--bg); border: 1px solid var(--line); color: var(--text);">
+            <option value="All" ${dashboardModule.selectedGender === "All" ? "selected" : ""}>All</option>
+            <option value="Male" ${dashboardModule.selectedGender === "Male" ? "selected" : ""}>Male</option>
+            <option value="Female" ${dashboardModule.selectedGender === "Female" ? "selected" : ""}>Female</option>
+            <option value="Other" ${dashboardModule.selectedGender === "Other" ? "selected" : ""}>Other</option>
+          </select>
+        </label>
+        <label style="display: flex; align-items: center; gap: 6px; font-size: 0.85rem;">
+          Weight Range:
+          <select id="leaderboard-weight-select" style="padding: 4px 8px; border-radius: var(--r-sm); background: var(--bg); border: 1px solid var(--line); color: var(--text);">
+            <option value="All" ${dashboardModule.selectedWeightClass === "All" ? "selected" : ""}>All</option>
+            <option value="Under 65kg" ${dashboardModule.selectedWeightClass === "Under 65kg" ? "selected" : ""}>Under 65kg</option>
+            <option value="65-75kg" ${dashboardModule.selectedWeightClass === "65-75kg" ? "selected" : ""}>65-75kg</option>
+            <option value="75-85kg" ${dashboardModule.selectedWeightClass === "75-85kg" ? "selected" : ""}>75-85kg</option>
+            <option value="85kg+" ${dashboardModule.selectedWeightClass === "85kg+" ? "selected" : ""}>85kg+</option>
+          </select>
+        </label>
+      </div>
+    `;
+  }
+
+  return `
+    <section class="panel stack" style="margin-top: 20px;">
+      <div class="panel-heading">
+        <h2>Gym Leaderboard</h2>
+        <span>Rankings & Achievements</span>
+      </div>
+
+      <div class="tabs-header" style="margin-bottom: 12px; border-bottom: 1px solid var(--line); justify-content: flex-start; gap: 8px; overflow-x: auto; white-space: nowrap; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; scrollbar-width: none; display: flex; padding-bottom: 4px;">
+        ${tabButton("points", "emoji_events", "Points")}
+        ${tabButton("consistency", "local_fire_department", "Consistency")}
+        ${tabButton("weight", "fitness_center", "Weight Class")}
+      </div>
+
+      ${filterControls}
+
+      <div class="list-table compact">
+        ${filteredRanked.length ? filteredRanked.map((member, index) => {
+          const isMe = context.myMember && context.myMember.id === member.id;
+          let rowStyle = "padding: 12px 15px; display: flex; align-items: center; justify-content: space-between; border-radius: var(--r-sm); margin-bottom: 6px; transition: transform 0.2s ease;";
+          let rankBadge = "";
+          
+          if (index === 0) {
+            rowStyle += " background: linear-gradient(135deg, rgba(255, 215, 0, 0.12) 0%, rgba(255, 179, 0, 0.04) 100%); border-left: 4px solid #FFD700; box-shadow: 0 2px 8px rgba(255, 215, 0, 0.1);";
+            rankBadge = `<span style="font-size: 1.4rem; filter: drop-shadow(0 2px 4px rgba(255,215,0,0.5));">🥇</span>`;
+          } else if (index === 1) {
+            rowStyle += " background: linear-gradient(135deg, rgba(192, 192, 192, 0.12) 0%, rgba(144, 164, 174, 0.04) 100%); border-left: 4px solid #C0C0C0; box-shadow: 0 2px 8px rgba(192, 192, 192, 0.1);";
+            rankBadge = `<span style="font-size: 1.4rem; filter: drop-shadow(0 2px 4px rgba(192,192,192,0.5));">🥈</span>`;
+          } else if (index === 2) {
+            rowStyle += " background: linear-gradient(135deg, rgba(205, 127, 50, 0.12) 0%, rgba(216, 67, 21, 0.04) 100%); border-left: 4px solid #CD7F32; box-shadow: 0 2px 8px rgba(205, 127, 50, 0.1);";
+            rankBadge = `<span style="font-size: 1.4rem; filter: drop-shadow(0 2px 4px rgba(205,127,50,0.5));">🥉</span>`;
+          } else {
+            rowStyle += " border-left: 4px solid transparent;";
+            rankBadge = `<span style="font-size: 0.95rem; font-weight: 700; color: var(--text-muted); width: 24px; text-align: center; display: inline-block;">${index + 1}</span>`;
+          }
+
+          if (isMe) {
+            rowStyle += " border: 1px solid var(--primary); box-shadow: 0 4px 12px rgba(var(--primary-rgb, 217, 119, 6), 0.15);";
+          }
+          
+          return `
+            <div class="table-row" style="${rowStyle}">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 30px; display: flex; justify-content: center; align-items: center;">${rankBadge}</div>
+                <span style="color: var(--text); font-weight: ${isMe ? '700' : '500'};">${escapeHtml(member.fullName)} ${isMe ? '<small style="color: var(--primary); font-weight: normal; margin-left: 4px;">(You)</small>' : ''}</span>
+              </div>
+              <span style="color: var(--accent); font-weight: 700; font-size: 1.05rem;">
+                ${member[displayValueKey]} <small style="font-weight: normal; font-size: 0.8rem; opacity: 0.85;">${displayUnit}</small>
+              </span>
+            </div>
+          `;
+        }).join("") : `<div class="table-empty">No members ranked in this category yet.</div>`}
+      </div>
     </section>
   `;
 }
