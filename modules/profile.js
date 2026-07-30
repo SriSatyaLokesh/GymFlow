@@ -48,49 +48,67 @@ export const profileModule = {
       currentBg = parts[2] || "#3a7bd5,#3a6073";
     }
 
+    const emailVal = context.profile.email || "";
+    const isSyntheticEmail = emailVal.endsWith("@gymflow.app");
+
     // Role-specific View Mode HTML
     let roleDetailsView = "";
     if (role === "member") {
       roleDetailsView = `
-        <div><strong>WhatsApp Number</strong><p style="margin: 4px 0 0 0; color: var(--text-muted);">${escapeHtml(me.whatsappNumber) || "--"}</p></div>
-        <div><strong>Gender</strong><p style="margin: 4px 0 0 0; color: var(--text-muted);">${escapeHtml(me.gender) || "--"}</p></div>
-        <div><strong>Date of Birth</strong><p style="margin: 4px 0 0 0; color: var(--text-muted);">${escapeHtml(me.dateOfBirth) || "--"}</p></div>
-        <div class="wide"><strong>Address</strong><p style="margin: 4px 0 0 0; color: var(--text-muted);">${escapeHtml(me.address) || "--"}</p></div>
+        <div><strong>WhatsApp Number</strong><p style="margin: 4px 0 0 0; color: var(--text-muted); word-break: break-all; overflow-wrap: break-word;">${escapeHtml(me.whatsappNumber) || "--"}</p></div>
+        <div><strong>Gender</strong><p style="margin: 4px 0 0 0; color: var(--text-muted); word-break: break-all; overflow-wrap: break-word;">${escapeHtml(me.gender) || "--"}</p></div>
+        <div><strong>Date of Birth</strong><p style="margin: 4px 0 0 0; color: var(--text-muted); word-break: break-all; overflow-wrap: break-word;">${escapeHtml(me.dateOfBirth) || "--"}</p></div>
+        <div class="wide"><strong>Address</strong><p style="margin: 4px 0 0 0; color: var(--text-muted); word-break: break-all; overflow-wrap: break-word;">${escapeHtml(me.address) || "--"}</p></div>
         
         <div class="form-section-heading wide" style="margin-top: 15px;">Emergency Contact</div>
-        <div><strong>Contact Name</strong><p style="margin: 4px 0 0 0; color: var(--text-muted);">${escapeHtml(me.emergencyName) || "--"}</p></div>
-        <div><strong>Relationship</strong><p style="margin: 4px 0 0 0; color: var(--text-muted);">${escapeHtml(me.emergencyRelationship) || "--"}</p></div>
-        <div><strong>Contact Phone</strong><p style="margin: 4px 0 0 0; color: var(--text-muted);">${escapeHtml(me.emergencyPhone) || "--"}</p></div>
+        <div><strong>Contact Name</strong><p style="margin: 4px 0 0 0; color: var(--text-muted); word-break: break-all; overflow-wrap: break-word;">${escapeHtml(me.emergencyName) || "--"}</p></div>
+        <div><strong>Relationship</strong><p style="margin: 4px 0 0 0; color: var(--text-muted); word-break: break-all; overflow-wrap: break-word;">${escapeHtml(me.emergencyRelationship) || "--"}</p></div>
+        <div><strong>Contact Phone</strong><p style="margin: 4px 0 0 0; color: var(--text-muted); word-break: break-all; overflow-wrap: break-word;">${escapeHtml(me.emergencyPhone) || "--"}</p></div>
         
         <div class="form-section-heading wide" style="margin-top: 15px;">Initial Measurements</div>
-        <div><strong>Weight</strong><p style="margin: 4px 0 0 0; color: var(--text-muted);">${me.initWeight != null ? me.initWeight + " kg" : "--"}</p></div>
-        <div><strong>Height</strong><p style="margin: 4px 0 0 0; color: var(--text-muted);">${me.initHeight != null ? me.initHeight + " cm" : "--"}</p></div>
-        <div><strong>Body Fat</strong><p style="margin: 4px 0 0 0; color: var(--text-muted);">${me.initBodyFat != null ? me.initBodyFat + " %" : "--"}</p></div>
-        <div><strong>Waist</strong><p style="margin: 4px 0 0 0; color: var(--text-muted);">${me.initWaist != null ? me.initWaist + " cm" : "--"}</p></div>
-        <div><strong>Chest</strong><p style="margin: 4px 0 0 0; color: var(--text-muted);">${me.initChest != null ? me.initChest + " cm" : "--"}</p></div>
-        <div><strong>Hip</strong><p style="margin: 4px 0 0 0; color: var(--text-muted);">${me.initHip != null ? me.initHip + " cm" : "--"}</p></div>
+        <div><strong>Weight</strong><p style="margin: 4px 0 0 0; color: var(--text-muted); word-break: break-all; overflow-wrap: break-word;">${me.initWeight != null ? me.initWeight + " kg" : "--"}</p></div>
+        <div><strong>Height</strong><p style="margin: 4px 0 0 0; color: var(--text-muted); word-break: break-all; overflow-wrap: break-word;">${me.initHeight != null ? me.initHeight + " cm" : "--"}</p></div>
+        <div><strong>Body Fat</strong><p style="margin: 4px 0 0 0; color: var(--text-muted); word-break: break-all; overflow-wrap: break-word;">${me.initBodyFat != null ? me.initBodyFat + " %" : "--"}</p></div>
+        <div><strong>Waist</strong><p style="margin: 4px 0 0 0; color: var(--text-muted); word-break: break-all; overflow-wrap: break-word;">${me.initWaist != null ? me.initWaist + " cm" : "--"}</p></div>
+        <div><strong>Chest</strong><p style="margin: 4px 0 0 0; color: var(--text-muted); word-break: break-all; overflow-wrap: break-word;">${me.initChest != null ? me.initChest + " cm" : "--"}</p></div>
+        <div><strong>Hip</strong><p style="margin: 4px 0 0 0; color: var(--text-muted); word-break: break-all; overflow-wrap: break-word;">${me.initHip != null ? me.initHip + " cm" : "--"}</p></div>
         
         <div class="form-section-heading wide" style="margin-top: 15px;">Medical &amp; Background</div>
-        <div><strong>Blood Group</strong><p style="margin: 4px 0 0 0; color: var(--text-muted);">${escapeHtml(me.bloodGroup) || "--"}</p></div>
-        <div><strong>Occupation</strong><p style="margin: 4px 0 0 0; color: var(--text-muted);">${escapeHtml(me.occupation) || "--"}</p></div>
-        <div class="wide"><strong>Medical Conditions</strong><p style="margin: 4px 0 0 0; color: var(--text-muted);">${escapeHtml(me.medicalConditions) || "--"}</p></div>
+        <div><strong>Blood Group</strong><p style="margin: 4px 0 0 0; color: var(--text-muted); word-break: break-all; overflow-wrap: break-word;">${escapeHtml(me.bloodGroup) || "--"}</p></div>
+        <div><strong>Occupation</strong><p style="margin: 4px 0 0 0; color: var(--text-muted); word-break: break-all; overflow-wrap: break-word;">${escapeHtml(me.occupation) || "--"}</p></div>
+        <div class="wide"><strong>Medical Conditions</strong><p style="margin: 4px 0 0 0; color: var(--text-muted); word-break: break-all; overflow-wrap: break-word;">${escapeHtml(me.medicalConditions) || "--"}</p></div>
       `;
     } else if (role === "trainer") {
       roleDetailsView = `
-        <div><strong>Specialization</strong><p style="margin: 4px 0 0 0; color: var(--text-muted);">${escapeHtml(tr.specialization) || "--"}</p></div>
-        <div><strong>Experience</strong><p style="margin: 4px 0 0 0; color: var(--text-muted);">${escapeHtml(tr.experience) || "--"}</p></div>
-        <div class="wide"><strong>Certifications</strong><p style="margin: 4px 0 0 0; color: var(--text-muted);">${escapeHtml(tr.certifications) || "--"}</p></div>
+        <div><strong>Specialization</strong><p style="margin: 4px 0 0 0; color: var(--text-muted); word-break: break-all; overflow-wrap: break-word;">${escapeHtml(tr.specialization) || "--"}</p></div>
+        <div><strong>Experience</strong><p style="margin: 4px 0 0 0; color: var(--text-muted); word-break: break-all; overflow-wrap: break-word;">${escapeHtml(tr.experience) || "--"}</p></div>
+        <div class="wide"><strong>Certifications</strong><p style="margin: 4px 0 0 0; color: var(--text-muted); word-break: break-all; overflow-wrap: break-word;">${escapeHtml(tr.certifications) || "--"}</p></div>
       `;
     }
 
-    // Role-specific Edit Mode Form HTML
+    // Role-specific Edit Mode Form HTML with synthetic email handling
     let roleFields = "";
+    let emailFieldHtml = "";
+
+    if (isSyntheticEmail) {
+      emailFieldHtml = `
+        <label class="wide">Email
+          <input name="email" type="text" value="Phone Authentication (No Email)" disabled style="opacity: 0.7;" />
+          <p class="panel-hint" style="margin-top: 4px; font-size: 0.8rem; color: var(--text-muted);">As your account uses phone number authentication, you do not have a linked email address.</p>
+        </label>
+      `;
+    } else {
+      emailFieldHtml = `
+        <label>Email (Read-only)
+          <input name="email" type="email" value="${escapeHtml(emailVal)}" disabled style="opacity: 0.7;" />
+        </label>
+      `;
+    }
+
     if (role === "member") {
       roleFields = `
         <div class="form-grid">
-          <label>Email (Read-only)
-            <input name="email" type="email" value="${escapeHtml(context.profile.email)}" disabled style="opacity: 0.7;" />
-          </label>
+          ${emailFieldHtml}
           <label>Mobile
             <input name="mobile" required maxlength="10" value="${escapeHtml(me.mobile || "")}" />
           </label>
@@ -222,9 +240,7 @@ export const profileModule = {
     } else if (role === "trainer") {
       roleFields = `
         <div class="form-grid">
-          <label>Email (Read-only)
-            <input name="email" type="email" value="${escapeHtml(context.profile.email)}" disabled style="opacity: 0.7;" />
-          </label>
+          ${emailFieldHtml}
           <label>Mobile
             <input name="mobile" required maxlength="10" value="${escapeHtml(tr.mobile || "")}" />
           </label>
@@ -242,15 +258,15 @@ export const profileModule = {
     } else if (role === "owner") {
       roleFields = `
         <div class="form-grid">
-          <label>Email (Read-only)
-            <input name="email" type="email" value="${escapeHtml(context.profile.email)}" disabled style="opacity: 0.7;" />
-          </label>
+          ${emailFieldHtml}
           <label>Mobile
             <input name="mobile" maxlength="10" value="${escapeHtml(context.profile.mobile || "")}" />
           </label>
         </div>
       `;
     }
+
+    const emailDisplay = isSyntheticEmail ? "Phone Authentication (No Email)" : emailVal;
 
     return `
       ${pageHeader("My Profile")}
@@ -262,7 +278,7 @@ export const profileModule = {
               <img src="${escapeHtml(getAvatarUrl(selectedAvatar))}" style="width: 100%; height: 100%; object-fit: cover;" />
             </div>
             <div class="stack" style="gap: 4px; flex: 1;">
-              <h2 style="margin: 0; font-size: 1.5rem;">${escapeHtml(context.profile.name)}</h2>
+              <h2 style="margin: 0; font-size: 1.5rem; word-break: break-all; overflow-wrap: break-word;">${escapeHtml(context.profile.name)}</h2>
               <span class="badge" style="align-self: flex-start; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em;">${context.profile.role}</span>
             </div>
             <button id="start-edit-btn" class="ghost-button" type="button" style="display: flex; align-items: center; gap: 6px;">
@@ -272,8 +288,8 @@ export const profileModule = {
           </div>
           
           <div class="form-grid" style="margin-top: 10px;">
-            <div><strong>Email</strong><p style="margin: 4px 0 0 0; color: var(--text-muted);">${escapeHtml(context.profile.email)}</p></div>
-            <div><strong>Mobile</strong><p style="margin: 4px 0 0 0; color: var(--text-muted);">${escapeHtml(role === "owner" ? context.profile.mobile : (role === "member" ? me.mobile : tr.mobile)) || "--"}</p></div>
+            <div><strong>Email</strong><p style="margin: 4px 0 0 0; color: var(--text-muted); font-size: 0.9rem; word-break: break-all; overflow-wrap: break-word; font-style: ${isSyntheticEmail ? 'italic' : 'normal'};">${escapeHtml(emailDisplay)}</p></div>
+            <div><strong>Mobile</strong><p style="margin: 4px 0 0 0; color: var(--text-muted); word-break: break-all; overflow-wrap: break-word;">${escapeHtml(role === "owner" ? context.profile.mobile : (role === "member" ? me.mobile : tr.mobile)) || "--"}</p></div>
             ${roleDetailsView}
           </div>
         </div>
