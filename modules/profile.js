@@ -48,6 +48,42 @@ export const profileModule = {
       currentBg = parts[2] || "#3a7bd5,#3a6073";
     }
 
+    // Role-specific View Mode HTML
+    let roleDetailsView = "";
+    if (role === "member") {
+      roleDetailsView = `
+        <div><strong>WhatsApp Number</strong><p style="margin: 4px 0 0 0; color: var(--text-muted);">${escapeHtml(me.whatsappNumber) || "--"}</p></div>
+        <div><strong>Gender</strong><p style="margin: 4px 0 0 0; color: var(--text-muted);">${escapeHtml(me.gender) || "--"}</p></div>
+        <div><strong>Date of Birth</strong><p style="margin: 4px 0 0 0; color: var(--text-muted);">${escapeHtml(me.dateOfBirth) || "--"}</p></div>
+        <div class="wide"><strong>Address</strong><p style="margin: 4px 0 0 0; color: var(--text-muted);">${escapeHtml(me.address) || "--"}</p></div>
+        
+        <div class="form-section-heading wide" style="margin-top: 15px;">Emergency Contact</div>
+        <div><strong>Contact Name</strong><p style="margin: 4px 0 0 0; color: var(--text-muted);">${escapeHtml(me.emergencyName) || "--"}</p></div>
+        <div><strong>Relationship</strong><p style="margin: 4px 0 0 0; color: var(--text-muted);">${escapeHtml(me.emergencyRelationship) || "--"}</p></div>
+        <div><strong>Contact Phone</strong><p style="margin: 4px 0 0 0; color: var(--text-muted);">${escapeHtml(me.emergencyPhone) || "--"}</p></div>
+        
+        <div class="form-section-heading wide" style="margin-top: 15px;">Initial Measurements</div>
+        <div><strong>Weight</strong><p style="margin: 4px 0 0 0; color: var(--text-muted);">${me.initWeight != null ? me.initWeight + " kg" : "--"}</p></div>
+        <div><strong>Height</strong><p style="margin: 4px 0 0 0; color: var(--text-muted);">${me.initHeight != null ? me.initHeight + " cm" : "--"}</p></div>
+        <div><strong>Body Fat</strong><p style="margin: 4px 0 0 0; color: var(--text-muted);">${me.initBodyFat != null ? me.initBodyFat + " %" : "--"}</p></div>
+        <div><strong>Waist</strong><p style="margin: 4px 0 0 0; color: var(--text-muted);">${me.initWaist != null ? me.initWaist + " cm" : "--"}</p></div>
+        <div><strong>Chest</strong><p style="margin: 4px 0 0 0; color: var(--text-muted);">${me.initChest != null ? me.initChest + " cm" : "--"}</p></div>
+        <div><strong>Hip</strong><p style="margin: 4px 0 0 0; color: var(--text-muted);">${me.initHip != null ? me.initHip + " cm" : "--"}</p></div>
+        
+        <div class="form-section-heading wide" style="margin-top: 15px;">Medical &amp; Background</div>
+        <div><strong>Blood Group</strong><p style="margin: 4px 0 0 0; color: var(--text-muted);">${escapeHtml(me.bloodGroup) || "--"}</p></div>
+        <div><strong>Occupation</strong><p style="margin: 4px 0 0 0; color: var(--text-muted);">${escapeHtml(me.occupation) || "--"}</p></div>
+        <div class="wide"><strong>Medical Conditions</strong><p style="margin: 4px 0 0 0; color: var(--text-muted);">${escapeHtml(me.medicalConditions) || "--"}</p></div>
+      `;
+    } else if (role === "trainer") {
+      roleDetailsView = `
+        <div><strong>Specialization</strong><p style="margin: 4px 0 0 0; color: var(--text-muted);">${escapeHtml(tr.specialization) || "--"}</p></div>
+        <div><strong>Experience</strong><p style="margin: 4px 0 0 0; color: var(--text-muted);">${escapeHtml(tr.experience) || "--"}</p></div>
+        <div class="wide"><strong>Certifications</strong><p style="margin: 4px 0 0 0; color: var(--text-muted);">${escapeHtml(tr.certifications) || "--"}</p></div>
+      `;
+    }
+
+    // Role-specific Edit Mode Form HTML
     let roleFields = "";
     if (role === "member") {
       roleFields = `
@@ -219,11 +255,35 @@ export const profileModule = {
     return `
       ${pageHeader("My Profile")}
       <div class="work-grid">
-        <form id="profile-edit-form" class="panel stack" style="gap: 16px;">
+        <!-- View Mode Panel -->
+        <div id="profile-view-section" class="panel stack" style="gap: 20px;">
+          <div style="display: flex; gap: 20px; align-items: center; border-bottom: 1px solid var(--line); padding-bottom: 20px;">
+            <div style="width: 80px; height: 80px; border-radius: 50%; overflow: hidden; border: 2px solid var(--primary); display: flex; align-items: center; justify-content: center; background: var(--bg-light); flex-shrink: 0;">
+              <img src="${escapeHtml(getAvatarUrl(selectedAvatar))}" style="width: 100%; height: 100%; object-fit: cover;" />
+            </div>
+            <div class="stack" style="gap: 4px; flex: 1;">
+              <h2 style="margin: 0; font-size: 1.5rem;">${escapeHtml(context.profile.name)}</h2>
+              <span class="badge" style="align-self: flex-start; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em;">${context.profile.role}</span>
+            </div>
+            <button id="start-edit-btn" class="ghost-button" type="button" style="display: flex; align-items: center; gap: 6px;">
+              <span class="material-symbols-outlined" style="font-size: 1.25rem;">edit</span>
+              Edit Profile
+            </button>
+          </div>
+          
+          <div class="form-grid" style="margin-top: 10px;">
+            <div><strong>Email</strong><p style="margin: 4px 0 0 0; color: var(--text-muted);">${escapeHtml(context.profile.email)}</p></div>
+            <div><strong>Mobile</strong><p style="margin: 4px 0 0 0; color: var(--text-muted);">${escapeHtml(role === "owner" ? context.profile.mobile : (role === "member" ? me.mobile : tr.mobile)) || "--"}</p></div>
+            ${roleDetailsView}
+          </div>
+        </div>
+
+        <!-- Edit Mode Panel (Hidden by default) -->
+        <form id="profile-edit-form" class="panel stack" style="gap: 16px; display: none;">
           <div class="panel-heading"><h2>Edit Profile Details</h2></div>
           
           <div style="display: flex; gap: 20px; align-items: center; margin-bottom: 10px;">
-            <div id="avatar-preview-container" style="width: 84px; height: 84px; border-radius: 50%; overflow: hidden; border: 3px solid var(--primary); display: flex; align-items: center; justify-content: center; background: var(--bg-light); box-shadow: var(--shadow-md);"></div>
+            <div id="avatar-preview-container" style="width: 84px; height: 84px; border-radius: 50%; overflow: hidden; border: 3px solid var(--primary); display: flex; align-items: center; justify-content: center; background: var(--bg-light); box-shadow: var(--shadow-md); flex-shrink: 0;"></div>
             <div class="stack" style="gap: 4px;">
               <label style="font-weight: 600; font-size: 1.1rem; margin: 0;">Avatar Creator</label>
               <span class="panel-hint">Design your custom avatar using any emoji and background color.</span>
@@ -268,15 +328,22 @@ export const profileModule = {
 
           ${roleFields}
           
-          <button class="primary-button" type="submit" style="margin-top: 10px; align-self: flex-start;">Save Changes</button>
+          <div class="button-row" style="margin-top: 15px; display: flex; gap: 10px;">
+            <button id="cancel-edit-btn" class="ghost-button" type="button">Cancel</button>
+            <button class="primary-button" type="submit">Save Changes</button>
+          </div>
         </form>
       </div>
     `;
   },
 
   bind(root, context) {
-    const form = root.querySelector("#profile-edit-form");
-    if (!form) return;
+    const viewSection = root.querySelector("#profile-view-section");
+    const editForm = root.querySelector("#profile-edit-form");
+    const startEditBtn = root.querySelector("#start-edit-btn");
+    const cancelEditBtn = root.querySelector("#cancel-edit-btn");
+
+    if (!editForm) return;
 
     const previewContainer = root.querySelector("#avatar-preview-container");
     const emojiInput = root.querySelector("#custom-emoji-input");
@@ -299,8 +366,17 @@ export const profileModule = {
       previewContainer.innerHTML = `<img src="${escapeHtml(url)}" style="width: 100%; height: 100%; object-fit: cover;" />`;
     }
 
-    // Initialize preview
-    renderPreview();
+    // Toggle Edit Mode
+    startEditBtn?.addEventListener("click", () => {
+      viewSection.style.display = "none";
+      editForm.style.display = "flex";
+      renderPreview();
+    });
+
+    cancelEditBtn?.addEventListener("click", () => {
+      editForm.style.display = "none";
+      viewSection.style.display = "flex";
+    });
 
     // Listen to custom emoji keyboard inputs
     emojiInput.addEventListener("input", (e) => {
@@ -332,15 +408,15 @@ export const profileModule = {
       });
     });
 
-    form.addEventListener("submit", async (event) => {
+    editForm.addEventListener("submit", async (event) => {
       event.preventDefault();
-      const submitBtn = form.querySelector("[type='submit']");
-      const name = form.querySelector("[name='name']").value.trim();
+      const submitBtn = editForm.querySelector("[type='submit']");
+      const name = editForm.querySelector("[name='name']").value.trim();
       if (!name) return;
 
       submitBtn.disabled = true;
       try {
-        const mobileVal = form.querySelector("[name='mobile']")?.value.trim() || "";
+        const mobileVal = editForm.querySelector("[name='mobile']")?.value.trim() || "";
         await context.services.auth.updateProfile({
           name,
           avatarUrl: selectedAvatar,
@@ -353,30 +429,30 @@ export const profileModule = {
             fullName: name,
             avatarUrl: selectedAvatar,
             mobile: mobileVal,
-            whatsappNumber: form.querySelector("[name='whatsappNumber']")?.value.trim() || "",
-            gender: form.querySelector("[name='gender']")?.value || "Not specified",
-            dateOfBirth: form.querySelector("[name='dateOfBirth']")?.value || "",
-            address: form.querySelector("[name='address']")?.value.trim() || "",
-            emergencyName: form.querySelector("[name='emergencyName']")?.value.trim() || "",
-            emergencyRelationship: form.querySelector("[name='emergencyRelationship']")?.value || "",
-            emergencyPhone: form.querySelector("[name='emergencyPhone']")?.value.trim() || "",
-            gymGoal: form.querySelector("[name='gymGoal']")?.value || "",
-            bloodGroup: form.querySelector("[name='bloodGroup']")?.value || "",
-            occupation: form.querySelector("[name='occupation']")?.value.trim() || "",
-            activityLevel: form.querySelector("[name='activityLevel']")?.value || "",
-            fitnessExperience: form.querySelector("[name='fitnessExperience']")?.value || "",
-            medicalConditions: form.querySelector("[name='medicalConditions']")?.value.trim() || "",
-            currentMedications: form.querySelector("[name='currentMedications']")?.value.trim() || "",
-            allergies: form.querySelector("[name='allergies']")?.value.trim() || "",
-            physicalLimitations: form.querySelector("[name='physicalLimitations']")?.value.trim() || "",
-            initWeight: form.querySelector("[name='initWeight']")?.value ? parseFloat(form.querySelector("[name='initWeight']").value) : "",
-            initHeight: form.querySelector("[name='initHeight']")?.value ? parseFloat(form.querySelector("[name='initHeight']").value) : "",
-            initBodyFat: form.querySelector("[name='initBodyFat']")?.value ? parseFloat(form.querySelector("[name='initBodyFat']").value) : "",
-            initWaist: form.querySelector("[name='initWaist']")?.value ? parseFloat(form.querySelector("[name='initWaist']").value) : "",
-            initChest: form.querySelector("[name='initChest']")?.value ? parseFloat(form.querySelector("[name='initChest']").value) : "",
-            initHip: form.querySelector("[name='initHip']")?.value ? parseFloat(form.querySelector("[name='initHip']").value) : "",
-            initBicep: form.querySelector("[name='initBicep']")?.value ? parseFloat(form.querySelector("[name='initBicep']").value) : "",
-            initThigh: form.querySelector("[name='initThigh']")?.value ? parseFloat(form.querySelector("[name='initThigh']").value) : ""
+            whatsappNumber: editForm.querySelector("[name='whatsappNumber']")?.value.trim() || "",
+            gender: editForm.querySelector("[name='gender']")?.value || "Not specified",
+            dateOfBirth: editForm.querySelector("[name='dateOfBirth']")?.value || "",
+            address: editForm.querySelector("[name='address']")?.value.trim() || "",
+            emergencyName: editForm.querySelector("[name='emergencyName']")?.value.trim() || "",
+            emergencyRelationship: editForm.querySelector("[name='emergencyRelationship']")?.value || "",
+            emergencyPhone: editForm.querySelector("[name='emergencyPhone']")?.value.trim() || "",
+            gymGoal: editForm.querySelector("[name='gymGoal']")?.value || "",
+            bloodGroup: editForm.querySelector("[name='bloodGroup']")?.value || "",
+            occupation: editForm.querySelector("[name='occupation']")?.value.trim() || "",
+            activityLevel: editForm.querySelector("[name='activityLevel']")?.value || "",
+            fitnessExperience: editForm.querySelector("[name='fitnessExperience']")?.value || "",
+            medicalConditions: editForm.querySelector("[name='medicalConditions']")?.value.trim() || "",
+            currentMedications: editForm.querySelector("[name='currentMedications']")?.value.trim() || "",
+            allergies: editForm.querySelector("[name='allergies']")?.value.trim() || "",
+            physicalLimitations: editForm.querySelector("[name='physicalLimitations']")?.value.trim() || "",
+            initWeight: editForm.querySelector("[name='initWeight']")?.value ? parseFloat(editForm.querySelector("[name='initWeight']").value) : "",
+            initHeight: editForm.querySelector("[name='initHeight']")?.value ? parseFloat(editForm.querySelector("[name='initHeight']").value) : "",
+            initBodyFat: editForm.querySelector("[name='initBodyFat']")?.value ? parseFloat(editForm.querySelector("[name='initBodyFat']").value) : "",
+            initWaist: editForm.querySelector("[name='initWaist']")?.value ? parseFloat(editForm.querySelector("[name='initWaist']").value) : "",
+            initChest: editForm.querySelector("[name='initChest']")?.value ? parseFloat(editForm.querySelector("[name='initChest']").value) : "",
+            initHip: editForm.querySelector("[name='initHip']")?.value ? parseFloat(editForm.querySelector("[name='initHip']").value) : "",
+            initBicep: editForm.querySelector("[name='initBicep']")?.value ? parseFloat(editForm.querySelector("[name='initBicep']").value) : "",
+            initThigh: editForm.querySelector("[name='initThigh']")?.value ? parseFloat(editForm.querySelector("[name='initThigh']").value) : ""
           };
 
           const calcBmi = (weightKg, heightCm) => {
@@ -425,9 +501,9 @@ export const profileModule = {
             name,
             avatarUrl: selectedAvatar,
             mobile: mobileVal,
-            specialization: form.querySelector("[name='specialization']")?.value.trim() || "",
-            experience: form.querySelector("[name='experience']")?.value.trim() || "",
-            certifications: form.querySelector("[name='certifications']")?.value.trim() || ""
+            specialization: editForm.querySelector("[name='specialization']")?.value.trim() || "",
+            experience: editForm.querySelector("[name='experience']")?.value.trim() || "",
+            certifications: editForm.querySelector("[name='certifications']")?.value.trim() || ""
           };
           const savedTrainer = await context.services.data.save("trainers", updatedTrainer);
           context.applyChange("trainers", savedTrainer);
