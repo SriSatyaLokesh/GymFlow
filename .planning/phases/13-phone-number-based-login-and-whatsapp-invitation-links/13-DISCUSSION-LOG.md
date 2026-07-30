@@ -15,7 +15,7 @@
 |--------|-------------|----------|
 | Unified Dynamic Field | Single input box; typing an '@' prompts for password, typing a number prompts for SMS OTP. | |
 | Separate Tabs | Tabs at the top of the auth card to select between 'Email & Password' and 'Phone Number'. | |
-| **Phone & Password Mapping** | **No SMS OTP required. Users type their Phone Number and Password directly to log in (like email/password). Under the hood, maps to synthetic email structure `[normalized_phone]@gymflow.local`.** | ✓ |
+| **Phone & Password Mapping** | **No SMS OTP required. Users type their Phone Number and Password directly to log in (like email/password). Under the hood, maps to synthetic email structure `[normalized_phone]@gymflow.app`.** | ✓ |
 
 **User's choice:** Phone number and Password combination login (no OTP needed).
 **Notes:** Custom mapping of phone numbers to synthetic email addresses avoids third-party SMS delivery fees and ensures 100% cost-free operation.
