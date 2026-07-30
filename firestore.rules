@@ -310,6 +310,34 @@ service cloud.firestore {
       );
     }
 
+    match /progress_records/{docId} {
+      allow read: if sameGym();
+      allow create: if incomingSameGym() && (
+        owner()
+        || (
+          myRole() == "member"
+          && exists(/databases/$(database)/documents/members/$(request.resource.data.memberId))
+          && get(/databases/$(database)/documents/members/$(request.resource.data.memberId)).data.uid == uid()
+        )
+      );
+      allow update: if sameGym() && incomingSameGym() && (
+        owner()
+        || (
+          myRole() == "member"
+          && exists(/databases/$(database)/documents/members/$(resource.data.memberId))
+          && get(/databases/$(database)/documents/members/$(resource.data.memberId)).data.uid == uid()
+        )
+      );
+      allow delete: if sameGym() && (
+        owner()
+        || (
+          myRole() == "member"
+          && exists(/databases/$(database)/documents/members/$(resource.data.memberId))
+          && get(/databases/$(database)/documents/members/$(resource.data.memberId)).data.uid == uid()
+        )
+      );
+    }
+
     // Everything else (plans, payments, progress, workouts, reminders):
     // same-gym read; owner-only writes.
     match /membership_pauses/{docId} {
