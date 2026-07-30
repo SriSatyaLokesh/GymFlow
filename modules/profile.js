@@ -270,7 +270,7 @@ export const profileModule = {
 
     return `
       ${pageHeader("My Profile")}
-      <div class="work-grid">
+      <div class="stack" style="max-width: 800px; margin: 0 auto; width: 100%; gap: 20px;">
         <!-- View Mode Panel -->
         <div id="profile-view-section" class="panel stack" style="gap: 20px;">
           <div style="display: flex; gap: 20px; align-items: center; border-bottom: 1px solid var(--line); padding-bottom: 20px;">
@@ -295,52 +295,56 @@ export const profileModule = {
         </div>
 
         <!-- Edit Mode Panel (Hidden by default) -->
-        <form id="profile-edit-form" class="panel stack" style="gap: 16px; display: none;">
+        <form id="profile-edit-form" class="panel stack" style="gap: 20px; display: none;">
           <div class="panel-heading"><h2>Edit Profile Details</h2></div>
           
-          <div style="display: flex; gap: 20px; align-items: center; margin-bottom: 10px;">
-            <div id="avatar-preview-container" style="width: 84px; height: 84px; border-radius: 50%; overflow: hidden; border: 3px solid var(--primary); display: flex; align-items: center; justify-content: center; background: var(--bg-light); box-shadow: var(--shadow-md); flex-shrink: 0;"></div>
-            <div class="stack" style="gap: 4px;">
-              <label style="font-weight: 600; font-size: 1.1rem; margin: 0;">Avatar Creator</label>
-              <span class="panel-hint">Design your custom avatar using any emoji and background color.</span>
+          <!-- Avatar Section -->
+          <div class="stack" style="gap: 16px; border-bottom: 1px solid var(--line); padding-bottom: 20px; margin-bottom: 10px;">
+            <div style="display: flex; gap: 20px; align-items: center;">
+              <div id="avatar-preview-container" style="width: 84px; height: 84px; border-radius: 50%; overflow: hidden; border: 3px solid var(--primary); display: flex; align-items: center; justify-content: center; background: var(--bg-light); box-shadow: var(--shadow-md); flex-shrink: 0;"></div>
+              <div class="stack" style="gap: 4px;">
+                <h3 style="margin: 0; font-size: 1.15rem;">Avatar Creator</h3>
+                <span class="panel-hint">Design your custom avatar using any emoji and background color.</span>
+              </div>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+              <div class="stack" style="gap: 12px;">
+                <label>Custom Emoji (Type or paste *any* emoji)
+                  <input id="custom-emoji-input" maxlength="2" placeholder="Type or paste any emoji" style="width: 100%; margin-top: 6px;" value="${escapeHtml(currentEmoji)}" />
+                </label>
+                <div>
+                  <label style="margin-bottom: 6px; display: block; font-weight: 500;">Quick Emojis</label>
+                  <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(36px, 1fr)); gap: 6px; max-height: 100px; overflow-y: auto; padding: 6px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface-light, rgba(255,255,255,0.02));">
+                    ${EMOJIS.map(emoji => `
+                      <button type="button" class="emoji-option-btn" data-emoji="${escapeHtml(emoji)}" style="font-size: 1.5rem; border: none; background: transparent; padding: 2px; cursor: pointer; border-radius: var(--r-sm); transition: background 0.15s; display: flex; align-items: center; justify-content: center;">${emoji}</button>
+                    `).join("")}
+                  </div>
+                </div>
+              </div>
+              
+              <div>
+                <label style="margin-bottom: 6px; display: block; font-weight: 500;">Background Color / Gradient</label>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(32px, 1fr)); gap: 8px; max-height: 154px; overflow-y: auto; padding: 6px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface-light, rgba(255,255,255,0.02));">
+                  ${BACKGROUNDS.map(([name, value]) => {
+                    const isGradient = value.includes(",");
+                    let styleBg = value;
+                    if (isGradient) {
+                      styleBg = `linear-gradient(135deg, ${value.split(",")[0]}, ${value.split(",")[1]})`;
+                    }
+                    const isSelected = currentBg === value;
+                    return `
+                      <div class="color-option-wrapper" data-color-val="${escapeHtml(value)}" title="${escapeHtml(name)}" style="cursor: pointer; border-radius: 50%; width: 32px; height: 32px; border: 3px solid ${isSelected ? "var(--primary)" : "transparent"}; background: ${styleBg}; transition: border-color 0.2s; box-shadow: var(--shadow-sm); flex-shrink: 0;"></div>
+                    `;
+                  }).join("")}
+                </div>
+              </div>
             </div>
           </div>
 
-          <label>Your Name
+          <label style="margin-bottom: 10px; display: block; width: 100%;">Your Name
             <input name="name" value="${escapeHtml(context.profile.name)}" required style="width: 100%; margin-top: 6px;" />
           </label>
-          
-          <div class="form-grid" style="grid-template-columns: 1fr; gap: 16px; margin-top: 6px;">
-            <label>Custom Emoji (Type or paste *any* emoji, e.g. 🦊)
-              <input id="custom-emoji-input" maxlength="2" placeholder="Type or paste any emoji" style="width: 100%; margin-top: 6px;" value="${escapeHtml(currentEmoji)}" />
-            </label>
-          </div>
-
-          <div>
-            <label style="margin-bottom: 8px; display: block; font-weight: 500;">Quick Emojis</label>
-            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(44px, 1fr)); gap: 8px; max-height: 140px; overflow-y: auto; padding: 8px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface-light, rgba(255,255,255,0.02));">
-              ${EMOJIS.map(emoji => `
-                <button type="button" class="emoji-option-btn" data-emoji="${escapeHtml(emoji)}" style="font-size: 1.75rem; border: none; background: transparent; padding: 4px; cursor: pointer; border-radius: var(--r-sm); transition: background 0.15s; display: flex; align-items: center; justify-content: center;">${emoji}</button>
-              `).join("")}
-            </div>
-          </div>
-
-          <div>
-            <label style="margin-bottom: 8px; display: block; font-weight: 500;">Background Color / Gradient</label>
-            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(36px, 1fr)); gap: 10px; max-height: 180px; overflow-y: auto; padding: 8px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface-light, rgba(255,255,255,0.02));">
-              ${BACKGROUNDS.map(([name, value]) => {
-                const isGradient = value.includes(",");
-                let styleBg = value;
-                if (isGradient) {
-                  styleBg = `linear-gradient(135deg, ${value.split(",")[0]}, ${value.split(",")[1]})`;
-                }
-                const isSelected = currentBg === value;
-                return `
-                  <div class="color-option-wrapper" data-color-val="${escapeHtml(value)}" title="${escapeHtml(name)}" style="cursor: pointer; border-radius: 50%; width: 36px; height: 36px; border: 3px solid ${isSelected ? "var(--primary)" : "transparent"}; background: ${styleBg}; transition: border-color 0.2s; box-shadow: var(--shadow-sm);"></div>
-                `;
-              }).join("")}
-            </div>
-          </div>
 
           ${roleFields}
           
@@ -382,16 +386,16 @@ export const profileModule = {
       previewContainer.innerHTML = `<img src="${escapeHtml(url)}" style="width: 100%; height: 100%; object-fit: cover;" />`;
     }
 
-    // Toggle Edit Mode
+    // Toggle Edit Mode (Set form display to block, so CSS stack works and elements render vertically!)
     startEditBtn?.addEventListener("click", () => {
       viewSection.style.display = "none";
-      editForm.style.display = "flex";
+      editForm.style.display = "block";
       renderPreview();
     });
 
     cancelEditBtn?.addEventListener("click", () => {
       editForm.style.display = "none";
-      viewSection.style.display = "flex";
+      viewSection.style.display = "block";
     });
 
     // Listen to custom emoji keyboard inputs
