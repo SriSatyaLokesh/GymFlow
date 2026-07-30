@@ -1,11 +1,52 @@
-import { escapeHtml, pageHeader, CARTOON_AVATARS } from "./utils.js";
+import { escapeHtml, pageHeader, getAvatarUrl } from "./utils.js";
+
+const EMOJIS = [
+  "😀", "😎", "🤓", "🤠", "👽", "🤖", "👑", "🧔", "🧑", "👩", "👨", "👱‍♀️", 
+  "🦁", "🐯", "🦊", "🐻", "🐼", "🐨", "🐙", "🦄", "🦅", "🦖", "🦈",
+  "🏋️", "🏃", "🧘", "🚴", "🥊", "🤸", "🧗", "⚽", "🏀", "🏆", "🥇", 
+  "💪", "⚡", "🔥", "❤️", "⭐", "🚀", "🍕", "🥑", "🎧", "🎨", "🎯"
+];
+
+const BACKGROUNDS = [
+  ["Solid Black", "#000000"],
+  ["Solid White", "#ffffff"],
+  ["Crimson Red", "#e63946"],
+  ["Hot Pink", "#ff007f"],
+  ["Neon Orange", "#f77f00"],
+  ["Sunshine Yellow", "#fcbf49"],
+  ["Emerald Green", "#2a9d8f"],
+  ["Mint Green", "#8ac926"],
+  ["Ocean Teal", "#00b4db"],
+  ["Royal Blue", "#0077b6"],
+  ["Electric Indigo", "#3f37c9"],
+  ["Deep Purple", "#7209b7"],
+  ["Slate Gray", "#4a5568"],
+  ["Coral Sunset", "#ff9068,#fd746c"],
+  ["Mint Green", "#11998e,#38ef7d"],
+  ["Neon Cyan", "#00c6ff,#0072ff"],
+  ["Berry Blast", "#8a2387,#e94057"],
+  ["Sunfire", "#f12711,#f5af19"],
+  ["Violet Magenta", "#7f00ff,#e100ff"],
+  ["Cool Blue", "#3a7bd5,#3a6073"],
+  ["Lavender Pink", "#4568dc,#b06ab8"],
+  ["Ocean Green", "#0575e6,#00f260"],
+  ["Deep Space", "#1d2671,#c33764"]
+];
 
 export const profileModule = {
   render(context) {
     const role = context.profile.role;
     const me = context.myMember || {};
     const tr = context.myTrainer || {};
-    const selectedAvatar = context.profile.avatarUrl || "";
+    const selectedAvatar = context.profile.avatarUrl || "emoji:🧔:#3a7bd5,#3a6073";
+
+    let currentEmoji = "🧔";
+    let currentBg = "#3a7bd5,#3a6073";
+    if (selectedAvatar.startsWith("emoji:")) {
+      const parts = selectedAvatar.split(":");
+      currentEmoji = parts[1] || "🧔";
+      currentBg = parts[2] || "#3a7bd5,#3a6073";
+    }
 
     let roleFields = "";
     if (role === "member") {
@@ -181,19 +222,45 @@ export const profileModule = {
         <form id="profile-edit-form" class="panel stack" style="gap: 16px;">
           <div class="panel-heading"><h2>Edit Profile Details</h2></div>
           
+          <div style="display: flex; gap: 20px; align-items: center; margin-bottom: 10px;">
+            <div id="avatar-preview-container" style="width: 84px; height: 84px; border-radius: 50%; overflow: hidden; border: 3px solid var(--primary); display: flex; align-items: center; justify-content: center; background: var(--bg-light); box-shadow: var(--shadow-md);"></div>
+            <div class="stack" style="gap: 4px;">
+              <label style="font-weight: 600; font-size: 1.1rem; margin: 0;">Avatar Creator</label>
+              <span class="panel-hint">Design your custom avatar using any emoji and background color.</span>
+            </div>
+          </div>
+
           <label>Your Name
             <input name="name" value="${escapeHtml(context.profile.name)}" required style="width: 100%; margin-top: 6px;" />
           </label>
           
+          <div class="form-grid" style="grid-template-columns: 1fr; gap: 16px; margin-top: 6px;">
+            <label>Custom Emoji (Type or paste *any* emoji, e.g. 🦊)
+              <input id="custom-emoji-input" maxlength="2" placeholder="Type or paste any emoji" style="width: 100%; margin-top: 6px;" value="${escapeHtml(currentEmoji)}" />
+            </label>
+          </div>
+
           <div>
-            <label style="margin-bottom: 8px; display: block; font-weight: 500;">Choose Avatar</label>
-            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 10px; max-height: 180px; overflow-y: auto; padding: 8px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface-light, rgba(255,255,255,0.02));">
-              ${CARTOON_AVATARS.map((url, index) => {
-                const isSelected = selectedAvatar === url;
+            <label style="margin-bottom: 8px; display: block; font-weight: 500;">Quick Emojis</label>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(44px, 1fr)); gap: 8px; max-height: 140px; overflow-y: auto; padding: 8px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface-light, rgba(255,255,255,0.02));">
+              ${EMOJIS.map(emoji => `
+                <button type="button" class="emoji-option-btn" data-emoji="${escapeHtml(emoji)}" style="font-size: 1.75rem; border: none; background: transparent; padding: 4px; cursor: pointer; border-radius: var(--r-sm); transition: background 0.15s; display: flex; align-items: center; justify-content: center;">${emoji}</button>
+              `).join("")}
+            </div>
+          </div>
+
+          <div>
+            <label style="margin-bottom: 8px; display: block; font-weight: 500;">Background Color / Gradient</label>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(36px, 1fr)); gap: 10px; max-height: 180px; overflow-y: auto; padding: 8px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface-light, rgba(255,255,255,0.02));">
+              ${BACKGROUNDS.map(([name, value]) => {
+                const isGradient = value.includes(",");
+                let styleBg = value;
+                if (isGradient) {
+                  styleBg = `linear-gradient(135deg, ${value.split(",")[0]}, ${value.split(",")[1]})`;
+                }
+                const isSelected = currentBg === value;
                 return `
-                  <div class="avatar-option-wrapper" data-avatar-url="${escapeHtml(url)}" style="cursor: pointer; border-radius: 50%; overflow: hidden; border: 3px solid ${isSelected ? "var(--primary)" : "transparent"}; aspect-ratio: 1; transition: border-color 0.2s;">
-                    <img src="${escapeHtml(url)}" alt="Avatar ${index + 1}" style="width: 100%; height: 100%; object-fit: cover;" />
-                  </div>
+                  <div class="color-option-wrapper" data-color-val="${escapeHtml(value)}" title="${escapeHtml(name)}" style="cursor: pointer; border-radius: 50%; width: 36px; height: 36px; border: 3px solid ${isSelected ? "var(--primary)" : "transparent"}; background: ${styleBg}; transition: border-color 0.2s; box-shadow: var(--shadow-sm);"></div>
                 `;
               }).join("")}
             </div>
@@ -211,17 +278,57 @@ export const profileModule = {
     const form = root.querySelector("#profile-edit-form");
     if (!form) return;
 
-    let selectedAvatar = context.profile.avatarUrl || "";
+    const previewContainer = root.querySelector("#avatar-preview-container");
+    const emojiInput = root.querySelector("#custom-emoji-input");
     const role = context.profile.role;
 
-    // Handle avatar selection
-    root.querySelectorAll(".avatar-option-wrapper").forEach((el) => {
+    let selectedAvatar = context.profile.avatarUrl || "emoji:🧔:#3a7bd5,#3a6073";
+    let currentEmoji = "🧔";
+    let currentBg = "#3a7bd5,#3a6073";
+    
+    if (selectedAvatar.startsWith("emoji:")) {
+      const parts = selectedAvatar.split(":");
+      currentEmoji = parts[1] || "🧔";
+      currentBg = parts[2] || "#3a7bd5,#3a6073";
+    }
+
+    function renderPreview() {
+      const spec = `emoji:${currentEmoji}:${currentBg}`;
+      selectedAvatar = spec;
+      const url = getAvatarUrl(spec);
+      previewContainer.innerHTML = `<img src="${escapeHtml(url)}" style="width: 100%; height: 100%; object-fit: cover;" />`;
+    }
+
+    // Initialize preview
+    renderPreview();
+
+    // Listen to custom emoji keyboard inputs
+    emojiInput.addEventListener("input", (e) => {
+      const val = e.target.value.trim();
+      if (val) {
+        currentEmoji = val;
+        renderPreview();
+      }
+    });
+
+    // Listen to quick emojis click
+    root.querySelectorAll(".emoji-option-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        currentEmoji = btn.dataset.emoji;
+        emojiInput.value = currentEmoji;
+        renderPreview();
+      });
+    });
+
+    // Listen to background colors selection
+    root.querySelectorAll(".color-option-wrapper").forEach((el) => {
       el.addEventListener("click", () => {
-        root.querySelectorAll(".avatar-option-wrapper").forEach((item) => {
+        root.querySelectorAll(".color-option-wrapper").forEach((item) => {
           item.style.borderColor = "transparent";
         });
         el.style.borderColor = "var(--primary)";
-        selectedAvatar = el.dataset.avatarUrl;
+        currentBg = el.dataset.colorVal;
+        renderPreview();
       });
     });
 

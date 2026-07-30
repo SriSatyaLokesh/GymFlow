@@ -18,7 +18,7 @@ import { trainerCheckinModule } from "./modules/trainer-checkin.js";
 import { trainerMembersModule } from "./modules/trainer-members.js";
 import { myWorkoutModule } from "./modules/my-workout.js";
 import { profileModule } from "./modules/profile.js";
-import { CARTOON_AVATARS, escapeHtml, getExercises, memberStatus } from "./modules/utils.js";
+import { CARTOON_AVATARS, escapeHtml, getExercises, memberStatus, getAvatarUrl } from "./modules/utils.js";
 
 const appRoot = document.querySelector("#app");
 
@@ -793,7 +793,7 @@ Total members listed: ${(state.data.members || []).length}</pre>
         <div class="profile-chip" style="cursor: pointer;" title="Edit Profile">
           <span class="avatar">
             ${state.profile.avatarUrl 
-              ? `<img src="${escapeHtml(state.profile.avatarUrl)}" alt="" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;" />` 
+              ? `<img src="${escapeHtml(getAvatarUrl(state.profile.avatarUrl))}" alt="" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;" />` 
               : initials(state.profile.name)}
           </span>
           <div>

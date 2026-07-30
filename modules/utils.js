@@ -313,9 +313,52 @@ function getInlineAvatar(index) {
 
 export const CARTOON_AVATARS = Array.from({ length: 12 }, (_, i) => getInlineAvatar(i));
 
+export function getAvatarUrl(avatarUrl) {
+  if (!avatarUrl) return "";
+  if (avatarUrl.startsWith("emoji:")) {
+    const parts = avatarUrl.split(":");
+    const emoji = parts[1] || "👤";
+    const bg = parts[2] || "#3a7bd5,#3a6073";
+    const colors = bg.split(",");
+    const c1 = colors[0];
+    const c2 = colors[1] || colors[0];
+    
+    let fill = `url(#eg)`;
+    let defs = `
+      <defs>
+        <linearGradient id="eg" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="${c1}" />
+          <stop offset="100%" stop-color="${c2}" />
+        </linearGradient>
+      </defs>
+    `;
+    if (bg === "#ffffff") {
+      fill = "#ffffff";
+      defs = "";
+    } else if (bg === "#000000") {
+      fill = "#000000";
+      defs = "";
+    } else if (colors.length === 1) {
+      fill = c1;
+      defs = "";
+    }
+    
+    const svg = `
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+        ${defs}
+        <circle cx="50" cy="50" r="48" fill="${fill}" />
+        <text x="50" y="55" font-size="52" text-anchor="middle" dominant-baseline="central" font-family="system-ui, -apple-system, sans-serif">${emoji}</text>
+      </svg>
+    `;
+    return `data:image/svg+xml;utf8,${encodeURIComponent(svg.trim())}`;
+  }
+  return avatarUrl;
+}
+
 export function nameCell(name, sub = "", avatarUrl = "") {
-  const avatarContent = avatarUrl 
-    ? `<img src="${escapeHtml(avatarUrl)}" alt="" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;" />`
+  const resolvedUrl = getAvatarUrl(avatarUrl);
+  const avatarContent = resolvedUrl 
+    ? `<img src="${escapeHtml(resolvedUrl)}" alt="" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;" />`
     : escapeHtml(initials(name));
 
   return `
