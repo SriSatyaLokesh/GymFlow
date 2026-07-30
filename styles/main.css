@@ -1574,7 +1574,7 @@ code { padding: 2px 6px; border-radius: 5px; background: var(--surface-strong); 
   .table-head { display: none; }
 
   .table-row, .members-table .table-row, .reminder-table .table-row, .compact .table-row {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr !important;
     gap: 10px;
     padding: 14px;
     border-left: 4px solid var(--primary);
