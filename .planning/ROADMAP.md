@@ -327,6 +327,17 @@ Plans:
 
 - [x] 12-01: TBD
 
+### Phase 12.1: Phone number based login and WhatsApp invitation links (INSERTED)
+
+**Goal:** [Urgent work - to be planned]
+**Requirements**: TBD
+**Depends on:** Phase 12
+**Plans:** 0 plans
+
+Plans:
+
+- [ ] TBD (run /gsd-plan-phase 12.1 to break down)
+
 ### Phase 13: Analytics & Insights
 
 **Goal**: Give gym owners actionable business intelligence to grow and retain members.

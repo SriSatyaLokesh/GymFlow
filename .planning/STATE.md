@@ -91,6 +91,7 @@ None currently.
 - Phase 11 edited: edited fields: title, goal, success_criteria to match Hevy-style requirements
 - Phase 16 added: Implement PBL gamification strategy (points, badges, leaderboard, PRs, milestones)
 - Phase 14 and 15 removed; re-sequenced remaining future phases to 12 (PBL), 13 (Analytics), and 14 (Multi-Branch)
+- Phase 12.1 inserted: Phone number based login and WhatsApp invitation links
 
 ## Session
 
