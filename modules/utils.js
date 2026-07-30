@@ -182,16 +182,136 @@ export function initials(name = "") {
   return parsed || "--";
 }
 
-export const CARTOON_AVATARS = [
-  // 30 Women Avatars
-  ...Array.from({ length: 30 }, (_, i) => {
-    return `https://avatar.iran.liara.run/public/girl?username=female-gym-${i + 1}`;
-  }),
-  // 70 Men Avatars
-  ...Array.from({ length: 70 }, (_, i) => {
-    return `https://avatar.iran.liara.run/public/boy?username=male-gym-${i + 1}`;
-  })
-];
+function getInlineAvatar(index) {
+  const gradients = [
+    ["#ff9068", "#fd746c"], // 1. Warm Coral
+    ["#11998e", "#38ef7d"], // 2. Mint Green
+    ["#00c6ff", "#0072ff"], // 3. Neon Cyan
+    ["#8a2387", "#e94057"], // 4. Berry Blast
+    ["#f12711", "#f5af19"], // 5. Sunfire
+    ["#7f00ff", "#e100ff"], // 6. Electric Violet
+    ["#3a7bd5", "#3a6073"], // 7. Cool Blue
+    ["#f9d423", "#ff4e50"], // 8. Peach Orange
+    ["#4568dc", "#b06ab8"], // 9. Lavender
+    ["#0575e6", "#00f260"], // 10. Ocean Green
+    ["#34e89e", "#0f3443"], // 11. Deep Forest
+    ["#1d2671", "#c33764"]  // 12. Deep Space
+  ];
+  
+  const [c1, c2] = gradients[index % gradients.length];
+  
+  let path = "";
+  if (index === 0) {
+    // 1. Male Gym Goer
+    path = `
+      <circle cx="50" cy="35" r="14" fill="#ffffff" fill-opacity="0.9" />
+      <path d="M 22,78 C 22,60 34,54 50,54 C 66,54 78,60 78,78 Z" fill="#ffffff" fill-opacity="0.9" />
+    `;
+  } else if (index === 1) {
+    // 2. Female Gym Goer
+    path = `
+      <circle cx="50" cy="20" r="7" fill="#ffffff" fill-opacity="0.9" />
+      <circle cx="50" cy="36" r="13" fill="#ffffff" fill-opacity="0.9" />
+      <path d="M 24,78 C 24,60 36,55 50,55 C 64,55 76,60 76,78 Z" fill="#ffffff" fill-opacity="0.9" />
+      <path d="M 45,23 C 43,26 40,26 38,23 C 40,20 43,20 45,23 Z" fill="#ffffff" fill-opacity="0.9" />
+    `;
+  } else if (index === 2) {
+    // 3. Weightlifter
+    path = `
+      <line x1="15" y1="28" x2="85" y2="28" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-opacity="0.9" />
+      <rect x="8" y="18" width="6" height="20" rx="2" fill="#ffffff" fill-opacity="0.9" />
+      <rect x="86" y="18" width="6" height="20" rx="2" fill="#ffffff" fill-opacity="0.9" />
+      <circle cx="50" cy="38" r="10" fill="#ffffff" fill-opacity="0.9" />
+      <path d="M 32,28 L 42,42 L 58,42 L 68,28" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.9" />
+      <path d="M 38,46 L 38,65 L 62,65 L 62,46 Z" fill="#ffffff" fill-opacity="0.9" />
+      <path d="M 38,65 L 34,80 M 62,65 L 66,80" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-opacity="0.9" />
+    `;
+  } else if (index === 3) {
+    // 4. Runner
+    path = `
+      <circle cx="56" cy="22" r="8" fill="#ffffff" fill-opacity="0.9" />
+      <path d="M 48,34 L 58,40 L 45,55 L 38,48 L 44,38 L 48,34" fill="#ffffff" fill-opacity="0.9" />
+      <path d="M 45,55 L 62,65 L 56,80" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.9" />
+      <path d="M 45,55 L 34,62 L 36,78" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.9" />
+    `;
+  } else if (index === 4) {
+    // 5. Flexing Arm
+    path = `
+      <path d="M 20,70 C 25,60 30,55 45,55 C 55,55 60,60 65,55 C 70,50 68,40 76,40 C 82,40 85,45 82,55 C 78,65 65,75 45,75 C 30,75 25,70 20,70 Z M 52,50 C 50,42 55,38 60,40 C 62,45 56,48 52,50 Z" fill="#ffffff" fill-opacity="0.9" />
+    `;
+  } else if (index === 5) {
+    // 6. Yoga Pose
+    path = `
+      <circle cx="50" cy="25" r="9" fill="#ffffff" fill-opacity="0.9" />
+      <path d="M 50,38 L 40,55 L 30,50 L 32,42 L 50,38" fill="#ffffff" fill-opacity="0.9" />
+      <path d="M 50,38 L 60,55 L 70,50 L 68,42 L 50,38" fill="#ffffff" fill-opacity="0.9" />
+      <path d="M 50,38 L 50,60 L 35,75 L 50,80 L 65,75 L 50,60" fill="#ffffff" fill-opacity="0.9" />
+    `;
+  } else if (index === 6) {
+    // 7. Kettlebell
+    path = `
+      <circle cx="50" cy="60" r="18" fill="#ffffff" fill-opacity="0.9" />
+      <path d="M 38,45 C 38,32 62,32 62,45" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" stroke-opacity="0.9" />
+      <circle cx="50" cy="60" r="6" fill="${c1}" />
+    `;
+  } else if (index === 7) {
+    // 8. Weight Plate
+    path = `
+      <circle cx="50" cy="50" r="26" fill="#ffffff" fill-opacity="0.9" />
+      <circle cx="50" cy="50" r="18" fill="none" stroke="${c2}" stroke-width="2" />
+      <circle cx="50" cy="50" r="6" fill="${c1}" />
+      <line x1="28" y1="50" x2="38" y2="50" stroke="${c2}" stroke-width="2" />
+      <line x1="62" y1="50" x2="72" y2="50" stroke="${c2}" stroke-width="2" />
+      <line x1="50" y1="28" x2="50" y2="38" stroke="${c2}" stroke-width="2" />
+      <line x1="50" y1="62" x2="50" y2="72" stroke="${c2}" stroke-width="2" />
+    `;
+  } else if (index === 8) {
+    // 9. Stopwatch
+    path = `
+      <circle cx="50" cy="53" r="22" fill="#ffffff" fill-opacity="0.9" />
+      <circle cx="50" cy="53" r="18" fill="none" stroke="${c1}" stroke-width="2" />
+      <path d="M 50,53 L 50,42 L 58,50" fill="none" stroke="${c2}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+      <rect x="45" y="24" width="10" height="5" rx="1.5" fill="#ffffff" fill-opacity="0.9" />
+      <line x1="32" y1="36" x2="38" y2="40" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-opacity="0.9" />
+      <line x1="68" y1="36" x2="62" y2="40" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-opacity="0.9" />
+    `;
+  } else if (index === 9) {
+    // 10. Heart Pulse
+    path = `
+      <path d="M 20,50 L 35,50 L 42,28 L 50,72 L 56,42 L 62,55 L 68,50 L 80,50" fill="none" stroke="#ffffff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.9" />
+    `;
+  } else if (index === 10) {
+    // 11. Trophy
+    path = `
+      <path d="M 32,32 L 68,32 L 65,58 C 65,65 58,72 50,72 C 42,72 35,65 35,58 Z" fill="#ffffff" fill-opacity="0.9" />
+      <path d="M 35,40 C 26,40 26,50 35,50 M 65,40 C 74,40 74,50 65,50" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" stroke-opacity="0.9" />
+      <rect x="42" y="72" width="16" height="5" fill="#ffffff" fill-opacity="0.9" />
+      <path d="M 36,77 H 64 V 81 H 36 Z" fill="#ffffff" fill-opacity="0.9" />
+    `;
+  } else if (index === 11) {
+    // 12. Gym Shield
+    path = `
+      <path d="M 50,20 L 76,26 V 54 C 76,70 65,80 50,84 C 35,80 24,70 24,54 V 26 Z" fill="#ffffff" fill-opacity="0.9" />
+      <path d="M 35,46 H 65 M 32,54 H 68" stroke="${c1}" stroke-width="4.5" stroke-linecap="round" />
+    `;
+  }
+  
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100%">
+      <defs>
+        <linearGradient id="g_${index}" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="${c1}" />
+          <stop offset="100%" stop-color="${c2}" />
+        </linearGradient>
+      </defs>
+      <circle cx="50" cy="50" r="48" fill="url(#g_${index})" />
+      ${path}
+    </svg>
+  `;
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg.trim())}`;
+}
+
+export const CARTOON_AVATARS = Array.from({ length: 12 }, (_, i) => getInlineAvatar(i));
 
 export function nameCell(name, sub = "", avatarUrl = "") {
   const avatarContent = avatarUrl 
