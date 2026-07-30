@@ -1,12 +1,15 @@
-const CACHE_NAME = "gymflow-v19";
+const CACHE_NAME = "gymflow-v22";
 const ASSETS = [
   "./",
   "./index.html",
   "./app.js",
   "./gym.config.js",
   "./styles/main.css",
-  "./assets/logo-square.svg",
-  "./assets/favicon.svg",
+  "./favicon.ico",
+  "./assets/icon-32.png",
+  "./assets/icon-192.png",
+  "./assets/icon-512.png",
+  "./assets/icon-maskable.png",
   "./lib/firebase-init.js",
   "./lib/exercises-pruned.json",
   "./modules/utils.js",
