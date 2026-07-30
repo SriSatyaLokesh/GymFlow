@@ -1,4 +1,4 @@
-# Phase 12.1 Research: Firebase Phone Authentication & WhatsApp Invitation Links
+# Phase 13 Research: Firebase Phone Authentication & WhatsApp Invitation Links
 
 ## 1. Firebase Phone Authentication Cost Analysis
 

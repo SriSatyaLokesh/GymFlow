@@ -42,10 +42,9 @@ progress:
 
 | Phase | Name | Priority |
 |---|---|---|
-| 11 | Member Workout Logging & Exercise Library (Hevy-Style) | HIGH |
-| 12 | Implement PBL gamification strategy (points, badges, leaderboard, PRs, milestones) | HIGH |
-| 13 | Analytics & Insights | MEDIUM |
-| 14 | Multi-Branch Support | MEDIUM |
+| 13 | Phone number based login and WhatsApp invitation links | HIGH |
+| 14 | Analytics & Insights | MEDIUM |
+| 15 | Multi-Branch Support | MEDIUM |
 
 ## In-Progress Work
 
@@ -92,9 +91,10 @@ None currently.
 - Phase 16 added: Implement PBL gamification strategy (points, badges, leaderboard, PRs, milestones)
 - Phase 14 and 15 removed; re-sequenced remaining future phases to 12 (PBL), 13 (Analytics), and 14 (Multi-Branch)
 - Phase 12.1 inserted: Phone number based login and WhatsApp invitation links
+- Phase 12.1 renumbered to Phase 13: to allow Phase 12 improvement revisions in future
 
 ## Session
 
-**Last session:** 2026-07-29T17:57:05.609Z
-**Stopped at:** Phase 12 context gathered
-**Resume file:** .planning/phases/12-implement-pbl-gamification-strategy-points-badges-leaderboar/12-CONTEXT.md
+**Last session:** 2026-07-30T11:27:00Z
+**Stopped at:** Phase 13 context gathered
+**Resume file:** .planning/phases/13-phone-number-based-login-and-whatsapp-invitation-links/13-RESEARCH.md

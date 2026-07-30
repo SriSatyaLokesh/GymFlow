@@ -19,8 +19,9 @@ GymFlow is a zero-cost, self-hosted gym management PWA. Phases build out the ful
 - [x] **Phase 10.1: Enhanced Member Intake Form & BMI Visual Meter** ⚡ URGENT NEXT — Full real-world intake fields, color-coded BMI horizontal meter, real-time duplicate phone/email detection, WhatsApp notification opt-in (completed 2026-07-23)
 - [x] **Phase 11: Member Workout Logging & Exercise Library (Hevy-Style)** — Unrestricted workout logging, routine scheduling, last-week duplication, gym feed dashboard, search, and trainer/owner check. (completed 2026-07-28)
 - [x] **Phase 12: Implement PBL gamification strategy (points, badges, leaderboard, PRs, milestones)** — Gamify member workouts using points, custom badges, leaderboards per weight/gender/consistency, and PR milestones. (completed 2026-07-29)
-- [ ] **Phase 13: Analytics & Insights** — Revenue trends, member growth, attendance heatmap, forecasting
-- [ ] **Phase 14: Multi-Branch Support** — Branch entity, per-branch scoping, cross-branch dashboard
+- [ ] **Phase 13: Phone number based login and WhatsApp invitation links** — Enable phone number sign-in with Firebase, support dual email/phone credentials, and send invitation links on registration.
+- [ ] **Phase 14: Analytics & Insights** — Revenue trends, member growth, attendance heatmap, forecasting
+- [ ] **Phase 15: Multi-Branch Support** — Branch entity, per-branch scoping, cross-branch dashboard
 
 ## Phase Details
 
@@ -327,18 +328,23 @@ Plans:
 
 - [x] 12-01: TBD
 
-### Phase 12.1: Phone number based login and WhatsApp invitation links (INSERTED)
+### Phase 13: Phone number based login and WhatsApp invitation links
 
-**Goal:** [Urgent work - to be planned]
-**Requirements**: TBD
-**Depends on:** Phase 12
-**Plans:** 0 plans
+**Goal**: Enable phone number sign-in with Firebase, support dual email/phone credentials, and send invitation links on registration.
+**Depends on**: Phase 12
+**Status**: Not started
+**Success Criteria** (what must be TRUE):
+
+  1. Users can log in using Firebase Phone Auth.
+  2. Users can log in using their email/password.
+  3. Pre-filled WhatsApp invitation links are generated upon member registration.
+  4. Access to member dashboard is granted on OTP confirmation.
 
 Plans:
 
-- [ ] TBD (run /gsd-plan-phase 12.1 to break down)
+- [ ] 13-01: TBD
 
-### Phase 13: Analytics & Insights
+### Phase 14: Analytics & Insights
 
 **Goal**: Give gym owners actionable business intelligence to grow and retain members.
 **Depends on**: Phase 4
@@ -354,9 +360,9 @@ Plans:
 
 Plans:
 
-- [ ] 13-01: TBD
+- [ ] 14-01: TBD
 
-### Phase 14: Multi-Branch Support
+### Phase 15: Multi-Branch Support
 
 **Goal**: Allow a gym chain to manage multiple locations under one owner account.
 **Depends on**: Phase 5
@@ -371,7 +377,7 @@ Plans:
 
 Plans:
 
-- [ ] 14-01: TBD
+- [ ] 15-01: TBD
 
 ## Progress
 
@@ -390,5 +396,6 @@ Plans:
 | 10.1 | Enhanced Member Intake Form & BMI Visual Meter | 3/3 | Complete    | 2026-07-23 |
 | 11 | Member Workout Logging & Exercise Library (Hevy-Style) | 1/1 | Complete    | 2026-07-28 |
 | 12 | Implement PBL gamification strategy (points, badges, leaderboard, PRs, milestones) | 1/1 | Complete    | 2026-07-29 |
-| 13 | Analytics & Insights | 0/1 | Not started | — |
-| 14 | Multi-Branch Support | 0/1 | Not started | — |
+| 13 | Phone number based login and WhatsApp invitation links | 0/1 | Not started | — |
+| 14 | Analytics & Insights | 0/1 | Not started | — |
+| 15 | Multi-Branch Support | 0/1 | Not started | — |
