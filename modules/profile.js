@@ -1,4 +1,4 @@
-import { escapeHtml, pageHeader, getAvatarUrl } from "./utils.js";
+import { escapeHtml, pageHeader, getAvatarUrl, renderSharedMemberFields, bindSharedBmiEvents, cmToFeetInches, calcBmi } from "./utils.js";
 
 const EMOJIS = [
   "😀", "😎", "🤓", "🤠", "👽", "🤖", "👑", "🧔", "🧑", "👩", "👨", "👱‍♀️", 
@@ -54,6 +54,9 @@ export const profileModule = {
     // Role-specific View Mode HTML
     let roleDetailsView = "";
     if (role === "member") {
+      const { feet: fVal, inches: iVal } = cmToFeetInches(me.initHeight);
+      const heightDisplay = fVal ? `${fVal} ft ${iVal} in` : "--";
+
       roleDetailsView = `
         <div><strong>WhatsApp Number</strong><p style="margin: 4px 0 0 0; color: var(--text-muted); word-break: break-all; overflow-wrap: break-word;">${escapeHtml(me.whatsappNumber) || "--"}</p></div>
         <div><strong>Gender</strong><p style="margin: 4px 0 0 0; color: var(--text-muted); word-break: break-all; overflow-wrap: break-word;">${escapeHtml(me.gender) || "--"}</p></div>
@@ -67,7 +70,7 @@ export const profileModule = {
         
         <div class="form-section-heading wide" style="margin-top: 15px;">Initial Measurements</div>
         <div><strong>Weight</strong><p style="margin: 4px 0 0 0; color: var(--text-muted); word-break: break-all; overflow-wrap: break-word;">${me.initWeight != null ? me.initWeight + " kg" : "--"}</p></div>
-        <div><strong>Height</strong><p style="margin: 4px 0 0 0; color: var(--text-muted); word-break: break-all; overflow-wrap: break-word;">${me.initHeight != null ? me.initHeight + " cm" : "--"}</p></div>
+        <div><strong>Height</strong><p style="margin: 4px 0 0 0; color: var(--text-muted); word-break: break-all; overflow-wrap: break-word;">${heightDisplay}</p></div>
         <div><strong>Body Fat</strong><p style="margin: 4px 0 0 0; color: var(--text-muted); word-break: break-all; overflow-wrap: break-word;">${me.initBodyFat != null ? me.initBodyFat + " %" : "--"}</p></div>
         <div><strong>Waist</strong><p style="margin: 4px 0 0 0; color: var(--text-muted); word-break: break-all; overflow-wrap: break-word;">${me.initWaist != null ? me.initWaist + " cm" : "--"}</p></div>
         <div><strong>Chest</strong><p style="margin: 4px 0 0 0; color: var(--text-muted); word-break: break-all; overflow-wrap: break-word;">${me.initChest != null ? me.initChest + " cm" : "--"}</p></div>
@@ -112,129 +115,7 @@ export const profileModule = {
           <label>Mobile
             <input name="mobile" required maxlength="10" value="${escapeHtml(me.mobile || "")}" />
           </label>
-          <label>WhatsApp Number
-            <input name="whatsappNumber" maxlength="10" placeholder="Same as mobile" value="${escapeHtml(me.whatsappNumber || "")}" />
-          </label>
-          <label>Gender
-            <select name="gender">
-              <option value="Not specified" ${me.gender === "Not specified" ? "selected" : ""}>Not specified</option>
-              <option value="Female" ${me.gender === "Female" ? "selected" : ""}>Female</option>
-              <option value="Male" ${me.gender === "Male" ? "selected" : ""}>Male</option>
-              <option value="Other" ${me.gender === "Other" ? "selected" : ""}>Other</option>
-            </select>
-          </label>
-          <label>Date of Birth
-            <input name="dateOfBirth" type="date" value="${escapeHtml(me.dateOfBirth || "")}" />
-          </label>
-          <label class="wide">Address
-            <textarea name="address" rows="2">${escapeHtml(me.address || "")}</textarea>
-          </label>
-
-          <div class="form-section-heading">Emergency Contact</div>
-          <label>Contact name
-            <input name="emergencyName" maxlength="80" value="${escapeHtml(me.emergencyName || "")}" />
-          </label>
-          <label>Relationship
-            <select name="emergencyRelationship">
-              <option value="" ${!me.emergencyRelationship ? "selected" : ""}>Not specified</option>
-              <option value="Spouse" ${me.emergencyRelationship === "Spouse" ? "selected" : ""}>Spouse</option>
-              <option value="Parent" ${me.emergencyRelationship === "Parent" ? "selected" : ""}>Parent</option>
-              <option value="Sibling" ${me.emergencyRelationship === "Sibling" ? "selected" : ""}>Sibling</option>
-              <option value="Child" ${me.emergencyRelationship === "Child" ? "selected" : ""}>Child</option>
-              <option value="Friend" ${me.emergencyRelationship === "Friend" ? "selected" : ""}>Friend</option>
-              <option value="Other" ${me.emergencyRelationship === "Other" ? "selected" : ""}>Other</option>
-            </select>
-          </label>
-          <label>Contact phone
-            <input name="emergencyPhone" type="tel" maxlength="10" value="${escapeHtml(me.emergencyPhone || "")}" />
-          </label>
-
-          <div class="form-section-heading">Measurements</div>
-          <label>Weight kg
-            <input name="initWeight" type="number" min="0" step="0.1" value="${escapeHtml(me.initWeight != null ? String(me.initWeight) : "")}" />
-          </label>
-          <label>Height cm
-            <input name="initHeight" type="number" min="0" step="0.1" value="${escapeHtml(me.initHeight != null ? String(me.initHeight) : "")}" />
-          </label>
-          <label>Body fat %
-            <input name="initBodyFat" type="number" min="0" step="0.1" value="${escapeHtml(me.initBodyFat != null ? String(me.initBodyFat) : "")}" />
-          </label>
-          <label>Waist cm
-            <input name="initWaist" type="number" min="0" step="0.1" value="${escapeHtml(me.initWaist != null ? String(me.initWaist) : "")}" />
-          </label>
-          <label>Chest cm
-            <input name="initChest" type="number" min="0" step="0.1" value="${escapeHtml(me.initChest != null ? String(me.initChest) : "")}" />
-          </label>
-          <label>Hip cm
-            <input name="initHip" type="number" min="0" step="0.1" value="${escapeHtml(me.initHip != null ? String(me.initHip) : "")}" />
-          </label>
-          <label>Bicep cm
-            <input name="initBicep" type="number" min="0" step="0.1" value="${escapeHtml(me.initBicep != null ? String(me.initBicep) : "")}" />
-          </label>
-          <label>Thigh cm
-            <input name="initThigh" type="number" min="0" step="0.1" value="${escapeHtml(me.initThigh != null ? String(me.initThigh) : "")}" />
-          </label>
-          <label class="wide">Gym goal
-            <select name="gymGoal">
-              <option value="" ${!me.gymGoal ? "selected" : ""}>Not specified</option>
-              <option value="Weight Loss" ${me.gymGoal === "Weight Loss" ? "selected" : ""}>Weight Loss</option>
-              <option value="Muscle Gain" ${me.gymGoal === "Muscle Gain" ? "selected" : ""}>Muscle Gain</option>
-              <option value="General Fitness" ${me.gymGoal === "General Fitness" ? "selected" : ""}>General Fitness</option>
-              <option value="Endurance / Cardio" ${me.gymGoal === "Endurance / Cardio" ? "selected" : ""}>Endurance / Cardio</option>
-              <option value="Body Toning" ${me.gymGoal === "Body Toning" ? "selected" : ""}>Body Toning</option>
-              <option value="Flexibility / Mobility" ${me.gymGoal === "Flexibility / Mobility" ? "selected" : ""}>Flexibility / Mobility</option>
-              <option value="Rehabilitation" ${me.gymGoal === "Rehabilitation" ? "selected" : ""}>Rehabilitation</option>
-            </select>
-          </label>
-
-          <div class="form-section-heading">Background</div>
-          <label>Blood group
-            <select name="bloodGroup">
-              <option value="" ${!me.bloodGroup ? "selected" : ""}>Not specified</option>
-              <option value="A+" ${me.bloodGroup === "A+" ? "selected" : ""}>A+</option>
-              <option value="A-" ${me.bloodGroup === "A-" ? "selected" : ""}>A-</option>
-              <option value="B+" ${me.bloodGroup === "B+" ? "selected" : ""}>B+</option>
-              <option value="B-" ${me.bloodGroup === "B-" ? "selected" : ""}>B-</option>
-              <option value="O+" ${me.bloodGroup === "O+" ? "selected" : ""}>O+</option>
-              <option value="O-" ${me.bloodGroup === "O-" ? "selected" : ""}>O-</option>
-              <option value="AB+" ${me.bloodGroup === "AB+" ? "selected" : ""}>AB+</option>
-              <option value="AB-" ${me.bloodGroup === "AB-" ? "selected" : ""}>AB-</option>
-            </select>
-          </label>
-          <label>Occupation
-            <input name="occupation" maxlength="80" value="${escapeHtml(me.occupation || "")}" />
-          </label>
-          <label>Activity level
-            <select name="activityLevel">
-              <option value="" ${!me.activityLevel ? "selected" : ""}>Not specified</option>
-              <option value="Sedentary" ${me.activityLevel === "Sedentary" ? "selected" : ""}>Sedentary</option>
-              <option value="Lightly Active" ${me.activityLevel === "Lightly Active" ? "selected" : ""}>Lightly Active</option>
-              <option value="Moderately Active" ${me.activityLevel === "Moderately Active" ? "selected" : ""}>Moderately Active</option>
-              <option value="Very Active" ${me.activityLevel === "Very Active" ? "selected" : ""}>Very Active</option>
-            </select>
-          </label>
-          <label>Fitness experience
-            <select name="fitnessExperience">
-              <option value="" ${!me.fitnessExperience ? "selected" : ""}>Not specified</option>
-              <option value="Beginner" ${me.fitnessExperience === "Beginner" ? "selected" : ""}>Beginner</option>
-              <option value="Intermediate" ${me.fitnessExperience === "Intermediate" ? "selected" : ""}>Intermediate</option>
-              <option value="Advanced" ${me.fitnessExperience === "Advanced" ? "selected" : ""}>Advanced</option>
-            </select>
-          </label>
-
-          <div class="form-section-heading">Health &amp; Medical</div>
-          <label class="wide">Medical conditions
-            <textarea name="medicalConditions" rows="2">${escapeHtml(me.medicalConditions || "")}</textarea>
-          </label>
-          <label class="wide">Current medications
-            <textarea name="currentMedications" rows="2">${escapeHtml(me.currentMedications || "")}</textarea>
-          </label>
-          <label class="wide">Allergies
-            <textarea name="allergies" rows="2">${escapeHtml(me.allergies || "")}</textarea>
-          </label>
-          <label class="wide">Limitations or injuries
-            <textarea name="physicalLimitations" rows="2">${escapeHtml(me.physicalLimitations || "")}</textarea>
-          </label>
+          ${renderSharedMemberFields(me)}
         </div>
       `;
     } else if (role === "trainer") {
@@ -428,6 +309,8 @@ export const profileModule = {
       });
     });
 
+    bindSharedBmiEvents(editForm);
+
     editForm.addEventListener("submit", async (event) => {
       event.preventDefault();
       const submitBtn = editForm.querySelector("[type='submit']");
@@ -475,12 +358,6 @@ export const profileModule = {
             initThigh: editForm.querySelector("[name='initThigh']")?.value ? parseFloat(editForm.querySelector("[name='initThigh']").value) : ""
           };
 
-          const calcBmi = (weightKg, heightCm) => {
-            const w = parseFloat(weightKg);
-            const h = parseFloat(heightCm) / 100;
-            if (!w || !h || h <= 0) return "";
-            return (w / (h * h)).toFixed(1);
-          };
           updatedMember.initBmi = calcBmi(updatedMember.initWeight, updatedMember.initHeight);
 
           const savedMember = await context.services.data.save("members", updatedMember);

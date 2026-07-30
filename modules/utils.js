@@ -1151,3 +1151,256 @@ export function getBadgeCss(badgeId, isUnlocked) {
   return `background: linear-gradient(135deg, #FFCCBC 0%, #D84315 50%, #BF360C 100%); color: #FFF; box-shadow: 0 4px 15px rgba(216, 67, 21, 0.45); border: 2px solid #FF8A65; padding: 12px 18px; border-radius: var(--r-md); display: flex; gap: 12px; align-items: center; text-align: left; transition: all 0.3s ease; font-weight: 600;`;
 }
 
+export function cmToFeetInches(cm) {
+  if (cm == null || cm === "") return { feet: "", inches: "" };
+  const val = parseFloat(cm);
+  if (isNaN(val) || val <= 0) return { feet: "", inches: "" };
+  const totalInches = val / 2.54;
+  const feet = Math.floor(totalInches / 12);
+  const inches = Math.round(totalInches % 12);
+  if (inches === 12) {
+    return { feet: feet + 1, inches: 0 };
+  }
+  return { feet, inches };
+}
+
+export function feetInchesToCm(feet, inches) {
+  const f = parseInt(feet, 10);
+  const i = parseInt(inches, 10);
+  if (isNaN(f) && isNaN(i)) return "";
+  const feetVal = isNaN(f) ? 0 : f;
+  const inchesVal = isNaN(i) ? 0 : i;
+  if (feetVal <= 0 && inchesVal <= 0) return "";
+  const totalInches = (feetVal * 12) + inchesVal;
+  return parseFloat((totalInches * 2.54).toFixed(1));
+}
+
+export function calcBmi(weightKg, heightCm) {
+  const w = parseFloat(weightKg);
+  const h = parseFloat(heightCm) / 100;
+  if (!w || !h || h <= 0) return "";
+  return (w / (h * h)).toFixed(1);
+}
+
+export function bmiCategory(bmi, gender) {
+  const v = parseFloat(bmi);
+  if (!v) return null;
+  // WHO Asian / Indian consensus thresholds (WHO Expert Consultation 2004 + ICMR guidelines)
+  // For Indians, overweight risk starts at 23 (vs 25 globally) and obese at 25 (vs 30 globally).
+  // Females carry ~6-8% more body fat at the same BMI, so healthy ceiling is 22.0 vs 22.9 for males.
+  const healthyMax = (gender === "Female") ? 22.0 : 22.9;
+  if (v < 18.5)        return { label: "Underweight",   color: "var(--warning, #d97706)" };
+  if (v <= healthyMax) return { label: "Healthy",        color: "var(--success, #16a34a)" };
+  if (v < 25)          return { label: "Overweight",     color: "var(--warning, #f59e0b)" };
+  if (v < 30)          return { label: "Obese Class 1",  color: "var(--danger,  #dc2626)" };
+  if (v < 35)          return { label: "Obese Class 2",  color: "var(--danger,  #b91c1c)" };
+  return { label: "Obese Class 3",  color: "var(--danger,  #7f1d1d)" };
+}
+
+export function renderSharedMemberFields(member = {}) {
+  const { feet, inches } = cmToFeetInches(member.initHeight);
+  
+  return `
+    <label>WhatsApp Number
+      <input name="whatsappNumber" type="tel" maxlength="10" value="${escapeHtml(member.whatsappNumber || "")}" placeholder="Same as mobile" />
+    </label>
+    <label>Gender
+      <select name="gender">
+        <option value="Not specified" ${member.gender === "Not specified" ? "selected" : ""}>Not specified</option>
+        <option value="Female" ${member.gender === "Female" ? "selected" : ""}>Female</option>
+        <option value="Male" ${member.gender === "Male" ? "selected" : ""}>Male</option>
+        <option value="Other" ${member.gender === "Other" ? "selected" : ""}>Other</option>
+      </select>
+    </label>
+    <label>Date of Birth
+      <input name="dateOfBirth" type="date" value="${escapeHtml(member.dateOfBirth || "")}" />
+    </label>
+    <label class="wide">Address
+      <textarea name="address" rows="2">${escapeHtml(member.address || "")}</textarea>
+    </label>
+
+    <div class="form-section-heading wide">Emergency Contact</div>
+    <label>Contact name
+      <input name="emergencyName" maxlength="80" value="${escapeHtml(member.emergencyName || "")}" />
+    </label>
+    <label>Relationship
+      <select name="emergencyRelationship">
+        <option value="" ${!member.emergencyRelationship ? "selected" : ""}>Not specified</option>
+        <option value="Spouse" ${member.emergencyRelationship === "Spouse" ? "selected" : ""}>Spouse</option>
+        <option value="Parent" ${member.emergencyRelationship === "Parent" ? "selected" : ""}>Parent</option>
+        <option value="Sibling" ${member.emergencyRelationship === "Sibling" ? "selected" : ""}>Sibling</option>
+        <option value="Child" ${member.emergencyRelationship === "Child" ? "selected" : ""}>Child</option>
+        <option value="Friend" ${member.emergencyRelationship === "Friend" ? "selected" : ""}>Friend</option>
+        <option value="Other" ${member.emergencyRelationship === "Other" ? "selected" : ""}>Other</option>
+      </select>
+    </label>
+    <label>Contact phone
+      <input name="emergencyPhone" type="tel" maxlength="10" value="${escapeHtml(member.emergencyPhone || "")}" />
+    </label>
+
+    <div class="form-section-heading wide">Initial Measurements</div>
+    <label>Weight kg
+      <input name="initWeight" type="number" min="0" step="0.1" value="${escapeHtml(member.initWeight != null ? String(member.initWeight) : "")}" />
+    </label>
+    
+    <label>Height (Feet)
+      <select name="heightFeet">
+        <option value="" ${feet === "" ? "selected" : ""}>Select</option>
+        ${[3,4,5,6,7,8].map(f => `<option value="${f}" ${feet === f ? "selected" : ""}>${f} ft</option>`).join("")}
+      </select>
+    </label>
+    <label>Height (Inches)
+      <select name="heightInches">
+        <option value="" ${inches === "" ? "selected" : ""}>Select</option>
+        ${[0,1,2,3,4,5,6,7,8,9,10,11].map(i => `<option value="${i}" ${inches === i ? "selected" : ""}>${i} in</option>`).join("")}
+      </select>
+    </label>
+    
+    <!-- Hidden input to store converted height in cm -->
+    <input type="hidden" name="initHeight" value="${escapeHtml(member.initHeight != null ? String(member.initHeight) : "")}" />
+
+    <!-- Obesity Meter -->
+    <div class="bmi-meter-wrapper wide hidden" data-bmi-meter>
+      <div class="bmi-meter-header">
+        <span class="bmi-meter-value" data-bmi-number>—</span>
+        <span class="bmi-unit">BMI</span>
+        <span class="bmi-meter-category" data-bmi-category></span>
+      </div>
+      <div class="bmi-meter-bar" aria-hidden="true">
+        <div class="bmi-zone bmi-zone--uw"  title="Underweight < 18.5"></div>
+        <div class="bmi-zone bmi-zone--ok"  title="Healthy 18.5–22.9"></div>
+        <div class="bmi-zone bmi-zone--ow"  title="Overweight 23–24.9"></div>
+        <div class="bmi-zone bmi-zone--ob1" title="Obese I 25–29.9"></div>
+        <div class="bmi-zone bmi-zone--ob2" title="Obese II 30–34.9"></div>
+        <div class="bmi-zone bmi-zone--ob3" title="Obese III ≥ 35"></div>
+        <div class="bmi-cursor" data-bmi-cursor></div>
+      </div>
+      <input type="hidden" name="initBmi" data-bmi-hidden value="${escapeHtml(member.initBmi || "")}" />
+    </div>
+
+    <label>Body fat %
+      <input name="initBodyFat" type="number" min="0" step="0.1" value="${escapeHtml(member.initBodyFat != null ? String(member.initBodyFat) : "")}" />
+    </label>
+    <label>Waist cm
+      <input name="initWaist" type="number" min="0" step="0.1" value="${escapeHtml(member.initWaist != null ? String(member.initWaist) : "")}" />
+    </label>
+    <label>Chest cm
+      <input name="initChest" type="number" min="0" step="0.1" value="${escapeHtml(member.initChest != null ? String(member.initChest) : "")}" />
+    </label>
+    <label>Hip cm
+      <input name="initHip" type="number" min="0" step="0.1" value="${escapeHtml(member.initHip != null ? String(member.initHip) : "")}" />
+    </label>
+    <label>Bicep cm
+      <input name="initBicep" type="number" min="0" step="0.1" value="${escapeHtml(member.initBicep != null ? String(member.initBicep) : "")}" />
+    </label>
+    <label>Thigh cm
+      <input name="initThigh" type="number" min="0" step="0.1" value="${escapeHtml(member.initThigh != null ? String(member.initThigh) : "")}" />
+    </label>
+    
+    <label class="wide">Gym goal
+      <select name="gymGoal">
+        <option value="" ${!member.gymGoal ? "selected" : ""}>Not specified</option>
+        <option value="Weight Loss" ${member.gymGoal === "Weight Loss" ? "selected" : ""}>Weight Loss</option>
+        <option value="Muscle Gain" ${member.gymGoal === "Muscle Gain" ? "selected" : ""}>Muscle Gain</option>
+        <option value="General Fitness" ${member.gymGoal === "General Fitness" ? "selected" : ""}>General Fitness</option>
+        <option value="Endurance / Cardio" ${member.gymGoal === "Endurance / Cardio" ? "selected" : ""}>Endurance / Cardio</option>
+        <option value="Body Toning" ${member.gymGoal === "Body Toning" ? "selected" : ""}>Body Toning</option>
+        <option value="Flexibility / Mobility" ${member.gymGoal === "Flexibility / Mobility" ? "selected" : ""}>Flexibility / Mobility</option>
+        <option value="Rehabilitation" ${member.gymGoal === "Rehabilitation" ? "selected" : ""}>Rehabilitation</option>
+      </select>
+    </label>
+
+    <div class="form-section-heading wide">Background</div>
+    <label>Blood group
+      <select name="bloodGroup">
+        <option value="" ${!member.bloodGroup ? "selected" : ""}>Not specified</option>
+        <option value="A+" ${member.bloodGroup === "A+" ? "selected" : ""}>A+</option>
+        <option value="A-" ${member.bloodGroup === "A-" ? "selected" : ""}>A-</option>
+        <option value="B+" ${member.bloodGroup === "B+" ? "selected" : ""}>B+</option>
+        <option value="B-" ${member.bloodGroup === "B-" ? "selected" : ""}>B-</option>
+        <option value="O+" ${member.bloodGroup === "O+" ? "selected" : ""}>O+</option>
+        <option value="O-" ${member.bloodGroup === "O-" ? "selected" : ""}>O-</option>
+        <option value="AB+" ${member.bloodGroup === "AB+" ? "selected" : ""}>AB+</option>
+        <option value="AB-" ${member.bloodGroup === "AB-" ? "selected" : ""}>AB-</option>
+      </select>
+    </label>
+    <label>Occupation
+      <input name="occupation" maxlength="80" value="${escapeHtml(member.occupation || "")}" />
+    </label>
+    <label>Activity level
+      <select name="activityLevel">
+        <option value="" ${!member.activityLevel ? "selected" : ""}>Not specified</option>
+        <option value="Sedentary" ${member.activityLevel === "Sedentary" ? "selected" : ""}>Sedentary</option>
+        <option value="Lightly Active" ${member.activityLevel === "Lightly Active" ? "selected" : ""}>Lightly Active</option>
+        <option value="Moderately Active" ${member.activityLevel === "Moderately Active" ? "selected" : ""}>Moderately Active</option>
+        <option value="Very Active" ${member.activityLevel === "Very Active" ? "selected" : ""}>Very Active</option>
+      </select>
+    </label>
+    <label>Fitness experience
+      <select name="fitnessExperience">
+        <option value="" ${!member.fitnessExperience ? "selected" : ""}>Not specified</option>
+        <option value="Beginner" ${member.fitnessExperience === "Beginner" ? "selected" : ""}>Beginner</option>
+        <option value="Intermediate" ${member.fitnessExperience === "Intermediate" ? "selected" : ""}>Intermediate</option>
+        <option value="Advanced" ${member.fitnessExperience === "Advanced" ? "selected" : ""}>Advanced</option>
+      </select>
+    </label>
+
+    <div class="form-section-heading wide">Health &amp; Medical</div>
+    <label class="wide">Medical conditions
+      <textarea name="medicalConditions" rows="2">${escapeHtml(member.medicalConditions || "")}</textarea>
+    </label>
+    <label class="wide">Current medications
+      <textarea name="currentMedications" rows="2">${escapeHtml(member.currentMedications || "")}</textarea>
+    </label>
+    <label class="wide">Allergies
+      <textarea name="allergies" rows="2">${escapeHtml(member.allergies || "")}</textarea>
+    </label>
+    <label class="wide">Limitations or injuries
+      <textarea name="physicalLimitations" rows="2">${escapeHtml(member.physicalLimitations || "")}</textarea>
+    </label>
+  `;
+}
+
+export function bindSharedBmiEvents(form) {
+  const bmiMeter      = form.querySelector("[data-bmi-meter]");
+  const bmiNumber     = form.querySelector("[data-bmi-number]");
+  const bmiCatEl      = form.querySelector("[data-bmi-category]");
+  const bmiCursor     = form.querySelector("[data-bmi-cursor]");
+  const bmiHidden     = form.querySelector("[data-bmi-hidden]");
+  const heightHidden  = form.querySelector("[name='initHeight']");
+
+  function updateBmi() {
+    const feet = form.heightFeet?.value || "";
+    const inches = form.heightInches?.value || "";
+    const cm = feetInchesToCm(feet, inches);
+    
+    if (heightHidden) heightHidden.value = cm || "";
+
+    const val = calcBmi(form.initWeight?.value || "", cm);
+    if (bmiHidden) bmiHidden.value = val;
+
+    if (!val) {
+      if (bmiMeter) bmiMeter.classList.add("hidden");
+      return;
+    }
+
+    if (bmiMeter) bmiMeter.classList.remove("hidden");
+
+    const cat = bmiCategory(val, form.gender?.value || "Not specified");
+    if (bmiNumber)  { bmiNumber.textContent = val; bmiNumber.style.color = cat ? cat.color : ""; }
+    if (bmiCatEl)   { bmiCatEl.textContent = cat ? cat.label : ""; bmiCatEl.style.color = cat ? cat.color : ""; }
+
+    // Cursor position: linear scale BMI 10–40 (30-unit range)
+    const pct = Math.min(Math.max((parseFloat(val) - 10) / 30 * 100, 0), 100);
+    if (bmiCursor) bmiCursor.style.left = `${pct}%`;
+  }
+
+  form.initWeight?.addEventListener("input", updateBmi);
+  form.heightFeet?.addEventListener("change", updateBmi);
+  form.heightInches?.addEventListener("change", updateBmi);
+  form.gender?.addEventListener("change", updateBmi);
+  
+  // Initial run
+  updateBmi();
+}
+
