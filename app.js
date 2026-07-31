@@ -11,6 +11,7 @@ import { attendanceModule } from "./modules/attendance.js";
 import { workoutsModule } from "./modules/workouts.js";
 import { progressModule } from "./modules/progress.js";
 import { reportsModule } from "./modules/reports.js";
+import { analyticsModule } from "./modules/analytics.js";
 import { settingsModule } from "./modules/settings.js";
 import { myMembershipModule } from "./modules/my-membership.js";
 import { myPaymentsModule } from "./modules/my-payments.js";
@@ -44,6 +45,7 @@ const nav = [
   ["workouts", "Workouts", "fitness_center", ["owner", "trainer"]],
   ["progress", "Progress", "trending_up", ALL_ROLES],
   ["reports", "Reports", "bar_chart", ["owner"]],
+  ["analytics", "Analytics", "analytics", ["owner"]],
   ["my-membership", "My Membership", "card_membership", ["member"]],
   ["my-payments", "My Payments", "receipt_long", ["member"]],
   ["my-workout", "My Workout", "fitness_center", ["member"]],
@@ -66,6 +68,7 @@ const modules = {
   workouts: workoutsModule,
   progress: progressModule,
   reports: reportsModule,
+  analytics: analyticsModule,
   "my-membership": myMembershipModule,
   "my-payments": myPaymentsModule,
   "trainer-checkin": trainerCheckinModule,

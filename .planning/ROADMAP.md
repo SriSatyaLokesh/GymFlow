@@ -20,7 +20,7 @@ GymFlow is a zero-cost, self-hosted gym management PWA. Phases build out the ful
 - [x] **Phase 11: Member Workout Logging & Exercise Library (Hevy-Style)** — Unrestricted workout logging, routine scheduling, last-week duplication, gym feed dashboard, search, and trainer/owner check. (completed 2026-07-28)
 - [x] **Phase 12: Implement PBL gamification strategy (points, badges, leaderboard, PRs, milestones)** — Gamify member workouts using points, custom badges, leaderboards per weight/gender/consistency, and PR milestones. (completed 2026-07-29)
 - [x] **Phase 13: Phone number based login and WhatsApp invitation links** — Enable phone number sign-in with Firebase, support dual email/phone credentials, and send invitation links on registration. (completed 2026-07-30)
-- [ ] **Phase 14: Analytics & Insights** — Revenue trends, member growth, attendance heatmap, forecasting
+- [x] **Phase 14: Analytics & Insights** — Revenue trends, member growth, attendance heatmap, forecasting (completed 2026-07-31)
 - [ ] **Phase 15: Multi-Branch Support** — Branch entity, per-branch scoping, cross-branch dashboard
 - [x] **Phase 16: Owner UX Enhancements (Payments, Dashboard Visuals, Reports, Roster, Templates)** — Improve payment capture (custom amounts, modes), member activity checkups, visually rich owner KPIs, report custom styling, and streamlined workout template management. (completed 2026-07-31)
 
@@ -350,7 +350,7 @@ Plans:
 
 **Goal**: Give gym owners actionable business intelligence to grow and retain members.
 **Depends on**: Phase 4
-**Status**: Not started
+**Status**: Complete
 **Success Criteria** (what must be TRUE):
 
   1. Revenue trend chart with monthly/weekly/daily toggle works
@@ -362,7 +362,7 @@ Plans:
 
 Plans:
 
-- [ ] 14-01: TBD
+- [x] 14-01-PLAN.md — Analytics & Insights panel implementation
 
 ### Phase 15: Multi-Branch Support
 
@@ -420,7 +420,7 @@ Plans:
 | 11 | Member Workout Logging & Exercise Library (Hevy-Style) | 1/1 | Complete    | 2026-07-28 |
 | 12 | Implement PBL gamification strategy (points, badges, leaderboard, PRs, milestones) | 1/1 | Complete    | 2026-07-29 |
 | 13 | Phone number based login and WhatsApp invitation links | 1/1 | Complete | 2026-07-30 |
-| 14 | Analytics & Insights | 0/1 | Not started | — |
+| 14 | Analytics & Insights | 1/1 | Complete | 2026-07-31 |
 | 15 | Multi-Branch Support | 0/1 | Not started | — |
 | 16 | Owner UX Enhancements | 1/1 | Complete | 2026-07-31 |
 

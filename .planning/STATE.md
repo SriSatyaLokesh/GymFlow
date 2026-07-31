@@ -2,24 +2,24 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Phase 13 complete — Phone login and WhatsApp invite links implemented
-stopped_at: Phase 13 complete
-last_updated: "2026-07-30T12:20:00.000Z"
+status: Phase 14 complete — Analytics & Insights dashboard implemented
+stopped_at: Phase 14 complete
+last_updated: "2026-07-31T19:15:00.000Z"
 progress:
-  total_phases: 15
-  completed_phases: 13
-  total_plans: 13
-  completed_plans: 13
+  total_phases: 16
+  completed_phases: 15
+  total_plans: 15
+  completed_plans: 15
 ---
 
 # GymFlow — Project State
 
 ## Current Status
 
-- **Milestone:** v0.9 Beta
-- **Active Branch:** `main`
-- **Last Phase Completed:** Phase 13 — Phone number based login and WhatsApp invitation links
-- **Next Phase:** Phase 14 — Analytics & Insights
+- **Milestone:** v1.0
+- **Active Branch:** `feature/member-view-refactor`
+- **Last Phase Completed:** Phase 14 — Analytics & Insights
+- **Next Phase:** Phase 15 — Multi-Branch Support
 
 ## Completed Phases
 
@@ -36,22 +36,22 @@ progress:
 | 9 | Membership Pause & Freeze | main | — |
 | 10 | Trainer Workout Module Library | main (#12) | — |
 | 10.1 | Enhanced Member Intake Form & BMI Visual Meter | main | 2026-07-23 |
-| 11 | Member Workout Logging & Exercise Library (Hevy-Style) | main | 2026-07-29 |
+| 11 | Member Workout Logging & Exercise Library (Hevy-Style) | main | 2026-07-28 |
 | 12 | Implement PBL gamification strategy (points, badges, leaderboard, PRs, milestones) | main | 2026-07-29 |
 | 13 | Phone number based login and WhatsApp invitation links | main | 2026-07-30 |
+| 14 | Analytics & Insights | feature/member-view-refactor | 2026-07-31 |
+| 16 | Owner UX Enhancements | feature/member-view-refactor | 2026-07-31 |
 
 ## Upcoming Phases (Priority Order)
 
 | Phase | Name | Priority |
 |---|---|---|
-| 14 | Analytics & Insights | MEDIUM |
 | 15 | Multi-Branch Support | MEDIUM |
 
 ## In-Progress Work
 
-- **Branch:** `main`
-- **Last merged commit:** `517a3ff` — Add trainer workout module library and basic member workouts (#12)
-- **Status:** Phase 11 shipped — PR #22 (Smoke tests enhanced)
+- **Branch:** `feature/member-view-refactor`
+- **Status:** Phase 14 complete, smoke test passed.
 
 ## Key Architectural Facts
 
@@ -66,9 +66,7 @@ progress:
 
 ## Open Decisions
 
-- Phase 8 (Member Portal v2): needs UX design for notification opt-in flow
-- Phase 13 (Multi-Branch): Firestore security rules need significant redesign for branch scoping
-- Phase 14 (Payment Gateway): Firebase Functions needed for webhook; adds server-side complexity
+- Phase 15 (Multi-Branch): Firestore security rules need significant redesign for branch scoping
 
 ## Blockers
 
@@ -93,9 +91,10 @@ None currently.
 - Phase 14 and 15 removed; re-sequenced remaining future phases to 12 (PBL), 13 (Analytics), and 14 (Multi-Branch)
 - Phase 12.1 inserted: Phone number based login and WhatsApp invitation links
 - Phase 12.1 renumbered to Phase 13: to allow Phase 12 improvement revisions in future
+- Phase 14 (Analytics & Insights) and Phase 16 (Owner UX Enhancements) completed on 2026-07-31
 
 ## Session
 
-**Last session:** 2026-07-30T12:20:00.000Z
-**Stopped at:** Phase 13 complete
-**Resume file:** .planning/phases/14-analytics-and-insights/14-CONTEXT.md
+**Last session:** 2026-07-31T19:15:00.000Z
+**Stopped at:** Phase 14 complete
+**Resume file:** .planning/phases/14-analytics-insights/14-CONTEXT.md
