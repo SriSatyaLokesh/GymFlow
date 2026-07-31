@@ -1,4 +1,4 @@
-import { collections, dateLabel, emptyState, escapeHtml, findName, formData, nameCell, optionList, pageHeader, today, trendChart, withButtonLoading, getBadgeCss, renderBadgeIcon } from "./utils.js";
+import { collections, dateLabel, emptyState, escapeHtml, findName, formData, nameCell, optionList, pageHeader, today, trendChart, withButtonLoading, getBadgeCss, renderBadgeIcon, getMemberTier, getBadgeClass } from "./utils.js";
 
 const METRICS = [
   { key: "weight", label: "Weight (kg)", color: "var(--teal)" },
@@ -163,16 +163,36 @@ function renderMemberProgress(context) {
     const personalRecords = me.personalRecords || {};
     const myLogsCount = (context.data.workout_logs || []).filter(l => l.memberId === me.id).length;
     const currentStreak = me.currentStreak || 0;
+    const tier = getMemberTier(me.points || 0);
+
+    const levelSummaryHtml = `
+      <section class="panel">
+        <div class="panel-heading">
+          <h2>Level & Rank</h2>
+        </div>
+        <div style="display: flex; align-items: center; justify-content: space-between; background: var(--surface-soft); padding: 16px 20px; border-radius: var(--r-md); box-shadow: var(--shadow-card); margin-top: 12px;">
+          <div style="display:flex; flex-direction:column; gap:4px;">
+            <span style="font-size: 0.85rem; color: var(--muted); font-weight:600;">Total Score</span>
+            <strong style="font-size: 1.6rem; color: var(--accent);">${me.points || 0} <span style="font-size: 0.9rem; font-weight: normal; color: var(--muted);">Points</span></strong>
+          </div>
+          <div class="tier-badge ${tier.class}">
+            <span class="material-symbols-outlined" style="font-size:18px;">${tier.icon}</span>
+            ${tier.name} Tier
+          </div>
+        </div>
+      </section>
+    `;
 
     const badgesHtml = `
-      <section class="panel">
+      <section class="panel" style="margin-top: 18px;">
         <div class="panel-heading">
           <h2>My Badges</h2>
           <span>${unlockedBadgeIds.length} / ${badges.length} unlocked</span>
         </div>
-        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr)); gap: 15px; margin-top: 15px;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr)); gap: 15px; margin-top: 15px;">
           ${badges.map(badge => {
             const isUnlocked = unlockedBadgeIds.includes(badge.id);
+            const cardClass = getBadgeClass(badge.id, isUnlocked);
             let progressHtml = "";
             if (!isUnlocked) {
               let currentVal = 0;
@@ -194,7 +214,7 @@ function renderMemberProgress(context) {
               const pct = Math.min(100, Math.round((currentVal / threshold) * 100));
               progressHtml = `
                 <div style="margin-top: 8px; width: 100%;">
-                  <div style="display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--muted); margin-bottom: 2px;">
+                  <div style="display: flex; justify-content: space-between; font-size: 0.65rem; color: var(--muted); margin-bottom: 3px;">
                     <span>Progress</span>
                     <span>${currentVal}/${threshold} ${unit}</span>
                   </div>
@@ -206,12 +226,12 @@ function renderMemberProgress(context) {
             }
 
             return `
-              <div style="${getBadgeCss(badge.id, isUnlocked)} flex-direction: column; align-items: flex-start; gap: 8px; box-sizing: border-box;">
+              <div class="${cardClass}">
                 <div style="display: flex; gap: 12px; align-items: center; width: 100%;">
                   ${renderBadgeIcon(badge.id, isUnlocked)}
                   <div style="text-align: left; flex: 1;">
-                    <strong style="font-size: 0.95rem; color: inherit; display: block;">${escapeHtml(badge.name)}</strong>
-                    <div style="font-size: 0.75rem; color: inherit; opacity: 0.85; line-height: 1.2;">${escapeHtml(badge.description)}</div>
+                    <strong style="font-size: 0.9rem; color: inherit; display: block; font-weight:700;">${escapeHtml(badge.name)}</strong>
+                    <div style="font-size: 0.72rem; color: inherit; opacity: 0.85; line-height: 1.3;">${escapeHtml(badge.description)}</div>
                   </div>
                 </div>
                 ${progressHtml}
@@ -230,22 +250,22 @@ function renderMemberProgress(context) {
           <span>${prList.length} exercises</span>
         </div>
         ${prList.length ? `
-          <div class="data-table">
-            <div class="table-head"><span>Exercise</span><span>Max Weight Logged</span></div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 180px), 1fr)); gap: 12px; margin-top: 15px;">
             ${prList.map(([exercise, weight]) => `
-              <div class="table-row" style="grid-template-columns: 1fr 1fr;">
-                <span data-label="Exercise" style="font-weight: 600;">${escapeHtml(exercise)}</span>
-                <span data-label="Max Weight" style="color: var(--accent); font-weight: 700;">${weight} kg</span>
+              <div style="background: var(--surface-soft); padding: 14px 16px; border-radius: var(--r-md); border-left: 4px solid var(--teal); box-shadow: var(--shadow-card); display:flex; flex-direction:column; gap:4px; text-align:left;">
+                <span style="font-size: 0.75rem; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing:0.5px;">${escapeHtml(exercise)}</span>
+                <strong style="font-size: 1.2rem; color: var(--ink-soft);">${weight} <span style="font-size: 0.85rem; font-weight:normal; color:var(--muted)">kg</span></strong>
               </div>
             `).join("")}
           </div>
-        ` : `<div class="table-empty">Log a workout with set weights to record your first PR!</div>`}
+        ` : `<div class="table-empty" style="margin-top:15px;">Log a workout with set weights to record your first PR!</div>`}
       </section>
     `;
 
     return `
       ${pageHeader("Progress")}
       ${tabHeader}
+      ${levelSummaryHtml}
       ${badgesHtml}
       ${prsHtml}
     `;

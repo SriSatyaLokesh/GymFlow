@@ -800,21 +800,41 @@ export function showMemberProfileModal(member, context) {
       const prList = Object.entries(personalRecords);
       const myLogsCount = logs.length;
       const currentStreak = member.currentStreak || 0;
+      const tier = getMemberTier(member.points || 0);
 
       contentEl.innerHTML = `
-        <div class="stack" style="gap: 15px;">
-          <section class="stack" style="gap: 8px;">
-            <h3 style="margin:0; border-bottom: 1px solid var(--line); padding-bottom:4px; font-size: 1rem; color:var(--accent);">Points Summary</h3>
-            <div style="font-size: 1.2rem; font-weight: 700; color: var(--accent);">
-              ${member.points || 0} <span style="font-size: 0.9rem; font-weight: normal; color: var(--text-muted);">total points earned</span>
+        <div class="stack" style="gap: 20px;">
+          <section class="stack" style="gap: 10px;">
+            <h3 style="margin:0; border-bottom: 1px solid var(--line); padding-bottom:6px; font-size: 0.95rem; color:var(--accent); text-transform:uppercase; letter-spacing:0.5px;">Level & Rank</h3>
+            <div style="display: flex; align-items: center; justify-content: space-between; background: var(--surface-soft); padding: 12px 16px; border-radius: var(--r-md); box-shadow: var(--shadow-card);">
+              <div style="display:flex; flex-direction:column; gap:2px;">
+                <span style="font-size: 0.8rem; color: var(--muted); font-weight:600;">Total Score</span>
+                <strong style="font-size: 1.4rem; color: var(--accent);">${member.points || 0} <span style="font-size: 0.85rem; font-weight: normal; color: var(--muted);">Points</span></strong>
+              </div>
+              <div class="tier-badge ${tier.class}">
+                <span class="material-symbols-outlined" style="font-size:16px;">${tier.icon}</span>
+                ${tier.name} Tier
+              </div>
             </div>
           </section>
 
-          <section class="stack" style="gap: 8px;">
-            <h3 style="margin:0; border-bottom: 1px solid var(--line); padding-bottom:4px; font-size: 1rem; color:var(--accent);">Unlocked Badges (${unlockedBadgeIds.length} / ${badges.length})</h3>
-            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr)); gap: 10px; margin-top: 5px;">
+          <section class="stack" style="gap: 10px;">
+            <h3 style="margin:0; border-bottom: 1px solid var(--line); padding-bottom:6px; font-size: 0.95rem; color:var(--accent); text-transform:uppercase; letter-spacing:0.5px;">Unlocked Badges (${unlockedBadgeIds.length} / ${badges.length})</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr)); gap: 12px; margin-top: 5px;">
               ${badges.map(badge => {
                 const isUnlocked = unlockedBadgeIds.includes(badge.id);
+                const levels = {
+                  "streak-starter": "bronze",
+                  "consistency-50": "bronze",
+                  "unstoppable": "silver",
+                  "consistency-100": "silver",
+                  "pr-hitter": "silver",
+                  "consistency-250": "gold",
+                  "heavy-lifter": "gold"
+                };
+                const level = levels[badge.id] || "bronze";
+                const cardClass = `badge-card-premium ${isUnlocked ? `badge-unlocked badge-${level}` : 'badge-locked'}`;
+
                 let progressHtml = "";
                 if (!isUnlocked) {
                   let currentVal = 0;
@@ -836,11 +856,11 @@ export function showMemberProfileModal(member, context) {
                   const pct = Math.min(100, Math.round((currentVal / threshold) * 100));
                   progressHtml = `
                     <div style="margin-top: 8px; width: 100%;">
-                      <div style="display: flex; justify-content: space-between; font-size: 0.65rem; color: var(--muted); margin-bottom: 2px;">
+                      <div style="display: flex; justify-content: space-between; font-size: 0.65rem; color: var(--muted); margin-bottom: 3px;">
                         <span>Progress</span>
                         <span>${currentVal}/${threshold} ${unit}</span>
                       </div>
-                      <div class="nm-progress-track" style="height: 5px;">
+                      <div class="nm-progress-track">
                         <div class="nm-progress-bar" style="width: ${pct}%;"></div>
                       </div>
                     </div>
@@ -848,12 +868,12 @@ export function showMemberProfileModal(member, context) {
                 }
 
                 return `
-                  <div style="${getBadgeCss(badge.id, isUnlocked)} flex-direction: column; align-items: flex-start; gap: 6px; box-sizing: border-box;">
-                    <div style="display: flex; gap: 10px; align-items: center; width: 100%;">
+                  <div class="${cardClass}">
+                    <div style="display: flex; gap: 12px; align-items: center; width: 100%;">
                       ${renderBadgeIcon(badge.id, isUnlocked)}
                       <div style="text-align: left; flex: 1;">
-                        <strong style="font-size: 0.85rem; color: inherit; display: block;">${escapeHtml(badge.name)}</strong>
-                        <div style="font-size: 0.7rem; color: inherit; opacity: 0.85; line-height: 1.25;">${escapeHtml(badge.description)}</div>
+                        <strong style="font-size: 0.9rem; color: inherit; display: block; font-weight:700;">${escapeHtml(badge.name)}</strong>
+                        <div style="font-size: 0.72rem; color: inherit; opacity: 0.85; line-height: 1.3;">${escapeHtml(badge.description)}</div>
                       </div>
                     </div>
                     ${progressHtml}
@@ -863,15 +883,14 @@ export function showMemberProfileModal(member, context) {
             </div>
           </section>
 
-          <section class="stack" style="gap: 8px;">
-            <h3 style="margin:0; border-bottom: 1px solid var(--line); padding-bottom:4px; font-size: 1rem; color:var(--accent);">Personal Records</h3>
+          <section class="stack" style="gap: 10px;">
+            <h3 style="margin:0; border-bottom: 1px solid var(--line); padding-bottom:6px; font-size: 0.95rem; color:var(--accent); text-transform:uppercase; letter-spacing:0.5px;">Personal Records</h3>
             ${prList.length ? `
-              <div class="data-table">
-                <div class="table-head"><span>Exercise</span><span>Max Weight</span></div>
+              <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 180px), 1fr)); gap: 10px; margin-top: 5px;">
                 ${prList.map(([exercise, weight]) => `
-                  <div class="table-row" style="grid-template-columns: 1fr 1fr;">
-                    <span data-label="Exercise" style="font-weight: 600;">${escapeHtml(exercise)}</span>
-                    <span data-label="Max Weight" style="color: var(--accent); font-weight: 700;">${weight} kg</span>
+                  <div style="background: var(--surface-soft); padding: 12px 14px; border-radius: var(--r-md); border-left: 3px solid var(--teal); box-shadow: var(--shadow-card); display:flex; flex-direction:column; gap:4px; text-align:left;">
+                    <span style="font-size: 0.75rem; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing:0.5px;">${escapeHtml(exercise)}</span>
+                    <strong style="font-size: 1.15rem; color: var(--ink-soft);">${weight} <span style="font-size: 0.8rem; font-weight:normal; color:var(--muted)">kg</span></strong>
                   </div>
                 `).join("")}
               </div>
@@ -1050,26 +1069,53 @@ export async function awardPointsAndBadges(context, actionType, details = {}) {
   }
 }
 
+export function getMemberTier(points = 0) {
+  const pts = Number(points);
+  if (pts >= 3000) return { name: "Platinum", class: "tier-platinum", icon: "diamond" };
+  if (pts >= 1500) return { name: "Gold", class: "tier-gold", icon: "workspace_premium" };
+  if (pts >= 500) return { name: "Silver", class: "tier-silver", icon: "shield_with_heart" };
+  return { name: "Bronze", class: "tier-bronze", icon: "military_tech" };
+}
+
+export function getBadgeClass(badgeId, isUnlocked) {
+  const levels = {
+    "streak-starter": "bronze",
+    "consistency-50": "bronze",
+    "unstoppable": "silver",
+    "consistency-100": "silver",
+    "pr-hitter": "silver",
+    "consistency-250": "gold",
+    "heavy-lifter": "gold"
+  };
+  const level = levels[badgeId] || "bronze";
+  return `badge-card-premium ${isUnlocked ? `badge-unlocked badge-${level}` : 'badge-locked'}`;
+}
+
 export function showCelebrationModal(newlyUnlockedBadges = [], newlyHitPRs = []) {
   const overlay = document.createElement("div");
-  overlay.className = "modal-overlay";
+  overlay.className = "modal-overlay celebration-overlay";
   overlay.style.zIndex = "3000";
 
   let badgesHtml = "";
   if (newlyUnlockedBadges.length > 0) {
     badgesHtml = `
-      <div style="margin-bottom: 20px; width: 100%;">
-        <h3 style="color: var(--accent); margin-bottom: 12px;">🏅 Badges Unlocked!</h3>
-        <div style="display: flex; flex-direction: column; gap: 10px; align-items: center; width: 100%;">
-          ${newlyUnlockedBadges.map(badge => `
-            <div style="${getBadgeCss(badge.id, true)} width: 100%; max-width: 320px; align-items: center;">
-              ${renderBadgeIcon(badge.id, true)}
-              <div style="text-align: left;">
-                <strong style="font-size: 1.05rem; color: inherit;">${escapeHtml(badge.name)}</strong>
-                <div style="font-size: 0.75rem; color: inherit; opacity: 0.85;">${escapeHtml(badge.description)}</div>
+      <div style="margin-bottom: 24px; width: 100%;">
+        <h3 style="color: var(--accent); margin-bottom: 14px; font-size: 1.05rem; text-transform: uppercase; letter-spacing: 0.5px; font-weight:700;">🏅 Badges Unlocked!</h3>
+        <div style="display: flex; flex-direction: column; gap: 12px; align-items: center; width: 100%;">
+          ${newlyUnlockedBadges.map(badge => {
+            const cardClass = getBadgeClass(badge.id, true);
+            return `
+              <div class="${cardClass}" style="width: 100%; max-width: 340px; pointer-events: none;">
+                <div style="display: flex; gap: 12px; align-items: center; width: 100%;">
+                  ${renderBadgeIcon(badge.id, true)}
+                  <div style="text-align: left; flex:1;">
+                    <strong style="font-size: 0.95rem; color: inherit; font-weight:700; display:block;">${escapeHtml(badge.name)}</strong>
+                    <div style="font-size: 0.72rem; color: inherit; opacity: 0.9;">${escapeHtml(badge.description)}</div>
+                  </div>
+                </div>
               </div>
-            </div>
-          `).join("")}
+            `;
+          }).join("")}
         </div>
       </div>
     `;
@@ -1078,13 +1124,16 @@ export function showCelebrationModal(newlyUnlockedBadges = [], newlyHitPRs = [])
   let prsHtml = "";
   if (newlyHitPRs.length > 0) {
     prsHtml = `
-      <div style="margin-bottom: 20px; width: 100%;">
-        <h3 style="color: var(--accent); margin-bottom: 12px;">🔥 New Personal Records!</h3>
-        <div style="display: flex; flex-direction: column; gap: 8px; align-items: center; width: 100%;">
+      <div style="margin-bottom: 24px; width: 100%;">
+        <h3 style="color: var(--accent); margin-bottom: 14px; font-size: 1.05rem; text-transform: uppercase; letter-spacing: 0.5px; font-weight:700;">🔥 New Personal Records!</h3>
+        <div style="display: flex; flex-direction: column; gap: 10px; align-items: center; width: 100%;">
           ${newlyHitPRs.map(pr => `
-            <div style="background: var(--bg-alt); padding: 12px 16px; border-radius: var(--r-sm); border-left: 4px solid var(--accent); width: 100%; max-width: 320px; text-align: left; box-shadow: 0 4px 10px rgba(var(--accent-rgb, 13, 148, 136), 0.15);">
-              <strong style="color: var(--text);">${escapeHtml(pr.exercise)}</strong>
-              <div style="font-size: 1.25rem; font-weight: 800; color: var(--accent); margin-top: 4px;">${pr.weight} kg</div>
+            <div style="background: var(--surface-soft); padding: 14px 18px; border-radius: var(--r-md); border-left: 4px solid var(--teal); width: 100%; max-width: 340px; text-align: left; box-shadow: var(--shadow); display:flex; justify-content:space-between; align-items:center;">
+              <div>
+                <strong style="color: var(--ink-soft); font-size: 0.95rem; display:block;">${escapeHtml(pr.exercise)}</strong>
+                <span style="font-size: 0.7rem; color: var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">New Record</span>
+              </div>
+              <div style="font-size: 1.35rem; font-weight: 800; color: var(--accent);">${pr.weight} <span style="font-size:0.85rem; font-weight:normal; color:var(--muted)">kg</span></div>
             </div>
           `).join("")}
         </div>
@@ -1093,16 +1142,16 @@ export function showCelebrationModal(newlyUnlockedBadges = [], newlyHitPRs = [])
   }
 
   overlay.innerHTML = `
-    <div class="modal-card stack animate-scale" style="max-width: 420px; text-align: center; padding: 30px; position: relative; border: 2px solid var(--primary); box-shadow: 0 10px 40px rgba(var(--primary-rgb, 217, 119, 6), 0.25);">
+    <div class="modal-card celebration-card stack animate-scale" style="max-width: 440px; text-align: center; padding: 35px 30px; position: relative;">
       <button class="modal-close" data-modal="close" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted);">&times;</button>
-      <div style="font-size: 4.5rem; margin-bottom: 10px; animation: bounce 1s infinite alternate;">🏆</div>
-      <h2 style="font-size: 1.80rem; margin: 0 0 10px 0; color: var(--text); font-weight: 800; letter-spacing: -0.5px;">Congratulations!</h2>
-      <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 20px;">You've hit new milestones and earned points!</p>
+      <div style="font-size: 5rem; margin-bottom: 15px; animation: bounce 1.2s infinite alternate; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.15));">🏆</div>
+      <h2 style="font-size: 2rem; margin: 0 0 8px 0; color: var(--ink); font-weight: 800; letter-spacing: -0.5px;">Congratulations!</h2>
+      <p style="color: var(--muted); font-size: 0.95rem; margin-bottom: 24px; font-weight:500;">You've hit new milestones and earned points!</p>
       
       ${badgesHtml}
       ${prsHtml}
       
-      <button class="primary-button" data-modal="close" style="margin-top: 10px; width: 100%; font-weight: 700; letter-spacing: 0.5px; border-radius: var(--r-md);">AWESOME!</button>
+      <button class="primary-button" data-modal="close" style="margin-top: 10px; width: 100%; font-weight: 700; letter-spacing: 0.5px; border-radius: var(--r-md); padding: 12px;">AWESOME!</button>
     </div>
   `;
 
