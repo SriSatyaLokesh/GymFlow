@@ -1,8 +1,18 @@
-import { collections, dateLabel, emptyState, escapeHtml, findName, formData, optionList, pageHeader, showMemberProfileModal, today, withButtonLoading, getExercisesList } from "./utils.js";
+import { collections, dateLabel, emptyState, escapeHtml, findName, formData, optionList, pageHeader, renderMemberProfileDetail, bindMemberProfileDetail, today, withButtonLoading, getExercisesList } from "./utils.js";
 import { canUseWorkoutTemplate, renderTemplateExercises } from "./workouts.js";
 
 export const trainerMembersModule = {
+  activeMemberId: null,
+
   render(context) {
+    if (this.activeMemberId) {
+      const member = context.data.members.find((item) => item.id === this.activeMemberId);
+      if (member) {
+        return renderMemberProfileDetail(member, context);
+      } else {
+        this.activeMemberId = null;
+      }
+    }
     const me = context.myTrainer;
     if (!me) {
       return `
@@ -112,6 +122,17 @@ export const trainerMembersModule = {
   },
 
   bind(root, context) {
+    if (this.activeMemberId) {
+      const member = context.data.members.find((item) => item.id === this.activeMemberId);
+      if (member) {
+        bindMemberProfileDetail(root, member, context, () => {
+          this.activeMemberId = null;
+          context.refreshView();
+        });
+      }
+      return;
+    }
+
     const me = context.myTrainer;
     if (!me) return;
 
@@ -239,10 +260,8 @@ export const trainerMembersModule = {
 
     root.querySelectorAll(".view-client-btn").forEach((button) => {
       button.addEventListener("click", () => {
-        const member = context.data.members.find((item) => item.id === button.dataset.clientId);
-        if (member) {
-          showMemberProfileModal(member, context);
-        }
+        this.activeMemberId = button.dataset.clientId;
+        context.refreshView();
       });
     });
   }

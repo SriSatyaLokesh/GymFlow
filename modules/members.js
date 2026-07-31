@@ -1,7 +1,19 @@
-import { addDays, byName, collections, confirmDialog, dateLabel, emptyState, escapeHtml, findName, formData, memberStatus, nameCell, normalizePhone10, optionList, pageHeader, showMemberProfileModal, statusClass, today, withButtonLoading, cmToFeetInches, feetInchesToCm, calcBmi, bmiCategory, renderSharedMemberFields, bindSharedBmiEvents } from "./utils.js";
+import { addDays, byName, collections, confirmDialog, dateLabel, emptyState, escapeHtml, findName, formData, memberStatus, nameCell, normalizePhone10, optionList, pageHeader, renderMemberProfileDetail, bindMemberProfileDetail, statusClass, today, withButtonLoading, cmToFeetInches, feetInchesToCm, calcBmi, bmiCategory, renderSharedMemberFields, bindSharedBmiEvents } from "./utils.js";
 
 export const membersModule = {
-  render({ data }) {
+  activeMemberId: null,
+
+  render(context) {
+    if (this.activeMemberId) {
+      const member = context.data.members.find((item) => item.id === this.activeMemberId);
+      if (member) {
+        return renderMemberProfileDetail(member, context);
+      } else {
+        this.activeMemberId = null;
+      }
+    }
+
+    const { data } = context;
     const members = [...(data.members || [])].sort(byName);
     const plans = data.membership_plans || [];
     const trainers = data.trainers || [];
@@ -125,6 +137,17 @@ export const membersModule = {
     `;
   },
   bind(root, context) {
+    if (this.activeMemberId) {
+      const member = context.data.members.find((item) => item.id === this.activeMemberId);
+      if (member) {
+        bindMemberProfileDetail(root, member, context, () => {
+          this.activeMemberId = null;
+          context.refreshView();
+        });
+      }
+      return;
+    }
+
     const form = root.querySelector("#member-form");
 
     form.planId.addEventListener("change", () => {
@@ -292,10 +315,8 @@ export const membersModule = {
 
     root.querySelectorAll("[data-view-member]").forEach((button) => {
       button.addEventListener("click", () => {
-        const member = context.data.members.find((item) => item.id === button.dataset.viewMember);
-        if (member) {
-          showMemberProfileModal(member, context);
-        }
+        this.activeMemberId = button.dataset.viewMember;
+        context.refreshView();
       });
     });
 

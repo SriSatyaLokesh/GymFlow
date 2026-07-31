@@ -548,12 +548,51 @@ export function showExerciseModal(exercise) {
   document.body.appendChild(overlay);
 }
 
-export function showMemberProfileModal(member, context) {
-  const overlay = document.createElement("div");
-  overlay.className = "modal-overlay";
-  overlay.style.display = "flex";
-  overlay.style.alignItems = "center";
-  overlay.style.justifyContent = "center";
+export function renderMemberProfileDetail(member, context) {
+  const plans = context.data.membership_plans || [];
+  const trainers = context.data.trainers || [];
+  const logs = (context.data.workout_logs || [])
+    .filter(l => l.memberId === member.id)
+    .sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")));
+
+  const planName = findName(plans, member.planId);
+  const trainerName = findName(trainers, member.assignedTrainer, "Unassigned");
+  const avatarInitials = (member.fullName || "M").split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase() || "M";
+
+  return `
+    ${pageHeader(
+      `<div style="display:flex; gap:12px; align-items:center;">
+        <button class="ghost-button compact" id="back-to-roster-btn" style="min-width: unset; padding: 6px 12px; display: inline-flex; align-items: center; gap: 6px; font-weight:600;">
+          <span class="material-symbols-outlined" style="font-size: 1.25rem;">arrow_back</span>
+          Back to List
+        </button>
+        <div class="avatar" style="width:40px; height:40px; border-radius:50%; background:var(--primary); color:var(--on-primary); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:1rem;">
+          ${avatarInitials}
+        </div>
+        <div>
+          <h2 style="margin: 0; font-size: 1.25rem;">${escapeHtml(member.fullName)}</h2>
+          <small style="opacity: 0.85;">${escapeHtml(planName)} • Trainer: ${escapeHtml(trainerName)}</small>
+        </div>
+      </div>`,
+      `<mark class="status ${statusClass(memberStatus(member))}">${escapeHtml(memberStatus(member))}</mark>`
+    )}
+
+    <div class="tabs-header profile-tabs" style="margin-bottom: 15px; border-bottom: 2px solid var(--line); display:flex; gap:10px;">
+      <button class="tab-btn active" data-profile-tab="info">Bio & Medical</button>
+      <button class="tab-btn" data-profile-tab="logs">Workout Logs (${logs.length})</button>
+      <button class="tab-btn" data-profile-tab="progress">Progress Timeline</button>
+      <button class="tab-btn" data-profile-tab="achievements">Achievements</button>
+    </div>
+
+    <div class="panel" style="padding: 20px; min-height: 400px; background: var(--surface); border-radius: var(--r-lg); box-shadow: var(--shadow-card); border: 1px solid var(--line);" id="profile-tab-content">
+      <!-- Tab content dynamically populated -->
+    </div>
+  `;
+}
+
+export function bindMemberProfileDetail(root, member, context, onBack) {
+  const contentEl = root.querySelector("#profile-tab-content");
+  if (!contentEl) return;
 
   const plans = context.data.membership_plans || [];
   const trainers = context.data.trainers || [];
@@ -564,10 +603,6 @@ export function showMemberProfileModal(member, context) {
   const logs = (context.data.workout_logs || [])
     .filter(l => l.memberId === member.id)
     .sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")));
-
-  const planName = findName(plans, member.planId);
-  const trainerName = findName(trainers, member.assignedTrainer, "Unassigned");
-  const avatarInitials = (member.fullName || "M").split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase() || "M";
 
   const METRICS = [
     { key: "weight", label: "Weight (kg)", color: "var(--teal)" },
@@ -590,57 +625,26 @@ export function showMemberProfileModal(member, context) {
     return trendChart(series, { color: metric.color });
   };
 
-  overlay.innerHTML = `
-    <div class="modal stack" role="dialog" aria-modal="true" style="width: min(650px, 95%); max-height: 85vh; display: flex; flex-direction: column; padding: 20px;">
-      <div class="panel-heading" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--line); padding-bottom: 12px; margin-bottom: 12px;">
-        <div style="display:flex; gap:12px; align-items:center;">
-          <div class="avatar" style="width:44px; height:44px; border-radius:50%; background:var(--primary); color:var(--on-primary); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:1.1rem;">
-            ${avatarInitials}
-          </div>
-          <div>
-            <h2 style="margin: 0; font-size: 1.25rem;">${escapeHtml(member.fullName)}</h2>
-            <small style="opacity: 0.85;">${escapeHtml(planName)} • Trainer: ${escapeHtml(trainerName)}</small>
-          </div>
-        </div>
-        <button class="ghost-button" data-modal="close" style="min-width: unset; padding: 4px; border: none; background: transparent; cursor: pointer;" title="Close">
-          <span class="material-symbols-outlined">close</span>
-        </button>
-      </div>
-
-      <div class="tabs-header modal-tabs" style="margin-bottom: 12px;">
-        <button class="tab-btn active" data-modal-tab="info">Bio & Medical</button>
-        <button class="tab-btn" data-modal-tab="logs">Workout Logs (${logs.length})</button>
-        <button class="tab-btn" data-modal-tab="progress">Progress Timeline</button>
-        <button class="tab-btn" data-modal-tab="achievements">Achievements</button>
-      </div>
-
-      <div style="flex: 1; overflow-y: auto; display:flex; flex-direction:column; gap: 15px;" id="modal-tab-content">
-        <!-- Tab contents dynamic -->
-      </div>
-    </div>
-  `;
-
-  const contentEl = overlay.querySelector("#modal-tab-content");
   let activeTab = "info";
 
   function renderTab() {
     if (activeTab === "info") {
       contentEl.innerHTML = `
-        <div class="stack" style="gap: 15px;">
+        <div class="stack" style="gap: 20px;">
           <section class="stack" style="gap: 8px;">
             <h3 style="margin:0; border-bottom: 1px solid var(--line); padding-bottom:4px; font-size: 1rem; color:var(--accent);">Personal Info</h3>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; font-size:0.9rem;">
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:12px; font-size:0.9rem;">
               <span><strong>Email:</strong> ${escapeHtml(member.email || "—")}</span>
               <span><strong>Mobile:</strong> ${escapeHtml(member.mobile || "—")}</span>
               <span><strong>Gender:</strong> ${escapeHtml(member.gender || "—")}</span>
               <span><strong>DOB:</strong> ${escapeHtml(member.dateOfBirth ? dateLabel(member.dateOfBirth) : "—")}</span>
-              <span style="grid-column: span 2;"><strong>Address:</strong> ${escapeHtml(member.address || "—")}</span>
+              <span style="grid-column: 1 / -1;"><strong>Address:</strong> ${escapeHtml(member.address || "—")}</span>
             </div>
           </section>
 
           <section class="stack" style="gap: 8px;">
             <h3 style="margin:0; border-bottom: 1px solid var(--line); padding-bottom:4px; font-size: 1rem; color:var(--accent);">Emergency Contact</h3>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; font-size:0.9rem;">
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:12px; font-size:0.9rem;">
               <span><strong>Name:</strong> ${escapeHtml(member.emergencyName || "—")}</span>
               <span><strong>Relationship:</strong> ${escapeHtml(member.emergencyRelationship || "—")}</span>
               <span><strong>Phone:</strong> ${escapeHtml(member.emergencyPhone || "—")}</span>
@@ -649,7 +653,7 @@ export function showMemberProfileModal(member, context) {
 
           <section class="stack" style="gap: 8px;">
             <h3 style="margin:0; border-bottom: 1px solid var(--line); padding-bottom:4px; font-size: 1rem; color:var(--accent);">Background & Metrics</h3>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; font-size:0.9rem;">
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:12px; font-size:0.9rem;">
               <span><strong>Blood Group:</strong> ${escapeHtml(member.bloodGroup || "—")}</span>
               <span><strong>Occupation:</strong> ${escapeHtml(member.occupation || "—")}</span>
               <span><strong>Activity Level:</strong> ${escapeHtml(member.activityLevel || "—")}</span>
@@ -753,7 +757,7 @@ export function showMemberProfileModal(member, context) {
 
       contentEl.innerHTML = `
         <div class="stack" style="gap: 15px;">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
             <h3 style="margin:0; font-size:1.1rem; color:var(--accent);">Trend Chart</h3>
             <select id="modal-metric-select" style="padding:4px 8px; border-radius:var(--r-sm); border:1px solid var(--line); background:var(--bg-alt); color:var(--text);">
               ${METRICS.map(m => `<option value="${m.key}">${m.label}</option>`).join("")}
@@ -771,7 +775,7 @@ export function showMemberProfileModal(member, context) {
                   <span>${dateLabel(r.date)}</span>
                   <span style="font-size:0.8rem; opacity:0.8;">${escapeHtml(r.notes || "Measurement")}</span>
                 </div>
-                <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:8px;">
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:8px;">
                   ${r.weight ? `<span><strong>Weight:</strong> ${escapeHtml(r.weight)} kg</span>` : ""}
                   ${r.bmi ? `<span><strong>BMI:</strong> ${escapeHtml(r.bmi)}</span>` : ""}
                   ${r.bodyFat ? `<span><strong>Body Fat:</strong> ${escapeHtml(r.bodyFat)}%</span>` : ""}
@@ -902,31 +906,19 @@ export function showMemberProfileModal(member, context) {
   }
 
   // Bind Tab clicks
-  overlay.querySelectorAll("[data-modal-tab]").forEach(btn => {
+  root.querySelectorAll("[data-profile-tab]").forEach(btn => {
     btn.addEventListener("click", () => {
-      overlay.querySelectorAll("[data-modal-tab]").forEach(b => b.classList.remove("active"));
+      root.querySelectorAll("[data-profile-tab]").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
-      activeTab = btn.dataset.modalTab;
+      activeTab = btn.dataset.profileTab;
       renderTab();
     });
   });
 
-  function close() {
-    document.removeEventListener("keydown", onKey);
-    overlay.remove();
-  }
-  function onKey(event) {
-    if (event.key === "Escape") close();
-  }
-
-  overlay.addEventListener("click", (event) => {
-    if (event.target === overlay) close();
-  });
-  overlay.querySelectorAll("[data-modal='close']").forEach(btn => btn.addEventListener("click", close));
-  document.addEventListener("keydown", onKey);
+  // Bind Back button click
+  root.querySelector("#back-to-roster-btn")?.addEventListener("click", onBack);
 
   renderTab();
-  document.body.appendChild(overlay);
 }
 
 export function calculateStreak(attendanceRecords, restDay = "Sunday") {
