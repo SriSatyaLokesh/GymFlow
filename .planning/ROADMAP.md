@@ -22,6 +22,8 @@ GymFlow is a zero-cost, self-hosted gym management PWA. Phases build out the ful
 - [x] **Phase 13: Phone number based login and WhatsApp invitation links** — Enable phone number sign-in with Firebase, support dual email/phone credentials, and send invitation links on registration. (completed 2026-07-30)
 - [ ] **Phase 14: Analytics & Insights** — Revenue trends, member growth, attendance heatmap, forecasting
 - [ ] **Phase 15: Multi-Branch Support** — Branch entity, per-branch scoping, cross-branch dashboard
+- [ ] **Phase 16: Owner UX Enhancements (Payments, Dashboard Visuals, Reports, Roster, Templates)** — Improve payment capture (custom amounts, modes), member activity checkups, visually rich owner KPIs, report custom styling, and streamlined workout template management.
+
 
 ## Phase Details
 
@@ -379,6 +381,27 @@ Plans:
 
 - [ ] 15-01: TBD
 
+### Phase 16: Owner UX Enhancements
+
+**Goal**: Elevate owner workflows, payments capturing, dashboard visuals, and reports to be highly user-friendly.
+**Depends on**: Phase 4, Phase 12
+**Status**: Not started
+**Success Criteria** (what must be TRUE):
+
+  1. Owner can capture payments with custom amounts, billing dates, payment modes (Cash, Card, UPI, NetBanking), and notes
+  2. Member viewing panel shows active/inactive statuses, payment alerts, and recent activities in one unified visual timeline
+  3. Owner dashboard displays rich visuals for monthly revenue, trainer performance, attendance heatmaps, and active membership ratios
+  4. Workout templates management is modernized with search filters, quick assigns, and responsive template editing
+  5. PDF/Excel reports have clean styling and configurable date ranges
+  6. Payment receipt is redesigned into a clean, modern neomorphic invoice/receipt view
+  7. Owner can share payment receipts directly to a member's WhatsApp with a prefilled template link
+  8. Member portal dashboard prominently shows a payment status widget (Active, Payment Due warning, or Overdue status) with the next billing date
+
+
+Plans:
+
+- [ ] 16-01: TBD
+
 ## Progress
 
 | Phase | Name | Plans Complete | Status | Completed |
@@ -399,3 +422,5 @@ Plans:
 | 13 | Phone number based login and WhatsApp invitation links | 1/1 | Complete | 2026-07-30 |
 | 14 | Analytics & Insights | 0/1 | Not started | — |
 | 15 | Multi-Branch Support | 0/1 | Not started | — |
+| 16 | Owner UX Enhancements | 0/1 | Not started | — |
+
