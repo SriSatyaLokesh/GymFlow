@@ -69,7 +69,7 @@ export const dashboardModule = {
         <section class="panel">
           <div class="panel-heading">
             <h2>Revenue Trend</h2>
-            <a href="#/reports">Reports</a>
+            <a href="#/reports" class="ghost-button compact" style="display: inline-flex; align-items: center; gap: 4px;"><span class="material-symbols-outlined" style="font-size:1.15rem;">bar_chart</span>Reports</a>
           </div>
           ${renderRevenueChart(payments, currency)}
         </section>
