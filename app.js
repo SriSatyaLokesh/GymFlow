@@ -126,6 +126,7 @@ async function boot() {
     if (membersModule.activeView) membersModule.activeView = "list";
     if (trainerMembersModule.activeMemberId) trainerMembersModule.activeMemberId = null;
     if (trainerMembersModule.activeView) trainerMembersModule.activeView = "list";
+    if (paymentsModule.activeReceiptPaymentId) paymentsModule.activeReceiptPaymentId = null;
     render();
   });
 
