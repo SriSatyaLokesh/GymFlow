@@ -1,314 +1,367 @@
 import { addDays, byName, collections, confirmDialog, dateLabel, emptyState, escapeHtml, findName, formData, memberStatus, nameCell, normalizePhone10, optionList, pageHeader, renderMemberProfileDetail, bindMemberProfileDetail, statusClass, today, withButtonLoading, cmToFeetInches, feetInchesToCm, calcBmi, bmiCategory, renderSharedMemberFields, bindSharedBmiEvents } from "./utils.js";
 
+function renderMemberForm(member, plans, trainers) {
+  const isEdit = !!member;
+  return `
+    <div class="page-header" style="border-bottom: 1.5px solid var(--line); padding-bottom: 16px; margin-bottom: 15px;">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <button class="ghost-button compact" id="cancel-form-btn" style="min-width: unset; padding: 6px 12px; display: inline-flex; align-items: center; gap: 6px; font-weight:600;">
+          <span class="material-symbols-outlined" style="font-size: 1.25rem;">arrow_back</span>
+          Cancel
+        </button>
+        <h1 style="margin:0; font-size:1.5rem; font-family:'Montserrat',sans-serif; font-weight:800; color:var(--text);">
+          ${isEdit ? "Edit Member" : "Add New Member"}
+        </h1>
+      </div>
+    </div>
+    <form class="panel stack" id="member-form" style="max-width: 800px; margin-top:15px; padding: 24px; background:var(--surface); border-radius:var(--r-lg); border:1px solid var(--line); box-shadow:var(--shadow-card);">
+      <input type="hidden" name="id" value="${member?.id || ""}" />
+      <div class="form-grid">
+        <label>Full name<input name="fullName" required maxlength="100" value="${escapeHtml(member?.fullName || "")}" /></label>
+        <label>Mobile
+          <input name="mobile" required maxlength="10" value="${escapeHtml(member?.mobile || "")}" />
+          <span class="dup-warn hidden" data-dup-warn="mobile"></span>
+        </label>
+        <label>Email
+          <input name="email" type="email" maxlength="100" value="${escapeHtml(member?.email || "")}" />
+          <span class="dup-warn hidden" data-dup-warn="email"></span>
+        </label>
+        
+        <label>Join date<input name="joinDate" type="date" value="${member?.joinDate || today()}" /></label>
+        <label>Membership plan
+          <select name="planId" required>
+            <option value="">Select plan</option>
+            ${plans.map(p => `<option value="${p.id}" ${member?.planId === p.id ? "selected" : ""}>${escapeHtml(p.planName)}</option>`).join("")}
+          </select>
+        </label>
+        <label>Assigned trainer
+          <select name="assignedTrainer">
+            <option value="">Unassigned</option>
+            ${trainers.map(t => `<option value="${t.id}" ${member?.assignedTrainer === t.id ? "selected" : ""}>${escapeHtml(t.name)}</option>`).join("")}
+          </select>
+        </label>
+        <label>Start date<input name="startDate" type="date" value="${member?.startDate || today()}" required /></label>
+        <label>End date<input name="endDate" type="date" value="${member?.endDate || ""}" required /></label>
+        ${isEdit ? `
+        <label>Status
+          <select name="status">
+            <option ${member?.status === "Active" ? "selected" : ""}>Active</option>
+            <option ${member?.status === "Suspended" ? "selected" : ""}>Suspended</option>
+            <option ${member?.status === "Expired" ? "selected" : ""}>Expired</option>
+            <option ${member?.status === "Paused" ? "selected" : ""}>Paused</option>
+          </select>
+        </label>
+        ` : ""}
+        ${renderSharedMemberFields(member || {})}
+      </div>
+      <label class="wide checkbox-label" style="margin-top: 10px;">
+        <input type="checkbox" name="whatsappOptIn" value="true" ${member?.whatsappOptIn ? "checked" : ""} />
+        Consent to WhatsApp reminders about membership &amp; renewals
+      </label>
+      <label class="wide checkbox-label">
+        <input type="checkbox" name="privateLeaderboard" value="true" ${member?.privateLeaderboard ? "checked" : ""} />
+        Hide me from leaderboards (Private Profile)
+      </label>
+      <div class="button-row" style="margin-top: 15px;">
+        <button class="primary-button" type="submit">Save Member</button>
+        <button class="ghost-button" type="button" id="cancel-form-btn-2">Cancel</button>
+      </div>
+    </form>
+  `;
+}
+
 export const membersModule = {
+  activeView: "list",
   activeMemberId: null,
 
   render(context) {
-    if (this.activeMemberId) {
+    if (!this.activeView) this.activeView = "list";
+
+    if (this.activeView === "detail" && this.activeMemberId) {
       const member = context.data.members.find((item) => item.id === this.activeMemberId);
       if (member) {
         return renderMemberProfileDetail(member, context);
       } else {
+        this.activeView = "list";
         this.activeMemberId = null;
       }
     }
 
     const { data } = context;
-    const members = [...(data.members || [])].sort(byName);
     const plans = data.membership_plans || [];
     const trainers = data.trainers || [];
 
+    if (this.activeView === "add" || this.activeView === "edit") {
+      const member = this.activeView === "edit" ? data.members.find(m => m.id === this.activeMemberId) : null;
+      return renderMemberForm(member, plans, trainers);
+    }
+
+    // Roster directory view
+    const members = [...(data.members || [])].sort(byName);
     return `
-      ${pageHeader("Members")}
-      <div class="work-grid">
-        <form class="panel stack" id="member-form">
-          <input type="hidden" name="id" />
-          <div class="panel-heading"><h2>Add Member</h2></div>
-          <div class="form-grid">
-            <label>Full name<input name="fullName" required maxlength="100" /></label>
-            <label>Mobile
-              <input name="mobile" required maxlength="10" />
-              <span class="dup-warn hidden" data-dup-warn="mobile"></span>
-            </label>
-            <label>Email
-              <input name="email" type="email" maxlength="100" />
-              <span class="dup-warn hidden" data-dup-warn="email"></span>
-            </label>
-            <label>Join date<input name="joinDate" type="date" value="${today()}" /></label>
-            <label>Membership plan
-              <select name="planId" required>
-                <option value="">Select plan</option>
-                ${optionList(plans, "planName")}
-              </select>
-            </label>
-            <label>Assigned trainer
-              <select name="assignedTrainer">
-                <option value="">Unassigned</option>
-                ${optionList(trainers, "name")}
-              </select>
-            </label>
-            <label>Start date<input name="startDate" type="date" value="${today()}" required /></label>
-            <label>End date<input name="endDate" type="date" required /></label>
-            <label>Status
-              <select name="status">
-                <option>Active</option>
-                <option>Suspended</option>
-              </select>
-            </label>
-            ${renderSharedMemberFields()}
-          </div>
-          <label class="wide checkbox-label">
-            <input type="checkbox" name="whatsappOptIn" value="true" />
-            Consent to WhatsApp reminders about membership &amp; renewals
-          </label>
-          <label class="wide checkbox-label">
-            <input type="checkbox" name="privateLeaderboard" value="true" />
-            Hide me from leaderboards (Private Profile)
-          </label>
-          <div class="button-row">
-            <button class="primary-button" type="submit">Save member</button>
-            <button class="ghost-button" type="reset" data-action="clear">Clear</button>
-          </div>
-        </form>
+      ${pageHeader(
+        "Members",
+        `<button class="primary-button" id="show-add-form-btn" style="display:inline-flex; align-items:center; gap:6px; font-weight:600;">
+          <span class="material-symbols-outlined" style="font-size:1.2rem;">add</span> Add Member
+        </button>`
+      )}
 
-        <form class="panel stack hidden" id="pause-form">
-          <input type="hidden" name="pauseId" />
-          <input type="hidden" name="memberId" />
-          <div class="panel-heading"><h2 data-pause-heading>Pause Membership</h2></div>
-          <p class="panel-hint" data-pause-member-name style="font-weight:600"></p>
-          <div class="form-grid" id="pause-fields">
-            <label>Pause from<input name="pauseStart" type="date" required /></label>
-            <label>Expected return<input name="returnDate" type="date" required /></label>
-            <label class="wide">Reason<input name="reason" maxlength="120" placeholder="Injury, travel, etc." /></label>
-          </div>
-          <div class="form-grid hidden" id="resume-fields">
-            <label class="wide">Actual return date<input name="actualReturn" type="date" /></label>
-          </div>
-          <div class="button-row">
-            <button class="primary-button" type="submit" data-pause-submit>Confirm pause</button>
-            <button class="ghost-button" type="button" data-action="cancel-pause">Cancel</button>
-          </div>
-        </form>
+      <section class="panel" style="margin-top: 15px;">
+        <div class="panel-heading">
+          <h2>Member Directory</h2>
+          <span data-member-count>${members.length} total</span>
+        </div>
+        ${
+          members.length
+            ? `
+              <div class="filter-bar">
+                <label>Search
+                  <span class="search-field">
+                    <span class="material-symbols-outlined">search</span>
+                    <input type="search" data-filter="search" placeholder="Name, mobile, or email" />
+                  </span>
+                </label>
+                <label>Status
+                  <select data-filter="status">
+                    <option value="">All statuses</option>
+                    <option>Pending</option>
+                    <option>Active</option>
+                    <option>Expiring Soon</option>
+                    <option>Expired</option>
+                    <option>Paused</option>
+                    <option>Suspended</option>
+                  </select>
+                </label>
+                <label>Plan
+                  <select data-filter="plan">
+                    <option value="">All plans</option>
+                    ${optionList(plans, "planName")}
+                  </select>
+                </label>
+                <label>Trainer
+                  <select data-filter="trainer">
+                    <option value="">All trainers</option>
+                    ${optionList(trainers, "name")}
+                  </select>
+                </label>
+              </div>
+              <div class="data-table members-table" data-member-list>
+                <div class="table-head"><span>Name</span><span>Plan</span><span>Expiry</span><span>Status</span><span></span></div>
+                ${members.map((member) => row(member, plans, trainers)).join("")}
+              </div>`
+            : emptyState("No members yet", "Add your first member to start tracking plans, payments, and renewals.")
+        }
+      </section>
 
-        <section class="panel">
-          <div class="panel-heading"><h2>Member Directory</h2><span data-member-count>${members.length} total</span><button class="ghost-button compact mobile-only-btn" style="margin-left: auto;" data-scroll-to-form><span class="material-symbols-outlined" style="font-size:16px;">add</span> Add Member</button></div>
-          ${
-            members.length
-              ? `
-                <div class="filter-bar">
-                  <label>Search
-                    <span class="search-field">
-                      <span class="material-symbols-outlined">search</span>
-                      <input type="search" data-filter="search" placeholder="Name, mobile, or email" />
-                    </span>
-                  </label>
-                  <label>Status
-                    <select data-filter="status">
-                      <option value="">All statuses</option>
-                      <option>Pending</option>
-                      <option>Active</option>
-                      <option>Expiring Soon</option>
-                      <option>Expired</option>
-                      <option>Paused</option>
-                      <option>Suspended</option>
-                    </select>
-                  </label>
-                  <label>Plan
-                    <select data-filter="plan">
-                      <option value="">All plans</option>
-                      ${optionList(plans, "planName")}
-                    </select>
-                  </label>
-                  <label>Trainer
-                    <select data-filter="trainer">
-                      <option value="">All trainers</option>
-                      ${optionList(trainers, "name")}
-                    </select>
-                  </label>
-                </div>
-                <div class="data-table members-table" data-member-list>
-                  <div class="table-head"><span>Name</span><span>Plan</span><span>Expiry</span><span>Status</span><span></span></div>
-                  ${members.map((member) => row(member, plans, trainers)).join("")}
-                </div>`
-              : emptyState("No members yet", "Add your first member to start tracking plans, payments, and renewals.")
-          }
-        </section>
-      </div>
+      <form class="panel stack hidden" id="pause-form" style="max-width: 500px; margin-top: 20px; border: 1px solid var(--line); box-shadow: var(--shadow-card);">
+        <input type="hidden" name="pauseId" />
+        <input type="hidden" name="memberId" />
+        <div class="panel-heading"><h2 data-pause-heading>Pause Membership</h2></div>
+        <p class="panel-hint" data-pause-member-name style="font-weight:600"></p>
+        <div class="form-grid" id="pause-fields">
+          <label>Pause from<input name="pauseStart" type="date" required /></label>
+          <label>Expected return<input name="returnDate" type="date" required /></label>
+          <label class="wide">Reason<input name="reason" maxlength="120" placeholder="Injury, travel, etc." /></label>
+        </div>
+        <div class="form-grid hidden" id="resume-fields">
+          <label class="wide">Actual return date<input name="actualReturn" type="date" /></label>
+        </div>
+        <div class="button-row">
+          <button class="primary-button" type="submit" data-pause-submit>Confirm pause</button>
+          <button class="ghost-button" type="button" data-action="cancel-pause">Cancel</button>
+        </div>
+      </form>
     `;
   },
+
   bind(root, context) {
-    if (this.activeMemberId) {
+    if (!this.activeView) this.activeView = "list";
+
+    // ── DETAIL VIEW BINDING ──────────────────────────────────────────────────
+    if (this.activeView === "detail") {
       const member = context.data.members.find((item) => item.id === this.activeMemberId);
       if (member) {
-        bindMemberProfileDetail(root, member, context, () => {
-          this.activeMemberId = null;
-          context.refreshView();
-        });
+        bindMemberProfileDetail(
+          root,
+          member,
+          context,
+          () => {
+            this.activeView = "list";
+            this.activeMemberId = null;
+            context.refreshView();
+          },
+          () => {
+            this.activeView = "edit";
+            context.refreshView();
+          }
+        );
       }
       return;
     }
 
-    const form = root.querySelector("#member-form");
+    // ── ADD / EDIT FORM BINDING ──────────────────────────────────────────────
+    if (this.activeView === "add" || this.activeView === "edit") {
+      const form = root.querySelector("#member-form");
+      if (!form) return;
 
-    form.planId.addEventListener("change", () => {
-      const plan = context.data.membership_plans.find((item) => item.id === form.planId.value);
-      if (plan && form.startDate.value) {
-        form.endDate.value = addDays(form.startDate.value, plan.durationDays);
+      form.planId.addEventListener("change", () => {
+        const plan = context.data.membership_plans.find((item) => item.id === form.planId.value);
+        if (plan && form.startDate.value) {
+          form.endDate.value = addDays(form.startDate.value, plan.durationDays);
+        }
+      });
+
+      form.startDate.addEventListener("change", () => {
+        const plan = context.data.membership_plans.find((item) => item.id === form.planId.value);
+        if (plan) form.endDate.value = addDays(form.startDate.value, plan.durationDays);
+      });
+
+      bindSharedBmiEvents(form);
+
+      const dupWarnMobile = form.querySelector('[data-dup-warn="mobile"]');
+      const dupWarnEmail  = form.querySelector('[data-dup-warn="email"]');
+
+      function showDupWarn(el, m) {
+        if (!el) return;
+        if (m) {
+          el.textContent = `⚠ Already registered: ${m.fullName}`;
+          el.classList.remove("hidden");
+        } else {
+          el.textContent = "";
+          el.classList.add("hidden");
+        }
       }
-    });
 
-    form.startDate.addEventListener("change", () => {
-      const plan = context.data.membership_plans.find((item) => item.id === form.planId.value);
-      if (plan) form.endDate.value = addDays(form.startDate.value, plan.durationDays);
-    });
+      form.mobile?.addEventListener("blur", () => {
+        const val    = normalizePhone10(form.mobile.value);
+        const editId = form.elements['id']?.value || "";
+        const match  = val
+          ? context.data.members.find(m => normalizePhone10(m.mobile) === val && m.id !== editId)
+          : null;
+        showDupWarn(dupWarnMobile, match);
+      });
 
-    bindSharedBmiEvents(form);
+      form.email?.addEventListener("blur", () => {
+        const val    = form.email.value.trim().toLowerCase();
+        const editId = form.elements['id']?.value || "";
+        const match  = val
+          ? context.data.members.find(m => m.email?.trim().toLowerCase() === val && m.id !== editId)
+          : null;
+        showDupWarn(dupWarnEmail, match);
+      });
 
-    // ── Duplicate detection ─────────────────────────────────────────────────
-    const dupWarnMobile = form.querySelector('[data-dup-warn="mobile"]');
-    const dupWarnEmail  = form.querySelector('[data-dup-warn="email"]');
+      let lastMobileSync = "";
+      form.mobile?.addEventListener("input", () => {
+        const whatsappEl = form.elements.whatsappNumber;
+        if (!whatsappEl) return;
+        if (!whatsappEl.value || whatsappEl.value === lastMobileSync) {
+          whatsappEl.value = form.mobile.value;
+        }
+        lastMobileSync = form.mobile.value;
+      });
 
-    function showDupWarn(el, member) {
-      if (!el) return;
-      if (member) {
-        el.textContent = `⚠ Already registered: ${member.fullName} — tap to edit`;
-        el.classList.remove("hidden");
-        el.dataset.editTarget = member.id;
-      } else {
-        el.textContent = "";
-        el.classList.add("hidden");
-        delete el.dataset.editTarget;
-      }
+      const handleCancel = () => {
+        if (this.activeView === "edit") {
+          this.activeView = "detail";
+        } else {
+          this.activeView = "list";
+          this.activeMemberId = null;
+        }
+        context.refreshView();
+      };
+
+      root.querySelector("#cancel-form-btn")?.addEventListener("click", handleCancel);
+      root.querySelector("#cancel-form-btn-2")?.addEventListener("click", handleCancel);
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const payload = formData(form);
+        if (payload.mobile) {
+          payload.mobile = normalizePhone10(payload.mobile);
+        }
+        if (payload.whatsappNumber) {
+          payload.whatsappNumber = normalizePhone10(payload.whatsappNumber);
+        } else if (payload.mobile) {
+          payload.whatsappNumber = payload.mobile;
+        }
+        if (!payload.email && payload.mobile) {
+          payload.email = `${payload.mobile}@gymflow.app`;
+        }
+        payload.whatsappOptIn = payload.whatsappOptIn === "true";
+        payload.privateLeaderboard = payload.privateLeaderboard === "true";
+        if (payload.endDate && payload.startDate && payload.endDate < payload.startDate) {
+          context.toast("End date can't be before the start date.");
+          return;
+        }
+        const isNew = !payload.id;
+        const measurements = {
+          weight:  payload.initWeight  || "",
+          bmi:     payload.initBmi     || "",
+          bodyFat: payload.initBodyFat || "",
+          waist:   payload.initWaist   || "",
+          chest:   payload.initChest   || "",
+          hip:     payload.initHip     || "",
+          bicep:   payload.initBicep   || "",
+          thigh:   payload.initThigh   || ""
+        };
+        const hasMeasurements = Object.values(measurements).some((v) => v !== "");
+        payload.status = payload.status === "Suspended" ? "Suspended" : memberStatus(payload);
+        
+        await withButtonLoading(form.querySelector("[type='submit']"), async () => {
+          const saved = await context.services.data.save(collections.members, payload);
+          if (isNew && hasMeasurements) {
+            const progressRecord = {
+              memberId: saved.id,
+              date:    payload.joinDate || today(),
+              weight:  measurements.weight,
+              bmi:     measurements.bmi,
+              bodyFat: measurements.bodyFat,
+              waist:   measurements.waist,
+              chest:   measurements.chest,
+              hip:     measurements.hip,
+              bicep:   measurements.bicep,
+              thigh:   measurements.thigh,
+              notes:   "Initial admission measurement"
+            };
+            const savedProgress = await context.services.data.save(collections.progress, progressRecord);
+            context.applyChange(collections.progress, savedProgress);
+          }
+          context.toast(isNew ? "Member added." : "Member updated.");
+          context.applyChange(collections.members, saved);
+
+          if (isNew) {
+            this.activeView = "list";
+            this.activeMemberId = null;
+            setTimeout(async () => {
+              const ok = await confirmDialog({
+                title: `Invite ${saved.fullName}?`,
+                body: `Would you like to send a WhatsApp invitation to join GymFlow now?`,
+                confirmText: "Send Invite",
+                danger: false
+              });
+              if (ok) {
+                const gymName = context.settings?.gymName || "our Gym";
+                const gymCode = context.settings?.gymCode || "";
+                const appUrl = window.location.origin + window.location.pathname;
+                const normalizedMob = normalizePhone10(saved.mobile);
+                const inviteText = `Hello ${saved.fullName}! Welcome to ${gymName}.\n\nTo register and access your workouts, schedules, and consistency points, please open the GymFlow App and set your password:\n${appUrl}#register?invite=${saved.id}&phone=${normalizedMob}&code=${gymCode}`;
+                const waUrl = `https://wa.me/${encodeURIComponent(normalizedMob)}?text=${encodeURIComponent(inviteText)}`;
+                window.open(waUrl, "_blank", "noopener,noreferrer");
+              }
+            }, 100);
+          } else {
+            this.activeView = "detail";
+          }
+          context.refreshView();
+        });
+      });
+      return;
     }
 
-    form.mobile?.addEventListener("blur", () => {
-      const val    = normalizePhone10(form.mobile.value);
-      const editId = form.elements['id']?.value || "";
-      const match  = val
-        ? context.data.members.find(m => normalizePhone10(m.mobile) === val && m.id !== editId)
-        : null;
-      showDupWarn(dupWarnMobile, match);
-    });
-
-    form.email?.addEventListener("blur", () => {
-      const val    = form.email.value.trim().toLowerCase();
-      const editId = form.elements['id']?.value || "";
-      const match  = val
-        ? context.data.members.find(m => m.email?.trim().toLowerCase() === val && m.id !== editId)
-        : null;
-      showDupWarn(dupWarnEmail, match);
-    });
-
-    [dupWarnMobile, dupWarnEmail].forEach(el => {
-      el?.addEventListener("click", () => {
-        if (!el.dataset.editTarget) return;
-        const member = context.data.members.find(m => m.id === el.dataset.editTarget);
-        if (!member) return;
-        Object.entries(member).forEach(([key, value]) => {
-          if (form.elements[key]) form.elements[key].value = value || "";
-        });
-        if (form.elements.whatsappOptIn) {
-          form.elements.whatsappOptIn.checked = !!member.whatsappOptIn;
-        }
-        if (form.elements.privateLeaderboard) {
-          form.elements.privateLeaderboard.checked = !!member.privateLeaderboard;
-        }
-        updateBmi();
-        root.querySelector(".panel-heading h2").textContent = "Edit Member";
-        form.scrollIntoView({ behavior: "smooth", block: "start" });
-        showDupWarn(dupWarnMobile, null);
-        showDupWarn(dupWarnEmail,  null);
-      });
-    });
-
-    // ── WhatsApp number auto-sync ───────────────────────────────────────
-    let lastMobileSync = "";
-    form.mobile?.addEventListener("input", () => {
-      const whatsappEl = form.elements.whatsappNumber;
-      if (!whatsappEl) return;
-      if (!whatsappEl.value || whatsappEl.value === lastMobileSync) {
-        whatsappEl.value = form.mobile.value;
-      }
-      lastMobileSync = form.mobile.value;
-    });
-
-    form.addEventListener("submit", async (event) => {
-      event.preventDefault();
-      const payload = formData(form);
-      if (payload.mobile) {
-        payload.mobile = normalizePhone10(payload.mobile);
-      }
-      if (payload.whatsappNumber) {
-        payload.whatsappNumber = normalizePhone10(payload.whatsappNumber);
-      } else if (payload.mobile) {
-        payload.whatsappNumber = payload.mobile;
-      }
-      if (!payload.email && payload.mobile) {
-        payload.email = `${payload.mobile}@gymflow.app`;
-      }
-      payload.whatsappOptIn = payload.whatsappOptIn === "true";
-      payload.privateLeaderboard = payload.privateLeaderboard === "true";
-      if (payload.endDate && payload.startDate && payload.endDate < payload.startDate) {
-        context.toast("End date can't be before the start date.");
-        return;
-      }
-      const isNew = !payload.id;
-      const measurements = {
-        weight:  payload.initWeight  || "",
-        bmi:     payload.initBmi     || "",
-        bodyFat: payload.initBodyFat || "",
-        waist:   payload.initWaist   || "",
-        chest:   payload.initChest   || "",
-        hip:     payload.initHip     || "",
-        bicep:   payload.initBicep   || "",
-        thigh:   payload.initThigh   || ""
-      };
-      const hasMeasurements = Object.values(measurements).some((v) => v !== "");
-      payload.status = payload.status === "Suspended" ? "Suspended" : memberStatus(payload);
-      await withButtonLoading(form.querySelector("[type='submit']"), async () => {
-        const saved = await context.services.data.save(collections.members, payload);
-        if (isNew && hasMeasurements) {
-          const progressRecord = {
-            memberId: saved.id,
-            date:    payload.joinDate || today(),
-            weight:  measurements.weight,
-            bmi:     measurements.bmi,
-            bodyFat: measurements.bodyFat,
-            waist:   measurements.waist,
-            chest:   measurements.chest,
-            hip:     measurements.hip,
-            bicep:   measurements.bicep,
-            thigh:   measurements.thigh,
-            notes:   "Initial admission measurement"
-          };
-          const savedProgress = await context.services.data.save(collections.progress, progressRecord);
-          context.applyChange(collections.progress, savedProgress);
-        }
-        context.toast(payload.id ? "Member updated." : "Member added.");
-        form.reset();
-        form.joinDate.value = today();
-        form.startDate.value = today();
-        context.applyChange(collections.members, saved);
-        if (isNew) {
-          setTimeout(async () => {
-            const ok = await confirmDialog({
-              title: `Invite ${saved.fullName}?`,
-              body: `Would you like to send a WhatsApp invitation to join GymFlow now?`,
-              confirmText: "Send Invite",
-              danger: false
-            });
-            if (ok) {
-              const gymName = context.settings?.gymName || "our Gym";
-              const gymCode = context.settings?.gymCode || "";
-              const appUrl = window.location.origin + window.location.pathname;
-              const normalizedMob = normalizePhone10(saved.mobile);
-              const inviteText = `Hello ${saved.fullName}! Welcome to ${gymName}.\n\nTo register and access your workouts, schedules, and consistency points, please open the GymFlow App and set your password:\n${appUrl}#register?invite=${saved.id}&phone=${normalizedMob}&code=${gymCode}`;
-              const waUrl = `https://wa.me/${encodeURIComponent(normalizedMob)}?text=${encodeURIComponent(inviteText)}`;
-              window.open(waUrl, "_blank", "noopener,noreferrer");
-            }
-          }, 100);
-        }
-      });
+    // ── LIST VIEW BINDING ────────────────────────────────────────────────────
+    root.querySelector("#show-add-form-btn")?.addEventListener("click", () => {
+      this.activeView = "add";
+      context.refreshView();
     });
 
     bindFilters(root);
@@ -316,6 +369,7 @@ export const membersModule = {
     root.querySelectorAll("[data-view-member]").forEach((button) => {
       button.addEventListener("click", () => {
         this.activeMemberId = button.dataset.viewMember;
+        this.activeView = "detail";
         context.refreshView();
       });
     });
@@ -334,34 +388,11 @@ export const membersModule = {
       });
     });
 
-    root.querySelectorAll("[data-edit-member]").forEach((button) => {
-      button.addEventListener("click", () => {
-        const member = context.data.members.find((item) => item.id === button.dataset.editMember);
-        if (!member) return;
-        Object.entries(member).forEach(([key, value]) => {
-          if (form.elements[key]) form.elements[key].value = value || "";
-        });
-        if (form.elements.whatsappOptIn) {
-          form.elements.whatsappOptIn.checked = !!member.whatsappOptIn;
-        }
-        if (form.elements.privateLeaderboard) {
-          form.elements.privateLeaderboard.checked = !!member.privateLeaderboard;
-        }
-        const { feet, inches } = cmToFeetInches(member.initHeight);
-        if (form.heightFeet) form.heightFeet.value = feet != null ? String(feet) : "";
-        if (form.heightInches) form.heightInches.value = inches != null ? String(inches) : "";
-        form.heightFeet?.dispatchEvent(new Event("change"));
-        root.querySelector(".panel-heading h2").textContent = "Edit Member";
-        form.scrollIntoView({ behavior: "smooth", block: "start" });
-      });
-    });
-
     root.querySelectorAll("[data-approve-member]").forEach((button) => {
       button.addEventListener("click", async () => {
         const member = context.data.members.find((item) => item.id === button.dataset.approveMember);
         if (!member) return;
         await withButtonLoading(button, async () => {
-          // Approve: clear Pending; recompute a date-based status (Active/Expiring/Expired).
           const next = { ...member, status: memberStatus({ ...member, status: "" }) };
           const saved = await context.services.data.save(collections.members, next);
           context.toast("Member approved.");
@@ -517,12 +548,6 @@ export const membersModule = {
         });
       }
     });
-
-    root.querySelector("[data-action='clear']")?.addEventListener("click", () => {
-      root.querySelector(".panel-heading h2").textContent = "Add Member";
-      showDupWarn(dupWarnMobile, null);
-      showDupWarn(dupWarnEmail,  null);
-    });
   }
 };
 
@@ -612,7 +637,6 @@ function row(member, plans, trainers) {
             : ""
         }
         <button class="icon-button" data-view-member="${escapeHtml(member.id)}" title="View profile & logs"><span class="material-symbols-outlined">visibility</span></button>
-        <button class="icon-button" data-edit-member="${escapeHtml(member.id)}" title="Edit"><span class="material-symbols-outlined">edit</span></button>
         <button class="icon-button danger" data-delete-member="${escapeHtml(member.id)}" title="Delete"><span class="material-symbols-outlined">delete</span></button>
       </span>
       <small class="table-note">Trainer: ${escapeHtml(findName(trainers, member.assignedTrainer, "Unassigned"))}</small>
