@@ -18,6 +18,7 @@ import { trainerCheckinModule } from "./modules/trainer-checkin.js";
 import { trainerMembersModule } from "./modules/trainer-members.js";
 import { myWorkoutModule } from "./modules/my-workout.js";
 import { profileModule } from "./modules/profile.js";
+import { leaderboardModule } from "./modules/leaderboard.js";
 import { CARTOON_AVATARS, escapeHtml, getExercises, memberStatus, getAvatarUrl } from "./modules/utils.js";
 
 const appRoot = document.querySelector("#app");
@@ -35,6 +36,7 @@ const ALL_ROLES = ["owner", "member"];
 const nav = [
   ["dashboard", "Dashboard", "grid_view", ["owner", "member", "trainer"]],
   ["members", "Members", "group", ["owner"]],
+  ["leaderboard", "Leaderboard", "leaderboard", ["owner", "trainer"]],
   ["plans", "Plans", "layers", ["owner"]],
   ["payments", "Payments", "payments", ["owner"]],
   ["renewals", "Renewals", "autorenew", ["owner"]],
@@ -50,13 +52,14 @@ const nav = [
   ["trainer-checkin", "Check In", "how_to_reg", ["trainer"]],
   ["my-checkins", "My Check-ins", "history", ["trainer"]],
   ["trainer-members", "My Clients", "group", ["trainer"]],
-  ["profile", "Profile", "person", ["owner", "member", "trainer"]],
+  ["profile", "Profile", "person", ["member"]], // owner/trainer use the sidebar profile chip
   ["settings", "Settings", "settings", ["owner"]]
 ];
 
 const modules = {
   dashboard: dashboardModule,
   members: membersModule,
+  leaderboard: leaderboardModule,
   plans: membershipsModule,
   payments: paymentsModule,
   renewals: renewalsModule,

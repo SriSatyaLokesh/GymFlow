@@ -56,12 +56,26 @@
   --primary-subtle:  rgba(204,255,0,0.12);  /* nav active bg */
   --primary-glow:    rgba(204,255,0,0.26);  /* button hover shadow */
 
+  /* Semantic ink tokens — always readable on surface (WCAG AA ≥ 4.5:1) */
+  --primary-ink:     #4d6600;   /* lime primary adapted for light bg text   */
+  --primary-text-bg: rgba(204,255,0,0.15); /* tinted bg pill behind primary text */
+  --gold-ink:        #7a5400;   /* #FFD700 gold → dark amber for light bg   */
+  --gold-bg:         rgba(255,215,0,0.12);
+  --silver-ink:      #4a5568;   /* silver → dark slate for light bg         */
+  --silver-bg:       rgba(192,192,192,0.12);
+  --bronze-ink:      #7c3a00;   /* bronze → dark brown for light bg         */
+  --bronze-bg:       rgba(205,127,50,0.12);
+  --teal-text:       var(--teal-ink); /* #006688 — safe on light bg          */
+
   --r-xs:   6px;
   --r-sm:   8px;
   --r-md:   12px;
   --r-lg:   16px;
   --r-xl:   20px;
   --r-pill: 999px;
+  --accent:          var(--teal);
+  --text:            var(--ink);
+  --text-muted:      var(--muted);
   color-scheme: light;
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
@@ -94,6 +108,19 @@
   --topbar-bg:       rgba(14,14,14,0.90);
   --topbar-border:   rgba(44,44,44,0.8);
   --nav-scrim:       rgba(0,0,0,0.72);
+  --accent:          var(--teal);
+  --text:            var(--ink);
+  --text-muted:      var(--muted);
+  /* Semantic ink tokens — bright variants for dark surfaces */
+  --primary-ink:     #ccff00;   /* lime is vivid enough on dark bg           */
+  --primary-text-bg: rgba(204,255,0,0.14);
+  --gold-ink:        #FFD700;   /* gold on dark bg — fine                    */
+  --gold-bg:         rgba(255,215,0,0.14);
+  --silver-ink:      #C0C0C0;
+  --silver-bg:       rgba(192,192,192,0.1);
+  --bronze-ink:      #CD7F32;
+  --bronze-bg:       rgba(205,127,50,0.12);
+  --teal-text:       var(--teal-ink); /* #29c8ff on dark — fine               */
   color-scheme: dark;
 }
 
@@ -826,7 +853,7 @@ input:focus, select:focus, textarea:focus {
 .button-row, .row-actions, .page-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 
 /* ===== Tables ===== */
-.data-table, .list-table { display: grid; gap: 6px; }
+.data-table, .list-table { display: grid; gap: 6px; overflow-x: hidden; }
 
 .table-head, .table-row {
   display: grid;
@@ -862,9 +889,103 @@ input:focus, select:focus, textarea:focus {
 .table-row > span { min-width: 0; }
 .table-row strong, .table-row small { display: block; overflow-wrap: anywhere; }
 .table-note { grid-column: 1 / -1; color: var(--muted); }
-.members-table .table-row { grid-template-columns: 1.25fr 0.85fr 0.8fr 0.8fr auto; }
+.members-table .table-head,
+.members-table .table-row {
+  grid-template-columns: 1.25fr 0.85fr 0.8fr 0.7fr 0.7fr 0.6fr auto;
+}
 .reminder-table .table-row { grid-template-columns: 1fr 0.75fr 0.75fr 1.5fr auto; }
 .compact .table-row { grid-template-columns: 1fr auto; }
+
+/* Reports Specific Tables */
+.reports-plans-table .table-head,
+.reports-plans-table .table-row {
+  grid-template-columns: 1.8fr 1fr 1fr;
+}
+
+.reports-renewals-table .table-head,
+.reports-renewals-table .table-row {
+  grid-template-columns: 1.8fr 1fr 1.2fr;
+}
+
+.reports-inactive-table .table-head,
+.reports-inactive-table .table-row {
+  grid-template-columns: 1.8fr 1.2fr auto;
+}
+
+.reports-pending-table .table-head,
+.reports-pending-table .table-row {
+  grid-template-columns: 1.8fr 1fr auto;
+}
+
+.reports-points-table .table-head,
+.reports-points-table .table-row {
+  grid-template-columns: 0.5fr 1.4fr 1.2fr auto;
+}
+
+/* Heatmap cell level styling */
+.heatmap-cell {
+  background: var(--surface-soft);
+  color: var(--muted);
+  opacity: 0.4;
+  border-radius: var(--r-sm);
+  padding: 10px 6px;
+  min-width: 80px;
+  transition: transform var(--dur-fast) var(--ease-out), background-color var(--dur-fast) var(--ease-out), opacity var(--dur-fast) var(--ease-out);
+}
+.heatmap-cell.level-1 {
+  opacity: 1;
+  background: rgba(16, 185, 129, 0.25);
+  color: var(--teal-ink);
+  font-weight: 700;
+}
+.heatmap-cell.level-2 {
+  opacity: 1;
+  background: rgba(16, 185, 129, 0.5);
+  color: var(--teal-ink);
+  font-weight: 700;
+}
+.heatmap-cell.level-3 {
+  opacity: 1;
+  background: rgba(16, 185, 129, 0.75);
+  color: #ffffff;
+  font-weight: 700;
+  text-shadow: 0 1px 1px rgba(0,0,0,0.25);
+}
+.heatmap-cell.level-4 {
+  opacity: 1;
+  background: rgba(16, 185, 129, 1);
+  color: #ffffff;
+  font-weight: 700;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.35);
+}
+
+/* Dark mode adjustments for heatmap */
+[data-theme="dark"] .heatmap-cell.level-1 {
+  background: rgba(16, 185, 129, 0.2);
+  color: #a7f3d0;
+}
+[data-theme="dark"] .heatmap-cell.level-2 {
+  background: rgba(16, 185, 129, 0.45);
+  color: #ecfdf5;
+}
+[data-theme="dark"] .heatmap-cell.level-3 {
+  background: rgba(16, 185, 129, 0.7);
+  color: #ffffff;
+}
+[data-theme="dark"] .heatmap-cell.level-4 {
+  background: rgba(16, 185, 129, 0.95);
+  color: #ffffff;
+}
+
+/* WhatsApp button hover transition */
+.reports-inactive-table .table-row a.icon-button {
+  transition: background-color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out), transform var(--dur-micro) var(--ease-out) !important;
+}
+.reports-inactive-table .table-row a.icon-button:hover {
+  background-color: #20ba5a !important;
+  border-color: #20ba5a !important;
+  transform: translateY(-1px) !important;
+}
 
 /* ===== Status pills ===== */
 .status {
@@ -2031,7 +2152,12 @@ body, button, input, select, textarea, .profile-chip strong {
   .data-table .table-row, 
   .members-table .table-row, 
   .reminder-table .table-row, 
-  .compact .table-row {
+  .compact .table-row,
+  .reports-plans-table .table-row,
+  .reports-renewals-table .table-row,
+  .reports-inactive-table .table-row,
+  .reports-pending-table .table-row,
+  .reports-points-table .table-row {
     grid-template-columns: 1fr !important;
     gap: 8px !important;
     padding: 12px 14px !important;
@@ -2045,7 +2171,12 @@ body, button, input, select, textarea, .profile-chip strong {
   .data-table .table-row > span[data-label],
   .members-table .table-row > span[data-label],
   .reminder-table .table-row > span[data-label],
-  .compact .table-row > span[data-label] {
+  .compact .table-row > span[data-label],
+  .reports-plans-table .table-row > span[data-label],
+  .reports-renewals-table .table-row > span[data-label],
+  .reports-inactive-table .table-row > span[data-label],
+  .reports-pending-table .table-row > span[data-label],
+  .reports-points-table .table-row > span[data-label] {
     display: flex !important;
     justify-content: space-between !important;
     align-items: center !important;
@@ -2058,7 +2189,12 @@ body, button, input, select, textarea, .profile-chip strong {
   .data-table .table-row > span[data-label]::before,
   .members-table .table-row > span[data-label]::before,
   .reminder-table .table-row > span[data-label]::before,
-  .compact .table-row > span[data-label]::before {
+  .compact .table-row > span[data-label]::before,
+  .reports-plans-table .table-row > span[data-label]::before,
+  .reports-renewals-table .table-row > span[data-label]::before,
+  .reports-inactive-table .table-row > span[data-label]::before,
+  .reports-pending-table .table-row > span[data-label]::before,
+  .reports-points-table .table-row > span[data-label]::before {
     content: attr(data-label);
     font-weight: 700;
     color: var(--muted);
@@ -2073,7 +2209,10 @@ body, button, input, select, textarea, .profile-chip strong {
   .data-table .table-row > .row-actions,
   .members-table .table-row > .row-actions,
   .reminder-table .table-row > .row-actions,
-  .compact .table-row > .row-actions {
+  .compact .table-row > .row-actions,
+  .reports-plans-table .table-row > .row-actions,
+  .reports-renewals-table .table-row > .row-actions,
+  .reports-inactive-table .table-row > .row-actions {
     display: flex !important;
     justify-content: flex-end !important;
     gap: 8px !important;

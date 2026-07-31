@@ -1,4 +1,4 @@
-import { dateLabel, daysUntil, escapeHtml, exportToExcel, findName, memberStatus, money, pageHeader, today } from "./utils.js";
+import { dateLabel, daysUntil, escapeHtml, exportToExcel, findName, memberStatus, money, pageHeader, statusClass, today } from "./utils.js";
 
 export const reportsModule = {
   activeTab: "analytics", // Default tab: analytics
@@ -32,18 +32,23 @@ export const reportsModule = {
     );
 
     const tabsSwitcherHtml = `
-      <div class="tab-container" style="margin-bottom: 20px; border-bottom: 1.5px solid var(--line); display: flex; gap: 16px;">
+      <div class="tab-container" style="margin-bottom: 20px; border-bottom: 1.5px solid var(--line); display: flex; gap: 16px; flex-wrap: wrap;">
         <button class="tab-link ${this.activeTab === 'analytics' ? 'active' : ''}" data-tab="analytics" style="padding: 10px 4px; font-weight: 700; font-size: 0.95rem; border-bottom: 3px solid ${this.activeTab === 'analytics' ? 'var(--primary)' : 'transparent'}; color: ${this.activeTab === 'analytics' ? 'var(--text)' : 'var(--text-muted)'}; background: none; border-top: none; border-left: none; border-right: none; cursor: pointer; display: flex; align-items: center; gap: 6px;">
-          <span class="material-symbols-outlined" style="font-size:1.15rem;">analytics</span> Analytics & Heatmap
+          <span class="material-symbols-outlined" style="font-size:1.15rem;">analytics</span> Analytics &amp; Heatmap
+        </button>
+        <button class="tab-link ${this.activeTab === 'members-report' ? 'active' : ''}" data-tab="members-report" style="padding: 10px 4px; font-weight: 700; font-size: 0.95rem; border-bottom: 3px solid ${this.activeTab === 'members-report' ? 'var(--primary)' : 'transparent'}; color: ${this.activeTab === 'members-report' ? 'var(--text)' : 'var(--text-muted)'}; background: none; border-top: none; border-left: none; border-right: none; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+          <span class="material-symbols-outlined" style="font-size:1.15rem;">group</span> Members Report
         </button>
         <button class="tab-link ${this.activeTab === 'overview' ? 'active' : ''}" data-tab="overview" style="padding: 10px 4px; font-weight: 700; font-size: 0.95rem; border-bottom: 3px solid ${this.activeTab === 'overview' ? 'var(--primary)' : 'transparent'}; color: ${this.activeTab === 'overview' ? 'var(--text)' : 'var(--text-muted)'}; background: none; border-top: none; border-left: none; border-right: none; cursor: pointer; display: flex; align-items: center; gap: 6px;">
-          <span class="material-symbols-outlined" style="font-size:1.15rem;">export_notes</span> Overview & Exports
+          <span class="material-symbols-outlined" style="font-size:1.15rem;">export_notes</span> Overview &amp; Exports
         </button>
       </div>
     `;
 
     // ── Render Content based on activeTab ──────────────────────────────────
-    if (this.activeTab === "analytics") {
+    if (this.activeTab === "members-report") {
+      return renderMembersReport(headerHtml, tabsSwitcherHtml, members, attendance, plans, today());
+    } else if (this.activeTab === "analytics") {
       // ── 1. Group Revenue Data for Charts ──────────────────────────────────
       let revLabels = [];
       let revValues = [];
@@ -189,12 +194,12 @@ export const reportsModule = {
           <article class="metric">
             <span>Forecasted Revenue (30d)</span>
             <strong>${money(projectedRevenue, currency)}</strong>
-            <small style="color: var(--teal); font-weight: 600;">${upcomingRenewals.length} renewals pending</small>
+            <small style="color: var(--teal-ink); font-weight: 600;">${upcomingRenewals.length} renewals pending</small>
           </article>
           <article class="metric">
             <span>Inactive Clients</span>
             <strong>${inactiveAlerts.length}</strong>
-            <small style="color: var(--primary); font-weight: 600;">No check-ins >14 days</small>
+            <small style="color: var(--danger); font-weight: 600;">No check-ins >14 days</small>
           </article>
           <article class="metric">
             <span>Active Plans</span>
@@ -260,13 +265,16 @@ export const reportsModule = {
                       <tr>
                         <td style="font-weight:700; color:var(--text); text-align:left; padding-right:10px;">${day}</td>
                         ${heatmapData[dayIdx].map((val) => {
-                          const intensity = val > 0 ? Math.min(0.2 + (val / maxHeat) * 0.8, 1) : 0;
-                          const bgStyle = val > 0 
-                            ? `background: rgba(16, 185, 129, ${intensity}); color: #ffffff; text-shadow: 0 1px 2px rgba(0,0,0,0.3); font-weight:700;` 
-                            : `background: var(--surface-soft); color: var(--text-muted); opacity: 0.4;`;
+                          let levelClass = "";
+                          if (val > 0) {
+                            const ratio = val / maxHeat;
+                            if (ratio <= 0.25) levelClass = "level-1";
+                            else if (ratio <= 0.5) levelClass = "level-2";
+                            else if (ratio <= 0.75) levelClass = "level-3";
+                            else levelClass = "level-4";
+                          }
                           return `
-                            <td style="border-radius:var(--r-sm); padding:10px 6px; min-width:80px; transition: transform 0.2s; ${bgStyle}" 
-                                class="heatmap-cell" title="${val} check-ins">
+                            <td class="heatmap-cell ${levelClass}" title="${val} check-ins">
                               ${val || "-"}
                             </td>
                           `;
@@ -285,7 +293,7 @@ export const reportsModule = {
               <h2>Membership Plan Analysis</h2>
               <span>Popularity and financial share</span>
             </div>
-            <div class="list-table compact" style="max-height: 270px; overflow-y: auto;">
+            <div class="list-table reports-plans-table" style="max-height: 270px; overflow-y: auto; overflow-x: hidden;">
               <div class="table-head">
                 <span>Plan</span>
                 <span style="text-align:right;">Members</span>
@@ -295,9 +303,9 @@ export const reportsModule = {
                 planStats.length
                   ? planStats.map(stat => `
                       <div class="table-row">
-                        <span><strong>${escapeHtml(stat.name)}</strong></span>
-                        <span style="text-align:right; font-weight:600; color:var(--text);">${stat.count} active</span>
-                        <span style="text-align:right; font-weight:700; color:var(--teal);">${money(stat.revenue, currency)}</span>
+                        <span data-label="Plan"><strong>${escapeHtml(stat.name)}</strong></span>
+                        <span data-label="Members" style="text-align:right; font-weight:600; color:var(--ink-soft);">${stat.count} active</span>
+                        <span data-label="Revenue" style="text-align:right; font-weight:700; color:var(--teal-ink);">${money(stat.revenue, currency)}</span>
                       </div>
                     `).join("")
                   : `<div class="table-empty">No plan data available.</div>`
@@ -314,24 +322,29 @@ export const reportsModule = {
               <h2>Forecasted Renewals</h2>
               <span>Expected signups next 30 days</span>
             </div>
-            <div class="list-table compact" style="max-height: 300px; overflow-y: auto;">
+            <div class="list-table reports-renewals-table" style="max-height: 300px; overflow-y: auto; overflow-x: hidden;">
               <div class="table-head">
                 <span>Member</span>
-                <span>Plan Price</span>
-                <span>Expires In</span>
+                <span style="text-align:right;">Plan Price</span>
+                <span style="text-align:right;">Expires In</span>
               </div>
               ${
                 upcomingRenewals.length
                   ? upcomingRenewals.map(m => {
                       const plan = plans.find(p => p.id === m.planId);
+                      const expiresColor = m.daysLeft === 0 
+                        ? "var(--danger)" 
+                        : m.daysLeft <= 7 
+                          ? "var(--warning)" 
+                          : "var(--teal-ink)";
                       return `
                         <div class="table-row">
-                          <span>
+                          <span data-label="Member">
                             <strong>${escapeHtml(m.fullName)}</strong>
                             <small>${escapeHtml(plan?.planName || "Custom")}</small>
                           </span>
-                          <span style="font-weight:700; color:var(--text);">${money(plan?.price || 0, currency)}</span>
-                          <span style="color: var(--primary); font-weight:600;">${m.daysLeft === 0 ? "Today" : `${m.daysLeft} days`}</span>
+                          <span data-label="Plan Price" style="text-align:right; font-weight:700; color:var(--ink-soft);">${money(plan?.price || 0, currency)}</span>
+                          <span data-label="Expires In" style="text-align:right; color: ${expiresColor}; font-weight:600;">${m.daysLeft === 0 ? "Today" : `${m.daysLeft} days`}</span>
                         </div>
                       `;
                     }).join("")
@@ -346,7 +359,7 @@ export const reportsModule = {
               <h2>Inactive Member Alerts</h2>
               <span>Re-engage members missing for >14 days</span>
             </div>
-            <div class="list-table compact" style="max-height: 300px; overflow-y: auto;">
+            <div class="list-table reports-inactive-table" style="max-height: 300px; overflow-y: auto; overflow-x: hidden;">
               <div class="table-head">
                 <span>Member</span>
                 <span>Last Check-in</span>
@@ -366,14 +379,14 @@ export const reportsModule = {
 
                       return `
                         <div class="table-row">
-                          <span>
+                          <span data-label="Member">
                             <strong>${escapeHtml(member.fullName)}</strong>
                             <small>${escapeHtml(phone)}</small>
                           </span>
-                          <span style="color: var(--text-muted);">${formattedDate}</span>
-                          <span style="text-align:right;">
+                          <span data-label="Last Check-in" style="color: var(--ink-soft);">${formattedDate}</span>
+                          <span data-label="Reach Out" style="text-align:right;">
                             <a href="${waUrl}" target="_blank" class="icon-button secondary" 
-                               style="background:#25D366; border-color:#25D366; color:white; display:inline-flex; align-items:center; padding: 4px 8px; font-size:0.75rem; gap:4px; text-decoration:none; border-radius:var(--r-sm);" 
+                               style="background:#25D366; border-color:#25D366; color:white; display:inline-flex; align-items:center; padding: 6px 12px; font-size:0.75rem; gap:6px; text-decoration:none; border-radius:var(--r-sm); font-weight:600;" 
                                title="Reach out on WhatsApp">
                               <span class="material-symbols-outlined" style="font-size: 1rem;">chat</span> Reach Out
                             </a>
@@ -387,7 +400,7 @@ export const reportsModule = {
           </section>
         </div>
       `;
-    } else {
+    } else if (this.activeTab !== "members-report") {
       // ── Overview & Exports Content ─────────────────────────────────────────
       return `
         ${headerHtml}
@@ -409,8 +422,8 @@ export const reportsModule = {
                       .map(
                         (member) => `
                           <div class="table-row">
-                            <span><strong>${escapeHtml(member.fullName)}</strong><small>${escapeHtml(member.mobile || "")}</small></span>
-                            <span>${dateLabel(member.endDate)}</span>
+                            <span data-label="Member"><strong>${escapeHtml(member.fullName)}</strong><small>${escapeHtml(member.mobile || "")}</small></span>
+                            <span data-label="Expiry" style="text-align: right; font-weight: 600; color: var(--ink-soft);">${dateLabel(member.endDate)}</span>
                           </div>
                         `
                       )
@@ -429,8 +442,8 @@ export const reportsModule = {
                       .map(
                         (payment) => `
                           <div class="table-row">
-                            <span><strong>${escapeHtml(findName(members, payment.memberId))}</strong><small>${dateLabel(payment.date)}</small></span>
-                            <span>${money(payment.amount, currency)}</span>
+                            <span data-label="Member"><strong>${escapeHtml(findName(members, payment.memberId))}</strong><small>${dateLabel(payment.date)}</small></span>
+                            <span data-label="Amount" style="text-align: right; font-weight: 700; color: var(--teal-ink);">${money(payment.amount, currency)}</span>
                           </div>
                         `
                       )
@@ -461,7 +474,9 @@ export const reportsModule = {
           context.refreshView();
         });
       });
-    } else {
+    } else if (this.activeTab === "members-report") {
+      // Members Report tab has no special bindings currently
+    } else if (this.activeTab === "overview") {
       // Bind Excel Export buttons
       root.querySelectorAll("[data-export]").forEach((button) => {
         button.addEventListener("click", async () => {
@@ -485,6 +500,163 @@ export const reportsModule = {
   }
 };
 
+// ── Members Report Tab ────────────────────────────────────────────────────────
+function renderMembersReport(headerHtml, tabsSwitcherHtml, members, attendance, plans, todayStr) {
+  // ── Pending Members ───────────────────────────────────────────────────────
+  const pendingMembers = members
+    .filter(m => m.status === "Pending")
+    .map(m => {
+      const joinDate = m.joinDate || m.startDate || "";
+      let daysPending = 0;
+      if (joinDate) {
+        const diff = new Date(todayStr) - new Date(joinDate);
+        daysPending = Math.max(0, Math.floor(diff / 86400000));
+      }
+      return { ...m, joinDate, daysPending };
+    })
+    .sort((a, b) => b.daysPending - a.daysPending);
+
+  // ── Points Leaderboard ────────────────────────────────────────────────────
+  const pointsLeaderboard = [...members]
+    .map(m => ({
+      ...m,
+      pts: Number(m.points || 0),
+      computedStatus: memberStatus(m)
+    }))
+    .sort((a, b) => b.pts - a.pts);
+
+  const maxPts = Math.max(...pointsLeaderboard.map(m => m.pts), 1);
+
+  const RANK_COLORS = ["#F97316", "#94A3B8", "#B45309"];
+  const RANK_LABELS = ["1st", "2nd", "3rd"];
+
+  // ── Summary metrics ───────────────────────────────────────────────────────
+  const totalPts    = pointsLeaderboard.reduce((s, m) => s + m.pts, 0);
+  const avgPts      = pointsLeaderboard.length ? (totalPts / pointsLeaderboard.length).toFixed(1) : 0;
+  const topMember   = pointsLeaderboard[0];
+  const pendingCount = pendingMembers.length;
+
+  return `
+    ${headerHtml}
+    ${tabsSwitcherHtml}
+
+    <!-- Summary Metrics -->
+    <div class="metric-grid" style="margin-bottom: 25px;">
+      <article class="metric">
+        <span>Pending Activations</span>
+        <strong style="color: ${pendingCount > 0 ? 'var(--warning)' : 'var(--teal-ink)'}">${pendingCount}</strong>
+        <small style="color: var(--text-muted);">Members awaiting activation</small>
+      </article>
+      <article class="metric">
+        <span>Points Leader</span>
+        <strong>${escapeHtml(topMember?.fullName || "N/A")}</strong>
+        <small style="color: var(--teal-ink); font-weight: 600;">${topMember?.pts.toLocaleString() || 0} pts</small>
+      </article>
+      <article class="metric">
+        <span>Avg. Member Points</span>
+        <strong>${Number(avgPts).toLocaleString()}</strong>
+        <small style="color: var(--text-muted);">Across all ${members.length} members</small>
+      </article>
+      <article class="metric">
+        <span>Total Points Issued</span>
+        <strong>${totalPts.toLocaleString()}</strong>
+        <small style="color: var(--text-muted);">Cumulative gym-wide</small>
+      </article>
+    </div>
+
+    <!-- Main two-column grid -->
+    <div class="split-grid" style="margin-bottom: 25px;">
+
+      <!-- LEFT: Pending Members -->
+      <section class="panel stack">
+        <div class="panel-heading">
+          <h2 style="display:flex; align-items:center; gap:8px;">
+            <span class="material-symbols-outlined" style="font-size:1.2rem; color:var(--warning);">pending_actions</span>
+            Pending Members
+          </h2>
+          <span style="color:var(--warning); font-weight:700; font-size:0.9rem;">${pendingCount} pending</span>
+        </div>
+        <div class="list-table reports-pending-table" style="max-height: 420px; overflow-y: auto; overflow-x: hidden;">
+          <div class="table-head">
+            <span>Member</span>
+            <span>Join Date</span>
+            <span style="text-align:right;">Days Pending</span>
+          </div>
+          ${
+            pendingMembers.length
+              ? pendingMembers.map(m => `
+                  <div class="table-row" style="border-left: 3px solid var(--warning);">
+                    <span data-label="Member">
+                      <strong>${escapeHtml(m.fullName || "-")}</strong>
+                      <small style="color:var(--text-muted);">${escapeHtml(m.mobile || m.email || "-")}</small>
+                    </span>
+                    <span data-label="Join Date" style="color:var(--ink-soft);">${m.joinDate ? dateLabel(m.joinDate) : "-"}</span>
+                    <span data-label="Days Pending" style="text-align:right;">
+                      <mark style="background: ${m.daysPending >= 7 ? 'rgba(245,158,11,0.18)' : 'rgba(16,185,129,0.12)'}; color: ${m.daysPending >= 7 ? 'var(--warning)' : 'var(--teal-ink)'}; border-radius:12px; padding:3px 10px; font-size:0.8rem; font-weight:700;">${m.daysPending}d</mark>
+                    </span>
+                  </div>
+                `).join("")
+              : `<div class="table-empty" style="padding:32px 0; text-align:center;">
+                  <span class="material-symbols-outlined" style="font-size:2.5rem; color:var(--teal); display:block; margin-bottom:8px;">check_circle</span>
+                  <strong style="color:var(--teal-ink);">All clear!</strong>
+                  <p style="color:var(--text-muted); font-size:0.9rem; margin-top:4px;">No members are currently pending activation.</p>
+                </div>`
+          }
+        </div>
+      </section>
+
+      <!-- RIGHT: Points Leaderboard -->
+      <section class="panel stack">
+        <div class="panel-heading">
+          <h2 style="display:flex; align-items:center; gap:8px;">
+            <span class="material-symbols-outlined" style="font-size:1.2rem; color:var(--primary);">leaderboard</span>
+            Points Leaderboard
+          </h2>
+          <span style="color:var(--text-muted); font-size:0.85rem;">${members.length} members</span>
+        </div>
+        <div class="list-table reports-points-table" style="max-height: 420px; overflow-y: auto; overflow-x: hidden;">
+          <div class="table-head">
+            <span>Rank</span>
+            <span>Member</span>
+            <span>Points</span>
+            <span style="text-align:right;">Status</span>
+          </div>
+          ${
+            pointsLeaderboard.length
+              ? pointsLeaderboard.map((m, idx) => {
+                  const rank = idx + 1;
+                  const rankColor = rank <= 3 ? RANK_COLORS[rank - 1] : "var(--text-muted)";
+                  const rankLabel = rank <= 3 ? RANK_LABELS[rank - 1] : `#${rank}`;
+                  const barPct = maxPts > 0 ? Math.max(2, Math.round((m.pts / maxPts) * 100)) : 0;
+                  const sc = statusClass(m.computedStatus);
+                  return `
+                    <div class="table-row">
+                      <span data-label="Rank" style="font-weight:800; font-size:0.85rem; color:${rankColor}; min-width:36px;">${rankLabel}</span>
+                      <span data-label="Member">
+                        <strong>${escapeHtml(m.fullName || "-")}</strong>
+                        <small style="color:var(--text-muted);">${dateLabel(m.joinDate || m.startDate || "")}</small>
+                      </span>
+                      <span data-label="Points" style="min-width:90px;">
+                        <span style="font-weight:700; font-size:0.9rem; color:var(--teal-ink);">${m.pts.toLocaleString()}</span>
+                        <span style="display:block; height:5px; border-radius:99px; background:var(--surface-soft); margin-top:4px; overflow:hidden;">
+                          <span style="display:block; height:100%; width:${barPct}%; border-radius:99px; background: ${rank === 1 ? 'var(--primary)' : rank <= 3 ? 'var(--warning)' : 'var(--teal)'}; transition: width 0.4s ease;"></span>
+                        </span>
+                      </span>
+                      <span data-label="Status" style="text-align:right;">
+                        <mark class="status ${sc}" style="font-size:0.75rem; font-weight:700; padding:3px 10px; border-radius:12px;">${escapeHtml(m.computedStatus)}</mark>
+                      </span>
+                    </div>
+                  `;
+                }).join("")
+              : `<div class="table-empty">No member data yet.</div>`
+          }
+        </div>
+      </section>
+
+    </div>
+  `;
+}
+
 function renderLineChart(labels, values, currency) {
   const width = 450;
   const height = 180;
@@ -500,6 +672,10 @@ function renderLineChart(labels, values, currency) {
 
   const pathD = points.length 
     ? points.map((p, idx) => `${idx === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(" ") 
+    : "";
+
+  const areaD = points.length 
+    ? `${pathD} L ${points[points.length - 1].x} ${height - paddingY} L ${points[0].x} ${height - paddingY} Z`
     : "";
 
   const labelsHtml = labels.map((l, idx) => {
@@ -523,6 +699,12 @@ function renderLineChart(labels, values, currency) {
   return `
     <div style="width: 100%; display: flex; justify-content: center; align-items: center; padding-top: 15px;">
       <svg viewBox="0 0 450 180" class="gymflow-chart" style="width:100%; height:auto; overflow:visible;">
+        <defs>
+          <linearGradient id="chart-area-grad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="var(--teal)" stop-opacity="0.25" />
+            <stop offset="100%" stop-color="var(--teal)" stop-opacity="0.00" />
+          </linearGradient>
+        </defs>
         <style>
           .chart-tooltip { display: none; }
           .chart-point-group:hover .chart-tooltip { display: block; }
@@ -530,6 +712,7 @@ function renderLineChart(labels, values, currency) {
         </style>
         <line x1="${paddingX}" y1="${height - paddingY}" x2="${width - paddingX}" y2="${height - paddingY}" stroke="var(--line-soft)" stroke-width="1" />
         <line x1="${paddingX}" y1="${paddingY}" x2="${paddingX}" y2="${height - paddingY}" stroke="var(--line-soft)" stroke-width="1" />
+        ${areaD ? `<path d="${areaD}" fill="url(#chart-area-grad)" />` : ""}
         ${points.length ? `<path d="${pathD}" fill="none" stroke="var(--teal)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />` : ""}
         ${dotsHtml}
         ${labelsHtml}
@@ -554,7 +737,7 @@ function renderBarChart(labels, values) {
     const y = height - paddingY - barHeight;
     return `
       <g style="cursor: pointer;">
-        <rect x="${x}" y="${y}" width="${barWidth}" height="${barHeight}" fill="var(--primary)" rx="3" class="chart-bar" style="transition: fill 0.2s;" />
+        <rect x="${x}" y="${y}" width="${barWidth}" height="${barHeight}" rx="3" class="chart-bar" style="fill: var(--primary); opacity: 0.85; transition: fill 0.2s, opacity 0.2s;" />
         <text x="${x + barWidth/2}" y="${y - 5}" text-anchor="middle" font-size="8px" font-weight="700" fill="var(--text)">${values[idx] || ""}</text>
         <text x="${x + barWidth/2}" y="${height - 5}" text-anchor="middle" font-size="8px" fill="var(--text-muted)" font-weight="500">${labels[idx]}</text>
       </g>
@@ -565,7 +748,7 @@ function renderBarChart(labels, values) {
     <div style="width: 100%; display: flex; justify-content: center; align-items: center; padding-top: 15px;">
       <svg viewBox="0 0 450 180" style="width:100%; height:auto; overflow:visible;">
         <style>
-          .chart-bar:hover { fill: var(--teal); }
+          .chart-bar:hover { fill: var(--teal) !important; opacity: 1; }
         </style>
         <line x1="${paddingX}" y1="${height - paddingY}" x2="${width - paddingX}" y2="${height - paddingY}" stroke="var(--line-soft)" stroke-width="1" />
         ${barsHtml}

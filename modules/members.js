@@ -99,6 +99,33 @@ export const membersModule = {
 
     // Roster directory view
     const members = [...(data.members || [])].sort(byName);
+
+    // Compute streaks and points metrics
+    let maxStreak = 0;
+    let streakLeaderName = "None";
+    let maxPoints = 0;
+    let topPointsName = "None";
+    let totalPoints = 0;
+    let streakSum = 0;
+
+    members.forEach(m => {
+      const streak = Number(m.currentStreak || 0);
+      const pts = Number(m.points || 0);
+      totalPoints += pts;
+      streakSum += streak;
+
+      if (streak > maxStreak) {
+        maxStreak = streak;
+        streakLeaderName = m.fullName || "M";
+      }
+      if (pts > maxPoints) {
+        maxPoints = pts;
+        topPointsName = m.fullName || "M";
+      }
+    });
+
+    const avgStreak = members.length ? streakSum / members.length : 0;
+
     return `
       ${pageHeader(
         "Members",
@@ -106,6 +133,35 @@ export const membersModule = {
           <span class="material-symbols-outlined" style="font-size:1.2rem;">add</span> Add Member
         </button>`
       )}
+
+      <!-- Roster Summary Metrics -->
+      ${members.length ? `
+        <div class="metric-grid" style="margin-top: 15px;">
+          <article class="metric">
+            <span>Active Streak Leader</span>
+            <strong>${escapeHtml(streakLeaderName)}</strong>
+            <small style="color: var(--warning); font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
+              <span class="material-symbols-outlined" style="font-size: 0.95rem; font-variation-settings: 'FILL' 1;">local_fire_department</span>
+              ${maxStreak} day streak
+            </small>
+          </article>
+          <article class="metric">
+            <span>Top Points Scorer</span>
+            <strong>${escapeHtml(topPointsName)}</strong>
+            <small style="color: var(--teal-ink); font-weight: 600;">${maxPoints} consistency points</small>
+          </article>
+          <article class="metric">
+            <span>Gym Average Streak</span>
+            <strong>${avgStreak.toFixed(1)} Days</strong>
+            <small style="color: var(--text-muted);">Current active attendance</small>
+          </article>
+          <article class="metric">
+            <span>Total Points Ledger</span>
+            <strong>${totalPoints.toLocaleString()}</strong>
+            <small style="color: var(--text-muted);">Points earned by all members</small>
+          </article>
+        </div>
+      ` : ""}
 
       <section class="panel" style="margin-top: 15px;">
         <div class="panel-heading">
@@ -145,9 +201,25 @@ export const membersModule = {
                     ${optionList(trainers, "name")}
                   </select>
                 </label>
+                <label>Sort By
+                  <select data-filter="sort">
+                    <option value="name">Name (A-Z)</option>
+                    <option value="streak">Active Streak (Highest)</option>
+                    <option value="points">Points (Highest)</option>
+                    <option value="expiry">Expiry Date (Soonest)</option>
+                  </select>
+                </label>
               </div>
               <div class="data-table members-table" data-member-list>
-                <div class="table-head"><span>Name</span><span>Plan</span><span>Expiry</span><span>Status</span><span></span></div>
+                <div class="table-head">
+                  <span>Name</span>
+                  <span>Plan</span>
+                  <span>Expiry</span>
+                  <span style="text-align: center;">Consistency</span>
+                  <span style="text-align: center;">Points</span>
+                  <span>Status</span>
+                  <span></span>
+                </div>
                 ${members.map((member) => row(member, plans, trainers)).join("")}
               </div>`
             : emptyState("No members yet", "Add your first member to start tracking plans, payments, and renewals.")
@@ -366,6 +438,32 @@ export const membersModule = {
     });
 
     bindFilters(root);
+
+    // Bind Sorting
+    const sortSelect = root.querySelector("[data-filter='sort']");
+    sortSelect?.addEventListener("change", () => {
+      const listEl = root.querySelector("[data-member-list]");
+      if (!listEl) return;
+      const rows = Array.from(listEl.querySelectorAll("[data-row]"));
+      const sortVal = sortSelect.value;
+
+      rows.sort((a, b) => {
+        if (sortVal === "streak") {
+          return Number(b.dataset.streak || 0) - Number(a.dataset.streak || 0);
+        } else if (sortVal === "points") {
+          return Number(b.dataset.points || 0) - Number(a.dataset.points || 0);
+        } else if (sortVal === "expiry") {
+          const expA = a.dataset.expiry || "9999-12-31";
+          const expB = b.dataset.expiry || "9999-12-31";
+          return expA.localeCompare(expB);
+        } else {
+          return String(a.dataset.name || "").localeCompare(String(b.dataset.name || ""));
+        }
+      });
+
+      // Re-append sorted rows to the list container (preserves elements, re-orders DOM)
+      rows.forEach(rowEl => listEl.appendChild(rowEl));
+    });
 
     root.querySelectorAll("[data-view-member]").forEach((button) => {
       button.addEventListener("click", () => {
@@ -611,14 +709,25 @@ function row(member, plans, trainers) {
       data-search="${escapeHtml(haystack)}"
       data-status="${escapeHtml(status)}"
       data-plan="${escapeHtml(member.planId || "")}"
-      data-trainer="${escapeHtml(member.assignedTrainer || "")}">
+      data-trainer="${escapeHtml(member.assignedTrainer || "")}"
+      data-streak="${member.currentStreak || 0}"
+      data-points="${member.points || 0}"
+      data-expiry="${member.endDate || ""}"
+      data-name="${escapeHtml((member.fullName || "").toLowerCase())}">
       ${nameCell(member.fullName, member.mobile || member.email || "", member.avatarUrl || "")}
       <span data-label="Plan">${escapeHtml(findName(plans, member.planId))}</span>
       <span data-label="Expiry">${dateLabel(member.endDate)}</span>
+      <span data-label="Consistency" style="text-align: center; font-weight: 700; color: var(--warning); display: inline-flex; align-items: center; justify-content: center; gap: 4px;">
+        <span class="material-symbols-outlined" style="font-size: 1.1rem; color: #ff6b00; font-variation-settings: 'FILL' 1;">local_fire_department</span>
+        ${member.currentStreak || 0}d
+      </span>
+      <span data-label="Points" style="text-align: center; font-weight: 700; color: var(--accent);">
+        ${member.points || 0} pts
+      </span>
       <span data-label="Status"><mark class="status ${statusClass(status)}">${escapeHtml(status)}</mark></span>
       <span class="row-actions">
-        ${
-          !member.uid
+        ${ /* WhatsApp invite moved to Renewals / Inactive-Alerts sections only */
+          false
             ? `<button class="icon-button" data-invite-member="${escapeHtml(member.id)}" title="Send WhatsApp Invite" style="color: var(--success, #16a34a);"><span class="material-symbols-outlined">send</span></button>`
             : ""
         }
