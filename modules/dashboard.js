@@ -360,7 +360,7 @@ function renderTrainerAllocationChart(members, trainers) {
   const activeMembers = members.filter(m => memberStatus(m) === "Active");
   const allocation = trainers.map(t => {
     const count = activeMembers.filter(m => m.trainerId === t.id).length;
-    return { name: t.fullName.split(" ")[0], count };
+    return { name: (t.name || t.fullName || "").split(" ")[0] || "Trainer", count };
   });
 
   const max = Math.max(...allocation.map(a => a.count), 1);
