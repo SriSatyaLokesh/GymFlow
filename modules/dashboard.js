@@ -85,10 +85,10 @@ export const dashboardModule = {
         </section>
         <section class="panel">
           <div class="panel-heading">
-            <h2>Trainer Clients Allocation</h2>
-            <span>Active client load per trainer</span>
+            <h2>Gym Attendance Trend (Last 7 Days)</h2>
+            <span>Daily check-in volume</span>
           </div>
-          ${renderTrainerAllocationChart(members, data.trainers || [])}
+          ${renderAttendanceTrendChart(data.attendance || [])}
         </section>
       </div>
       ${renderCommunityFeed(context)}
@@ -343,82 +343,65 @@ function renderPlanPopularityChart(members, plans) {
   const data = plans.map(p => ({
     name: p.planName,
     count: planCounts[p.id] || 0
-  })).filter(p => p.count > 0);
+  })).filter(p => p.count > 0).sort((a, b) => b.count - a.count);
 
   if (data.length === 0) {
     return `<div class="table-empty" style="height:110px; display:flex; align-items:center; justify-content:center;">No active plan data available.</div>`;
   }
 
   const total = data.reduce((sum, d) => sum + d.count, 0);
-  let currentOffset = 0;
-  const colors = ["var(--teal)", "var(--primary)", "var(--primary-strong)", "#c36f2d", "var(--ink-soft)"];
-  
-  const slicesHtml = data.map((d, idx) => {
-    const percentage = d.count / total;
-    const dashArray = `${percentage * 100} ${100 - (percentage * 100)}`;
-    const dashOffset = 100 - currentOffset + 25;
-    currentOffset += percentage * 100;
-    const strokeColor = colors[idx % colors.length];
+  const colors = ["var(--teal)", "var(--primary)", "#a855f7", "#f97316", "var(--muted)"];
 
+  const barsHtml = data.map((d, idx) => {
+    const percentage = Math.round((d.count / total) * 100);
+    const color = colors[idx % colors.length];
     return `
-      <circle cx="80" cy="55" r="30" fill="transparent"
-              stroke="${strokeColor}" stroke-width="16"
-              stroke-dasharray="${dashArray}" stroke-dashoffset="${dashOffset}"
-              pathLength="100" class="chart-donut-slice" />
-    `;
-  }).join("");
-
-  const legendHtml = data.map((d, idx) => {
-    const strokeColor = colors[idx % colors.length];
-    return `
-      <div style="display:flex; align-items:center; gap:8px; font-size:0.8rem; font-weight:600;">
-        <span style="width:10px; height:10px; border-radius:50%; background:${strokeColor}; flex-shrink:0;"></span>
-        <span style="text-overflow:ellipsis; overflow:hidden; white-space:nowrap; max-width:140px;">${escapeHtml(d.name)} (${d.count})</span>
+      <div style="margin-bottom: 8px;">
+        <div style="display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 700; margin-bottom: 4px;">
+          <span style="color: var(--text-muted); text-overflow:ellipsis; overflow:hidden; white-space:nowrap; max-width:180px;">${escapeHtml(d.name)}</span>
+          <span style="color: var(--text);">${d.count} (${percentage}%)</span>
+        </div>
+        <div style="background: var(--line-soft); border-radius: 4px; height: 6px; overflow: hidden; display: flex; box-shadow: inset 1px 1px 2px rgba(0,0,0,0.1);">
+          <div style="background: ${color}; width: ${percentage}%; height: 100%; border-radius: 4px; box-shadow: 0 0 6px ${color};"></div>
+        </div>
       </div>
     `;
   }).join("");
 
   return `
-    <div style="display: flex; align-items: center; justify-content: space-around; width: 100%; height: 110px;">
-      <svg viewBox="0 0 160 110" style="width:140px; height:110px;" class="gymflow-chart">
-        <circle cx="80" cy="55" r="30" fill="transparent" stroke="var(--line-soft)" stroke-width="16" />
-        ${slicesHtml}
-        <text x="80" y="58" text-anchor="middle" font-size="11px" font-weight="800" fill="var(--ink)">${total}</text>
-      </svg>
-      <div style="display:flex; flex-direction:column; gap:4px; max-height:100px; overflow-y:auto; padding-right:10px;">
-        ${legendHtml}
-      </div>
+    <div style="padding: 10px 0; max-height: 120px; overflow-y: auto; scrollbar-width: none;">
+      ${barsHtml}
     </div>
   `;
 }
 
-function renderTrainerAllocationChart(members, trainers) {
-  if (trainers.length === 0) {
-    return `<div class="table-empty" style="height:110px; display:flex; align-items:center; justify-content:center;">No trainer data available.</div>`;
-  }
-  const activeMembers = members.filter(m => memberStatus(m) === "Active");
-  const allocation = trainers.map(t => {
-    const count = activeMembers.filter(m => m.trainerId === t.id).length;
-    return { name: (t.name || t.fullName || "").split(" ")[0] || "Trainer", count };
+function renderAttendanceTrendChart(attendance) {
+  const days = Array.from({ length: 7 }, (_, index) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (6 - index));
+    return d.toISOString().slice(0, 10);
   });
 
-  const max = Math.max(...allocation.map(a => a.count), 1);
-  
+  const values = days.map(day => attendance.filter(a => a.date === day).length);
+  const max = Math.max(...values, 1);
+
   const width = 380;
   const height = 110;
   const padding = 20;
-  const barWidth = 24;
-  const spacing = (width - 2 * padding) / allocation.length;
+  const barWidth = 20;
+  const spacing = (width - 2 * padding) / days.length;
 
-  const barsHtml = allocation.map((a, idx) => {
+  const barsHtml = days.map((day, idx) => {
     const x = padding + idx * spacing + (spacing - barWidth) / 2;
-    const barHeight = (a.count / max) * (height - 2 * padding - 15);
+    const barHeight = (values[idx] / max) * (height - 2 * padding - 15);
     const y = height - padding - 15 - barHeight;
+    const dateObj = new Date(day);
+    const dayLabel = dateObj.toLocaleDateString("en-US", { weekday: "short" }).slice(0, 3);
 
     return `
-      <rect x="${x}" y="${y}" width="${barWidth}" height="${barHeight}" class="chart-bar-rect" />
-      <text x="${x + barWidth/2}" y="${height - 5}" text-anchor="middle" font-size="8px">${escapeHtml(a.name)}</text>
-      <text x="${x + barWidth/2}" y="${y - 4}" text-anchor="middle" font-size="9px" font-weight="700" fill="var(--ink)">${a.count}</text>
+      <rect x="${x}" y="${y}" width="${barWidth}" height="${barHeight}" class="chart-bar-rect" style="fill: var(--teal); filter: drop-shadow(0px 2px 4px rgba(0, 194, 255, 0.2));" />
+      <text x="${x + barWidth/2}" y="${height - 5}" text-anchor="middle" font-size="8px">${dayLabel}</text>
+      <text x="${x + barWidth/2}" y="${y - 4}" text-anchor="middle" font-size="9px" font-weight="700" fill="var(--ink)">${values[idx]}</text>
     `;
   }).join("");
 
