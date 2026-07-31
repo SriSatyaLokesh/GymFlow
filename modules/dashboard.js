@@ -28,7 +28,7 @@ export const dashboardModule = {
     const attendanceToday = attendance.filter((record) => record.date === today).length;
     const upcoming = members
       .map((member) => ({ ...member, computedStatus: memberStatus(member), remaining: daysUntil(member.endDate) }))
-      .filter((member) => member.remaining <= 30)
+      .filter((member) => member.computedStatus !== "Paused" && member.remaining <= 7)
       .sort((a, b) => a.remaining - b.remaining)
       .slice(0, 6);
 
