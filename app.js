@@ -123,7 +123,9 @@ async function boot() {
   window.addEventListener("hashchange", () => {
     state.route = getRoute();
     if (membersModule.activeMemberId) membersModule.activeMemberId = null;
+    if (membersModule.activeView) membersModule.activeView = "list";
     if (trainerMembersModule.activeMemberId) trainerMembersModule.activeMemberId = null;
+    if (trainerMembersModule.activeView) trainerMembersModule.activeView = "list";
     render();
   });
 

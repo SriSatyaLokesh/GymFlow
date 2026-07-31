@@ -641,6 +641,7 @@ export function bindMemberProfileDetail(root, member, context, onBack, onEdit) {
 
   function renderTab() {
     if (activeTab === "info") {
+      const isMobileLogin = member.email && member.email.endsWith("@gymflow.app");
       contentEl.innerHTML = `
         <div class="stack" style="gap: 20px;">
           <!-- Top Row Grid: Contact and Personal Info -->
@@ -650,7 +651,7 @@ export function bindMemberProfileDetail(root, member, context, onBack, onEdit) {
                 <span class="material-symbols-outlined" style="font-size: 1.25rem; color: var(--primary);">contact_page</span> Personal Details
               </h3>
               <div class="stack" style="gap: 8px; font-size: 0.88rem;">
-                <div><span style="color: var(--text-muted);">Email:</span> <strong style="color: var(--text); float: right;">${escapeHtml(member.email || "—")}</strong></div>
+                <div><span style="color: var(--text-muted);">Email:</span> <strong style="color: var(--text); float: right;">${isMobileLogin ? "Mobile-based login" : escapeHtml(member.email || "—")}</strong></div>
                 <div><span style="color: var(--text-muted);">Mobile:</span> <strong style="color: var(--text); float: right;">${escapeHtml(member.mobile || "—")}</strong></div>
                 <div><span style="color: var(--text-muted);">Gender:</span> <strong style="color: var(--text); float: right;">${escapeHtml(member.gender || "—")}</strong></div>
                 <div><span style="color: var(--text-muted);">DOB:</span> <strong style="color: var(--text); float: right;">${escapeHtml(member.dateOfBirth ? dateLabel(member.dateOfBirth) : "—")}</strong></div>

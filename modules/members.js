@@ -2,6 +2,7 @@ import { addDays, byName, collections, confirmDialog, dateLabel, emptyState, esc
 
 function renderMemberForm(member, plans, trainers) {
   const isEdit = !!member;
+  const emailValue = (member?.email && member.email.endsWith("@gymflow.app")) ? "" : (member?.email || "");
   return `
     <div class="page-header" style="border-bottom: 1.5px solid var(--line); padding-bottom: 16px; margin-bottom: 15px;">
       <div style="display:flex; align-items:center; gap:12px;">
@@ -23,7 +24,7 @@ function renderMemberForm(member, plans, trainers) {
           <span class="dup-warn hidden" data-dup-warn="mobile"></span>
         </label>
         <label>Email
-          <input name="email" type="email" maxlength="100" value="${escapeHtml(member?.email || "")}" />
+          <input name="email" type="email" maxlength="100" value="${escapeHtml(emailValue)}" />
           <span class="dup-warn hidden" data-dup-warn="email"></span>
         </label>
         
