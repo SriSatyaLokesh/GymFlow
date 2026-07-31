@@ -37,12 +37,22 @@ export const dashboardModule = {
       <div class="metric-grid">
         ${metric("Total Members", members.length)}
         ${metric("Active Members", active)}
+        ${metric("Revenue Month", money(revenueMonth, currency))}
+        ${metric("Attendance Today", attendanceToday)}
+      </div>
+
+      <div style="margin: -10px 0 20px 0; text-align: left;">
+        <button class="ghost-button compact" id="toggle-more-metrics" style="display:inline-flex; align-items:center; gap:4px; font-weight:600;">
+          <span class="material-symbols-outlined" style="font-size:1.15rem;">expand_more</span>
+          Show More Metrics
+        </button>
+      </div>
+
+      <div class="metric-grid hidden" id="more-metrics-panel" style="margin-bottom: 20px;">
+        ${metric("Revenue Today", money(revenueToday, currency))}
         ${metric("Expiring Soon", expiring)}
         ${metric("Expired", expired)}
         ${metric("Paused Members", paused)}
-        ${metric("Revenue Today", money(revenueToday, currency))}
-        ${metric("Revenue Month", money(revenueMonth, currency))}
-        ${metric("Attendance Today", attendanceToday)}
         ${metric("Pending Payments", payments.filter((payment) => payment.status === "Pending" || payment.status === "Partial").length)}
       </div>
 
@@ -105,6 +115,35 @@ export const dashboardModule = {
     weightSelect?.addEventListener("change", () => {
       this.selectedWeightClass = weightSelect.value;
       context.refreshView();
+    });
+
+    // Toggle Metrics
+    const toggleBtn = root.querySelector("#toggle-more-metrics");
+    const panel = root.querySelector("#more-metrics-panel");
+    if (toggleBtn && panel) {
+      toggleBtn.addEventListener("click", () => {
+        const isHidden = panel.classList.contains("hidden");
+        panel.classList.toggle("hidden");
+        toggleBtn.innerHTML = isHidden 
+          ? `<span class="material-symbols-outlined" style="font-size:1.15rem;">expand_less</span>Hide Details` 
+          : `<span class="material-symbols-outlined" style="font-size:1.15rem;">expand_more</span>Show More Metrics`;
+      });
+    }
+
+    // Toggle Feed Workouts
+    root.querySelectorAll("[data-toggle-feed-workout]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const logId = btn.dataset.toggleFeedWorkout;
+        const detailsEl = root.querySelector(`#feed-details-${logId}`);
+        if (detailsEl) {
+          const isHidden = detailsEl.classList.contains("hidden");
+          detailsEl.classList.toggle("hidden");
+          const count = btn.dataset.exerciseCount || "0";
+          btn.innerHTML = isHidden 
+            ? `<span class="material-symbols-outlined" style="font-size:1rem;">expand_less</span>Hide Exercises` 
+            : `<span class="material-symbols-outlined" style="font-size:1rem;">expand_more</span>Show Exercises (${count})`;
+        }
+      });
     });
   }
 };
@@ -420,6 +459,7 @@ function renderCommunityFeed(context) {
               const member = findMember(log.memberId);
               const initials = (member.fullName || "M").split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase() || "M";
               const exercises = log.exercises || [];
+              const hasExercises = exercises.length > 0;
               
               return `
                 <div class="feed-item" style="display:flex; flex-direction:column; gap:8px; padding:12px; border:1px solid var(--line); border-radius:var(--r-md); background:var(--bg-alt);">
@@ -438,16 +478,22 @@ function renderCommunityFeed(context) {
                     <small style="opacity:0.9; font-weight:600; font-size:0.8rem;">Duration: ${log.durationMinutes || 0} mins</small>
                     ${log.notes ? `<p style="font-style:italic; font-size:0.85rem; margin:4px 0; opacity:0.95;">"${escapeHtml(log.notes)}"</p>` : ""}
                     
-                    <div style="margin-top:6px; display:flex; flex-direction:column; gap:2px; border-top:1px solid var(--line); padding-top:6px;">
-                      ${exercises.map(ex => `
-                        <div style="font-size:0.85rem; margin-top:2px;">
-                          <strong>${escapeHtml(ex.name)}</strong>
-                          <span style="opacity:0.8; padding-left:8px;">
-                            ${(ex.sets || []).map((s, idx) => `${idx + 1}: ${s.weight}kg x ${s.reps}`).join(" / ")}
-                          </span>
-                        </div>
-                      `).join("")}
-                    </div>
+                    ${hasExercises ? `
+                      <button class="ghost-button compact" data-toggle-feed-workout="${log.id}" data-exercise-count="${exercises.length}" style="font-size:0.75rem; padding: 4px 8px; margin-top: 6px; display:inline-flex; align-items:center; gap:4px; font-weight:600;">
+                        <span class="material-symbols-outlined" style="font-size:1rem;">expand_more</span>
+                        Show Exercises (${exercises.length})
+                      </button>
+                      <div class="feed-workout-details hidden" id="feed-details-${log.id}" style="margin-top:6px; display:flex; flex-direction:column; gap:2px; border-top:1px solid var(--line); padding-top:6px;">
+                        ${exercises.map(ex => `
+                          <div style="font-size:0.85rem; margin-top:2px;">
+                            <strong>${escapeHtml(ex.name)}</strong>
+                            <span style="opacity:0.8; padding-left:8px;">
+                              ${(ex.sets || []).map((s, idx) => `${idx + 1}: ${s.weight}kg x ${s.reps}`).join(" / ")}
+                            </span>
+                          </div>
+                        `).join("")}
+                      </div>
+                    ` : ""}
                   </div>
                 </div>
               `;

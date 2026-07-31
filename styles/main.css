@@ -2455,6 +2455,25 @@ body, button, input, select, textarea, .profile-chip strong {
   }
 }
 
+/* Mobile responsive compact styling for community feed */
+@media (max-width: 480px) {
+  .feed-item {
+    padding: 8px !important;
+  }
+  .feed-item .avatar-circle {
+    width: 30px !important;
+    height: 30px !important;
+    font-size: 0.8rem !important;
+  }
+  .feed-item > div {
+    padding-left: 0 !important;
+  }
+  .feed-item h4 {
+    font-size: 0.9rem !important;
+  }
+}
+
+
 
 
 
