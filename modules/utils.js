@@ -850,7 +850,7 @@ export function showMemberProfileModal(member, context) {
                 return `
                   <div style="${getBadgeCss(badge.id, isUnlocked)} flex-direction: column; align-items: flex-start; gap: 6px; box-sizing: border-box;">
                     <div style="display: flex; gap: 10px; align-items: center; width: 100%;">
-                      <span class="material-symbols-outlined" style="font-size: 2.2rem; ${isUnlocked ? 'color: inherit;' : 'color: var(--text-muted);'}">${badge.icon}</span>
+                      ${renderBadgeIcon(badge.id, isUnlocked)}
                       <div style="text-align: left; flex: 1;">
                         <strong style="font-size: 0.85rem; color: inherit; display: block;">${escapeHtml(badge.name)}</strong>
                         <div style="font-size: 0.7rem; color: inherit; opacity: 0.85; line-height: 1.25;">${escapeHtml(badge.description)}</div>
@@ -1062,8 +1062,8 @@ export function showCelebrationModal(newlyUnlockedBadges = [], newlyHitPRs = [])
         <h3 style="color: var(--accent); margin-bottom: 12px;">🏅 Badges Unlocked!</h3>
         <div style="display: flex; flex-direction: column; gap: 10px; align-items: center; width: 100%;">
           ${newlyUnlockedBadges.map(badge => `
-            <div style="${getBadgeCss(badge.id, true)} width: 100%; max-width: 320px;">
-              <span class="material-symbols-outlined" style="font-size: 2.5rem; color: inherit;">${badge.icon}</span>
+            <div style="${getBadgeCss(badge.id, true)} width: 100%; max-width: 320px; align-items: center;">
+              ${renderBadgeIcon(badge.id, true)}
               <div style="text-align: left;">
                 <strong style="font-size: 1.05rem; color: inherit;">${escapeHtml(badge.name)}</strong>
                 <div style="font-size: 0.75rem; color: inherit; opacity: 0.85;">${escapeHtml(badge.description)}</div>
@@ -1149,6 +1149,147 @@ export function getBadgeCss(badgeId, isUnlocked) {
   }
   // bronze
   return `background: linear-gradient(135deg, #FFE0B2 0%, #FFB74D 50%, #E65100 100%); color: #3E2723; box-shadow: var(--nm-glow-bronze); border: 1px solid #FFCC80; padding: 16px 20px; border-radius: var(--r-md); display: flex; gap: 12px; align-items: center; text-align: left; transition: all 0.3s ease; font-weight: 600;`;
+}
+
+export function renderBadgeIcon(badgeId, isUnlocked) {
+  const fill = isUnlocked ? "url(#badge-bg)" : "var(--surface-soft)";
+  const stroke = isUnlocked ? "url(#badge-border)" : "var(--line)";
+  
+  const levels = {
+    "streak-starter": "bronze",
+    "consistency-50": "bronze",
+    "unstoppable": "silver",
+    "consistency-100": "silver",
+    "pr-hitter": "silver",
+    "consistency-250": "gold",
+    "heavy-lifter": "gold"
+  };
+  const level = levels[badgeId] || "bronze";
+
+  let gradients = "";
+  if (isUnlocked) {
+    if (level === "gold") {
+      gradients = `
+        <defs>
+          <linearGradient id="badge-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#FFF9C4" />
+            <stop offset="50%" stop-color="#FBC02D" />
+            <stop offset="100%" stop-color="#F57F17" />
+          </linearGradient>
+          <linearGradient id="badge-border" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#FFEE58" />
+            <stop offset="100%" stop-color="#E65100" />
+          </linearGradient>
+          <linearGradient id="ribbon-bg" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#FFEE58" />
+            <stop offset="100%" stop-color="#F57F17" />
+          </linearGradient>
+        </defs>
+      `;
+    } else if (level === "silver") {
+      gradients = `
+        <defs>
+          <linearGradient id="badge-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#ECEFF1" />
+            <stop offset="50%" stop-color="#CFD8DC" />
+            <stop offset="100%" stop-color="#78909C" />
+          </linearGradient>
+          <linearGradient id="badge-border" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#ECEFF1" />
+            <stop offset="100%" stop-color="#37474F" />
+          </linearGradient>
+          <linearGradient id="ribbon-bg" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#CFD8DC" />
+            <stop offset="100%" stop-color="#78909C" />
+          </linearGradient>
+        </defs>
+      `;
+    } else {
+      gradients = `
+        <defs>
+          <linearGradient id="badge-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#FFE0B2" />
+            <stop offset="50%" stop-color="#FFB74D" />
+            <stop offset="100%" stop-color="#E65100" />
+          </linearGradient>
+          <linearGradient id="badge-border" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#FFCC80" />
+            <stop offset="100%" stop-color="#BF360C" />
+          </linearGradient>
+          <linearGradient id="ribbon-bg" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#FFCC80" />
+            <stop offset="100%" stop-color="#E65100" />
+          </linearGradient>
+        </defs>
+      `;
+    }
+  }
+
+  let graphic = "";
+  if (badgeId === "streak-starter" || badgeId === "unstoppable") {
+    const color = isUnlocked ? "#ffffff" : "var(--muted)";
+    const opacity = isUnlocked ? "1" : "0.35";
+    graphic = `
+      <path d="M 50 20 C 50 20 63 36 63 48 C 63 58 50 67 50 67 C 50 67 37 58 37 48 C 37 36 50 20 50 20 Z" fill="${color}" fill-opacity="${opacity}" />
+      <path d="M 50 30 C 50 30 58 42 58 48 C 58 54 50 59 50 59 C 50 59 42 54 42 48 C 42 42 50 30 50 30 Z" fill="#FFE082" fill-opacity="${isUnlocked ? '0.9' : '0.1'}" />
+    `;
+  } else if (badgeId === "consistency-50" || badgeId === "consistency-100" || badgeId === "consistency-250") {
+    const num = badgeId.split("-")[1];
+    const textColor = isUnlocked ? "#ffffff" : "var(--muted)";
+    const ribColor = isUnlocked ? "url(#ribbon-bg)" : "var(--line)";
+    graphic = `
+      <path d="M 35 18 L 65 18 L 65 66 L 50 54 L 35 66 Z" fill="${ribColor}" />
+      <text x="50" y="40" font-size="17" font-weight="900" text-anchor="middle" dominant-baseline="central" fill="${textColor}">${num}</text>
+    `;
+  } else if (badgeId === "pr-hitter") {
+    const color = isUnlocked ? "#ffffff" : "var(--muted)";
+    graphic = `
+      <rect x="25" y="46" width="50" height="8" rx="2" fill="${color}" />
+      <rect x="20" y="34" width="10" height="32" rx="3" fill="${color}" />
+      <rect x="70" y="34" width="10" height="32" rx="3" fill="${color}" />
+      <rect x="15" y="38" width="5" height="24" rx="2" fill="${color}" opacity="0.8" />
+      <rect x="80" y="38" width="5" height="24" rx="2" fill="${color}" opacity="0.8" />
+    `;
+  } else if (badgeId === "heavy-lifter") {
+    const color = isUnlocked ? "#ffffff" : "var(--muted)";
+    const ringBg = isUnlocked ? "#4E342E" : "var(--line-soft)";
+    graphic = `
+      <circle cx="50" cy="48" r="22" fill="${ringBg}" stroke="${color}" stroke-width="4.5" />
+      <circle cx="50" cy="48" r="6" fill="none" stroke="${color}" stroke-width="2.5" />
+      <text x="50" y="48" font-size="8.5" font-weight="800" text-anchor="middle" dominant-baseline="central" fill="${color}">100 KG</text>
+    `;
+  }
+
+  let stars = "";
+  if (isUnlocked) {
+    const starColor = level === "gold" ? "#FFF9C4" : (level === "silver" ? "#ECEFF1" : "#FFD54F");
+    if (level === "gold") {
+      stars = `
+        <polygon points="50,75 52,80 57,80 53,83 55,88 50,85 45,88 47,83 43,80 48,80" fill="${starColor}" />
+        <polygon points="34,77 36,82 41,82 37,85 39,90 34,87 29,90 31,85 27,82 32,82" fill="${starColor}" />
+        <polygon points="66,77 68,82 73,82 69,85 71,90 66,87 61,90 63,85 59,82 64,82" fill="${starColor}" />
+      `;
+    } else if (level === "silver") {
+      stars = `
+        <polygon points="42,76 44,81 49,81 45,84 47,89 42,86 37,89 39,84 35,81 40,81" fill="${starColor}" />
+        <polygon points="58,76 60,81 65,81 61,84 63,89 58,86 53,89 55,84 51,81 56,81" fill="${starColor}" />
+      `;
+    } else {
+      stars = `
+        <polygon points="50,76 52,81 57,81 53,84 55,89 50,86 45,89 47,84 43,81 48,81" fill="${starColor}" />
+      `;
+    }
+  }
+
+  return `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="58" height="58" style="flex-shrink:0;">
+      ${gradients}
+      <polygon points="50,7 88,29 88,71 50,93 12,71 12,29" fill="${fill}" stroke="${stroke}" stroke-width="4.5" stroke-linejoin="round" />
+      <polygon points="50,13 83,32 83,68 50,87 17,68 17,32" fill="none" stroke="${isUnlocked ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.05)'}" stroke-width="1.5" stroke-linejoin="round" />
+      ${graphic}
+      ${stars}
+    </svg>
+  `;
 }
 
 export function cmToFeetInches(cm) {

@@ -1,4 +1,4 @@
-import { collections, dateLabel, emptyState, escapeHtml, findName, formData, nameCell, optionList, pageHeader, today, trendChart, withButtonLoading, getBadgeCss } from "./utils.js";
+import { collections, dateLabel, emptyState, escapeHtml, findName, formData, nameCell, optionList, pageHeader, today, trendChart, withButtonLoading, getBadgeCss, renderBadgeIcon } from "./utils.js";
 
 const METRICS = [
   { key: "weight", label: "Weight (kg)", color: "var(--teal)" },
@@ -208,7 +208,7 @@ function renderMemberProgress(context) {
             return `
               <div style="${getBadgeCss(badge.id, isUnlocked)} flex-direction: column; align-items: flex-start; gap: 8px; box-sizing: border-box;">
                 <div style="display: flex; gap: 12px; align-items: center; width: 100%;">
-                  <span class="material-symbols-outlined" style="font-size: 2.2rem; ${isUnlocked ? 'color: inherit;' : 'color: var(--text-muted);'}">${badge.icon}</span>
+                  ${renderBadgeIcon(badge.id, isUnlocked)}
                   <div style="text-align: left; flex: 1;">
                     <strong style="font-size: 0.95rem; color: inherit; display: block;">${escapeHtml(badge.name)}</strong>
                     <div style="font-size: 0.75rem; color: inherit; opacity: 0.85; line-height: 1.2;">${escapeHtml(badge.description)}</div>
