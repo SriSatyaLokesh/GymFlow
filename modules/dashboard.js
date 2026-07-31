@@ -28,7 +28,7 @@ export const dashboardModule = {
     const attendanceToday = attendance.filter((record) => record.date === today).length;
     const upcoming = members
       .map((member) => ({ ...member, computedStatus: memberStatus(member), remaining: daysUntil(member.endDate) }))
-      .filter((member) => member.remaining <= 30)
+      .filter((member) => member.computedStatus !== "Paused" && member.remaining <= 7)
       .sort((a, b) => a.remaining - b.remaining)
       .slice(0, 6);
 
@@ -37,12 +37,22 @@ export const dashboardModule = {
       <div class="metric-grid">
         ${metric("Total Members", members.length)}
         ${metric("Active Members", active)}
+        ${metric("Revenue Month", money(revenueMonth, currency))}
+        ${metric("Attendance Today", attendanceToday)}
+      </div>
+
+      <div style="margin: -10px 0 20px 0; text-align: left;">
+        <button class="ghost-button compact" id="toggle-more-metrics" style="display:inline-flex; align-items:center; gap:4px; font-weight:600;">
+          <span class="material-symbols-outlined" style="font-size:1.15rem;">expand_more</span>
+          Show More Metrics
+        </button>
+      </div>
+
+      <div class="metric-grid hidden" id="more-metrics-panel" style="margin-bottom: 20px;">
+        ${metric("Revenue Today", money(revenueToday, currency))}
         ${metric("Expiring Soon", expiring)}
         ${metric("Expired", expired)}
         ${metric("Paused Members", paused)}
-        ${metric("Revenue Today", money(revenueToday, currency))}
-        ${metric("Revenue Month", money(revenueMonth, currency))}
-        ${metric("Attendance Today", attendanceToday)}
         ${metric("Pending Payments", payments.filter((payment) => payment.status === "Pending" || payment.status === "Partial").length)}
       </div>
 
@@ -59,9 +69,26 @@ export const dashboardModule = {
         <section class="panel">
           <div class="panel-heading">
             <h2>Revenue Trend</h2>
-            <a href="#/reports">Reports</a>
+            <a href="#/reports" class="ghost-button compact" style="display: inline-flex; align-items: center; gap: 4px;"><span class="material-symbols-outlined" style="font-size:1.15rem;">bar_chart</span>Reports</a>
           </div>
-          ${renderBars(payments, currency)}
+          ${renderRevenueChart(payments, currency)}
+        </section>
+      </div>
+
+      <div class="split-grid" style="margin-top:20px;">
+        <section class="panel">
+          <div class="panel-heading">
+            <h2>Plan Popularity</h2>
+            <span>Distribution of active plans</span>
+          </div>
+          ${renderPlanPopularityChart(members, data.membership_plans || [])}
+        </section>
+        <section class="panel">
+          <div class="panel-heading">
+            <h2>Gym Attendance Trend (Last 7 Days)</h2>
+            <span>Daily check-in volume</span>
+          </div>
+          ${renderAttendanceTrendChart(data.attendance || [])}
         </section>
       </div>
       ${renderCommunityFeed(context)}
@@ -88,6 +115,35 @@ export const dashboardModule = {
     weightSelect?.addEventListener("change", () => {
       this.selectedWeightClass = weightSelect.value;
       context.refreshView();
+    });
+
+    // Toggle Metrics
+    const toggleBtn = root.querySelector("#toggle-more-metrics");
+    const panel = root.querySelector("#more-metrics-panel");
+    if (toggleBtn && panel) {
+      toggleBtn.addEventListener("click", () => {
+        const isHidden = panel.classList.contains("hidden");
+        panel.classList.toggle("hidden");
+        toggleBtn.innerHTML = isHidden 
+          ? `<span class="material-symbols-outlined" style="font-size:1.15rem;">expand_less</span>Hide Details` 
+          : `<span class="material-symbols-outlined" style="font-size:1.15rem;">expand_more</span>Show More Metrics`;
+      });
+    }
+
+    // Toggle Feed Workouts
+    root.querySelectorAll("[data-toggle-feed-workout]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const logId = btn.dataset.toggleFeedWorkout;
+        const detailsEl = root.querySelector(`#feed-details-${logId}`);
+        if (detailsEl) {
+          const isHidden = detailsEl.classList.contains("hidden");
+          detailsEl.classList.toggle("hidden");
+          const count = btn.dataset.exerciseCount || "0";
+          btn.innerHTML = isHidden 
+            ? `<span class="material-symbols-outlined" style="font-size:1rem;">expand_less</span>Hide Exercises` 
+            : `<span class="material-symbols-outlined" style="font-size:1rem;">expand_more</span>Show Exercises (${count})`;
+        }
+      });
     });
   }
 };
@@ -121,13 +177,43 @@ function renderMemberDashboard(context) {
   const status = me.status === "Pending" ? "Pending" : memberStatus(me);
   const remaining = daysUntil(me.endDate);
 
+  // Calculate Payment / Renewal Status Warning
+  let billingStatus = "active";
+  let billingLabel = "Active";
+  let billingText = `Your next renewal is on ${me.endDate ? dateLabel(me.endDate) : "-"}.`;
+  let billingIcon = "check_circle";
+  
+  if (remaining < 0) {
+    billingStatus = "overdue";
+    billingLabel = "Payment Overdue";
+    billingText = `Your plan expired ${Math.abs(remaining)} days ago. Please renew to continue gym access.`;
+    billingIcon = "error";
+  } else if (remaining <= 5) {
+    billingStatus = "due";
+    billingLabel = "Payment Due Soon";
+    billingText = `Your plan expires in ${remaining} days. Please renew to avoid access interruption.`;
+    billingIcon = "warning";
+  }
+
+  const billingWidgetHtml = `
+    <section class="billing-status-widget status-${billingStatus}" style="margin-bottom: 20px;">
+      <div style="display:flex; align-items:center; gap:12px; text-align:left;">
+        <span class="material-symbols-outlined" style="font-size: 28px; color: ${billingStatus === 'active' ? 'var(--teal)' : billingStatus === 'due' ? 'var(--warning)' : 'var(--danger)'};">${billingIcon}</span>
+        <div>
+          <span style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; opacity:0.85; display:block;">Billing Status</span>
+          <strong style="font-size:1.1rem; color:var(--ink-soft);">${billingLabel}</strong>
+          <p style="font-size:0.85rem; color:var(--muted); margin: 2px 0 0 0; line-height: 1.3;">${billingText}</p>
+        </div>
+      </div>
+      <div style="text-align:right; flex-shrink:0;">
+        <a class="primary-button" href="#/progress" style="padding: 8px 12px; font-size:0.8rem; font-weight:700;">View History</a>
+      </div>
+    </section>
+  `;
+
   return `
     ${pageHeader(`Welcome, ${name}`)}
-    ${
-      me.status === "Pending"
-        ? `<div class="panel-hint" style="margin-bottom:18px">Your membership is pending approval from the gym.</div>`
-        : ""
-    }
+    ${me.status === "Pending" ? `<div class="panel-hint" style="margin-bottom:18px">Your membership is pending approval from the gym.</div>` : billingWidgetHtml}
     <div class="metric-grid">
       <article class="metric"><span>Membership</span><strong><mark class="status ${statusClass(status)}">${escapeHtml(status)}</mark></strong></article>
       <article class="metric"><span>Expires</span><strong>${me.endDate ? dateLabel(me.endDate) : "-"}</strong></article>
@@ -204,7 +290,7 @@ function renewalRow(member) {
   `;
 }
 
-function renderBars(payments, currency) {
+function renderRevenueChart(payments, currency) {
   const lastSix = Array.from({ length: 6 }, (_, index) => {
     const date = new Date();
     date.setMonth(date.getMonth() - (5 - index));
@@ -213,22 +299,122 @@ function renderBars(payments, currency) {
   const values = lastSix.map((month) => payments.filter((payment) => String(payment.date || "").startsWith(month)).reduce((sum, payment) => sum + Number(payment.amount || 0), 0));
   const max = Math.max(...values, 1);
 
+  const width = 380;
+  const height = 110;
+  const padding = 25;
+  const points = values.map((val, idx) => {
+    const x = padding + (idx * (width - 2 * padding) / 5);
+    const y = height - padding - (val / max * (height - 2 * padding));
+    return { x, y };
+  });
+  const pathD = points.map((p, idx) => `${idx === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(" ");
+
+  const labelsHtml = lastSix.map((m, idx) => {
+    const x = padding + (idx * (width - 2 * padding) / 5);
+    return `<text x="${x}" y="${height - 5}" text-anchor="middle">${m.slice(5)}</text>`;
+  }).join("");
+
+  const dotsHtml = points.map((p, idx) => {
+    return `<circle cx="${p.x}" cy="${p.y}" r="4" fill="var(--teal)" stroke="var(--surface)" stroke-width="2" />
+            <text x="${p.x}" y="${p.y - 8}" text-anchor="middle" font-size="8px" font-weight="700" fill="var(--ink)">${money(values[idx], currency)}</text>`;
+  }).join("");
+
   return `
-    <div class="bar-chart">
-      ${lastSix
-        .map(
-          (month, index) => `
-            <div class="bar-item">
-              <div class="bar-track"><span style="height:${Math.max(8, (values[index] / max) * 100)}%"></span></div>
-              <small>${month.slice(5)}</small>
-              <strong>${money(values[index], currency)}</strong>
-            </div>
-          `
-        )
-        .join("")}
+    <div style="width: 100%; display: flex; justify-content: center; align-items: center; padding-top: 10px;">
+      <svg viewBox="0 0 380 110" class="gymflow-chart">
+        <line x1="${padding}" y1="${height - padding}" x2="${width - padding}" y2="${height - padding}" class="grid-line" />
+        <path d="${pathD}" class="chart-line-path" />
+        ${dotsHtml}
+        ${labelsHtml}
+      </svg>
     </div>
   `;
 }
+
+function renderPlanPopularityChart(members, plans) {
+  const activeMembers = members.filter(m => memberStatus(m) === "Active");
+  const planCounts = {};
+  activeMembers.forEach(m => {
+    if (m.planId) {
+      planCounts[m.planId] = (planCounts[m.planId] || 0) + 1;
+    }
+  });
+
+  const data = plans.map(p => ({
+    name: p.planName,
+    count: planCounts[p.id] || 0
+  })).filter(p => p.count > 0).sort((a, b) => b.count - a.count);
+
+  if (data.length === 0) {
+    return `<div class="table-empty" style="height:110px; display:flex; align-items:center; justify-content:center;">No active plan data available.</div>`;
+  }
+
+  const total = data.reduce((sum, d) => sum + d.count, 0);
+  const colors = ["var(--teal)", "var(--primary)", "#a855f7", "#f97316", "var(--muted)"];
+
+  const barsHtml = data.map((d, idx) => {
+    const percentage = Math.round((d.count / total) * 100);
+    const color = colors[idx % colors.length];
+    return `
+      <div style="margin-bottom: 8px;">
+        <div style="display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 700; margin-bottom: 4px;">
+          <span style="color: var(--text-muted); text-overflow:ellipsis; overflow:hidden; white-space:nowrap; max-width:180px;">${escapeHtml(d.name)}</span>
+          <span style="color: var(--text);">${d.count} (${percentage}%)</span>
+        </div>
+        <div style="background: var(--line-soft); border-radius: 4px; height: 6px; overflow: hidden; display: flex; box-shadow: inset 1px 1px 2px rgba(0,0,0,0.1);">
+          <div style="background: ${color}; width: ${percentage}%; height: 100%; border-radius: 4px; box-shadow: 0 0 6px ${color};"></div>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  return `
+    <div style="padding: 10px 0; max-height: 120px; overflow-y: auto; scrollbar-width: none;">
+      ${barsHtml}
+    </div>
+  `;
+}
+
+function renderAttendanceTrendChart(attendance) {
+  const days = Array.from({ length: 7 }, (_, index) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (6 - index));
+    return d.toISOString().slice(0, 10);
+  });
+
+  const values = days.map(day => attendance.filter(a => a.date === day).length);
+  const max = Math.max(...values, 1);
+
+  const width = 380;
+  const height = 110;
+  const padding = 20;
+  const barWidth = 20;
+  const spacing = (width - 2 * padding) / days.length;
+
+  const barsHtml = days.map((day, idx) => {
+    const x = padding + idx * spacing + (spacing - barWidth) / 2;
+    const barHeight = (values[idx] / max) * (height - 2 * padding - 15);
+    const y = height - padding - 15 - barHeight;
+    const dateObj = new Date(day);
+    const dayLabel = dateObj.toLocaleDateString("en-US", { weekday: "short" }).slice(0, 3);
+
+    return `
+      <rect x="${x}" y="${y}" width="${barWidth}" height="${barHeight}" class="chart-bar-rect" style="fill: var(--teal); filter: drop-shadow(0px 2px 4px rgba(0, 194, 255, 0.2));" />
+      <text x="${x + barWidth/2}" y="${height - 5}" text-anchor="middle" font-size="8px">${dayLabel}</text>
+      <text x="${x + barWidth/2}" y="${y - 4}" text-anchor="middle" font-size="9px" font-weight="700" fill="var(--ink)">${values[idx]}</text>
+    `;
+  }).join("");
+
+  return `
+    <div style="width: 100%; display: flex; justify-content: center; align-items: center; padding-top: 10px;">
+      <svg viewBox="0 0 380 110" class="gymflow-chart">
+        <line x1="${padding}" y1="${height - padding - 15}" x2="${width - padding}" y2="${height - padding - 15}" class="axis-line" />
+        ${barsHtml}
+      </svg>
+    </div>
+  `;
+}
+
 
 function renderCommunityFeed(context) {
   const logs = context.data.workout_logs || [];
@@ -256,6 +442,7 @@ function renderCommunityFeed(context) {
               const member = findMember(log.memberId);
               const initials = (member.fullName || "M").split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase() || "M";
               const exercises = log.exercises || [];
+              const hasExercises = exercises.length > 0;
               
               return `
                 <div class="feed-item" style="display:flex; flex-direction:column; gap:8px; padding:12px; border:1px solid var(--line); border-radius:var(--r-md); background:var(--bg-alt);">
@@ -274,16 +461,22 @@ function renderCommunityFeed(context) {
                     <small style="opacity:0.9; font-weight:600; font-size:0.8rem;">Duration: ${log.durationMinutes || 0} mins</small>
                     ${log.notes ? `<p style="font-style:italic; font-size:0.85rem; margin:4px 0; opacity:0.95;">"${escapeHtml(log.notes)}"</p>` : ""}
                     
-                    <div style="margin-top:6px; display:flex; flex-direction:column; gap:2px; border-top:1px solid var(--line); padding-top:6px;">
-                      ${exercises.map(ex => `
-                        <div style="font-size:0.85rem; margin-top:2px;">
-                          <strong>${escapeHtml(ex.name)}</strong>
-                          <span style="opacity:0.8; padding-left:8px;">
-                            ${(ex.sets || []).map((s, idx) => `${idx + 1}: ${s.weight}kg x ${s.reps}`).join(" / ")}
-                          </span>
-                        </div>
-                      `).join("")}
-                    </div>
+                    ${hasExercises ? `
+                      <button class="ghost-button compact" data-toggle-feed-workout="${log.id}" data-exercise-count="${exercises.length}" style="font-size:0.75rem; padding: 4px 8px; margin-top: 6px; display:inline-flex; align-items:center; gap:4px; font-weight:600;">
+                        <span class="material-symbols-outlined" style="font-size:1rem;">expand_more</span>
+                        Show Exercises (${exercises.length})
+                      </button>
+                      <div class="feed-workout-details hidden" id="feed-details-${log.id}" style="margin-top:6px; display:flex; flex-direction:column; gap:2px; border-top:1px solid var(--line); padding-top:6px;">
+                        ${exercises.map(ex => `
+                          <div style="font-size:0.85rem; margin-top:2px;">
+                            <strong>${escapeHtml(ex.name)}</strong>
+                            <span style="opacity:0.8; padding-left:8px;">
+                              ${(ex.sets || []).map((s, idx) => `${idx + 1}: ${s.weight}kg x ${s.reps}`).join(" / ")}
+                            </span>
+                          </div>
+                        `).join("")}
+                      </div>
+                    ` : ""}
                   </div>
                 </div>
               `;

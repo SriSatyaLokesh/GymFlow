@@ -22,18 +22,6 @@ export const membersModule = {
               <input name="email" type="email" maxlength="100" />
               <span class="dup-warn hidden" data-dup-warn="email"></span>
             </label>
-            <label>WhatsApp number
-              <input name="whatsappNumber" type="tel" maxlength="10" placeholder="Same as mobile" />
-            </label>
-            <label>Gender
-              <select name="gender">
-                <option>Not specified</option>
-                <option>Female</option>
-                <option>Male</option>
-                <option>Other</option>
-              </select>
-            </label>
-            <label>Date of birth<input name="dateOfBirth" type="date" /></label>
             <label>Join date<input name="joinDate" type="date" value="${today()}" /></label>
             <label>Membership plan
               <select name="planId" required>

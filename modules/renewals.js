@@ -7,7 +7,7 @@ export const renewalsModule = {
     const currency = settings?.currency || "INR";
     const watched = members
       .map((member) => ({ ...member, remaining: daysUntil(member.endDate), computedStatus: memberStatus(member) }))
-      .filter((member) => member.computedStatus !== "Paused" && (member.remaining <= 30 || member.computedStatus === "Expired"))
+      .filter((member) => member.computedStatus !== "Paused" && member.remaining <= 7)
       .sort((a, b) => a.remaining - b.remaining);
 
     return `
@@ -50,7 +50,7 @@ export const renewalsModule = {
                   <div class="table-head"><span>Member</span><span>Plan</span><span>Expiry</span><span>Status</span><span></span></div>
                   ${watched.map((member) => renewalRow(member, plans, currency)).join("")}
                 </div>`
-              : emptyState("No renewals due", "Members expiring within 30 days will appear here.")
+              : emptyState("No renewals due", "Members expiring within 7 days will appear here.")
           }
         </section>
       </div>

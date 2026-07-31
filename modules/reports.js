@@ -8,7 +8,7 @@ export const reportsModule = {
     const currency = settings?.currency || "INR";
     const revenue = payments.reduce((sum, payment) => sum + Number(payment.amount || 0), 0);
     const active = members.filter((member) => memberStatus(member) === "Active").length;
-    const inactive = members.filter((member) => !attendance.some((record) => record.memberId === member.id && daysUntil(record.date) >= -14));
+    const inactive = members.filter((member) => memberStatus(member) !== "Active");
 
     return `
       ${pageHeader(
@@ -25,7 +25,7 @@ export const reportsModule = {
         <article class="metric"><span>Total revenue</span><strong>${money(revenue, currency)}</strong></article>
         <article class="metric"><span>Active members</span><strong>${active}</strong></article>
         <article class="metric"><span>Attendance records</span><strong>${attendance.length}</strong></article>
-        <article class="metric"><span>Inactive 14 days</span><strong>${inactive.length}</strong></article>
+        <article class="metric"><span>Inactive members</span><strong>${inactive.length}</strong></article>
       </div>
       <div class="split-grid">
         <section class="panel">
