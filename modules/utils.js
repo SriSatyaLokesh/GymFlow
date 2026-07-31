@@ -560,22 +560,28 @@ export function renderMemberProfileDetail(member, context) {
   const avatarInitials = (member.fullName || "M").split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase() || "M";
 
   return `
-    ${pageHeader(
-      `<div style="display:flex; gap:12px; align-items:center;">
-        <button class="ghost-button compact" id="back-to-roster-btn" style="min-width: unset; padding: 6px 12px; display: inline-flex; align-items: center; gap: 6px; font-weight:600;">
-          <span class="material-symbols-outlined" style="font-size: 1.25rem;">arrow_back</span>
-          Back to List
-        </button>
-        <div class="avatar" style="width:40px; height:40px; border-radius:50%; background:var(--primary); color:var(--on-primary); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:1rem;">
-          ${avatarInitials}
+    <div class="page-header" style="border-bottom: 1.5px solid var(--line); padding-bottom: 16px; margin-bottom: 15px;">
+      <div style="display:flex; flex-wrap: wrap; justify-content: space-between; align-items: center; width: 100%; gap: 12px;">
+        <div style="display:flex; gap:12px; align-items:center;">
+          <button class="ghost-button compact" id="back-to-roster-btn" style="min-width: unset; padding: 6px 12px; display: inline-flex; align-items: center; gap: 6px; font-weight:600;">
+            <span class="material-symbols-outlined" style="font-size: 1.25rem;">arrow_back</span>
+            Back to List
+          </button>
+          <div class="avatar" style="width:40px; height:40px; border-radius:50%; background:var(--primary); color:var(--on-primary); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:1rem; box-shadow: 0 0 8px rgba(0,0,0,0.15);">
+            ${avatarInitials}
+          </div>
+          <div>
+            <h2 style="margin: 0; font-size: 1.4rem; font-family: 'Montserrat', sans-serif; font-weight: 800; color: var(--text);">${escapeHtml(member.fullName)}</h2>
+            <small style="opacity: 0.85; color: var(--text-muted);">${escapeHtml(planName)} • Trainer: ${escapeHtml(trainerName)}</small>
+          </div>
         </div>
         <div>
-          <h2 style="margin: 0; font-size: 1.25rem;">${escapeHtml(member.fullName)}</h2>
-          <small style="opacity: 0.85;">${escapeHtml(planName)} • Trainer: ${escapeHtml(trainerName)}</small>
+          <mark class="status ${statusClass(memberStatus(member))}" style="font-size: 0.85rem; font-weight: 700; padding: 6px 12px; border-radius: 20px;">
+            ${escapeHtml(memberStatus(member))}
+          </mark>
         </div>
-      </div>`,
-      `<mark class="status ${statusClass(memberStatus(member))}">${escapeHtml(memberStatus(member))}</mark>`
-    )}
+      </div>
+    </div>
 
     <div class="tabs-header profile-tabs" style="margin-bottom: 15px; border-bottom: 2px solid var(--line); display:flex; gap:10px;">
       <button class="tab-btn active" data-profile-tab="info">Bio & Medical</button>
