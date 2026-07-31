@@ -142,23 +142,29 @@ function renderMemberDashboard(context) {
   let billingStatus = "active";
   let billingLabel = "Active";
   let billingText = `Your next renewal is on ${me.endDate ? dateLabel(me.endDate) : "-"}.`;
+  let billingIcon = "check_circle";
   
   if (remaining < 0) {
     billingStatus = "overdue";
     billingLabel = "Payment Overdue";
-    billingText = `⚠️ Your plan expired ${Math.abs(remaining)} days ago. Please renew to continue gym access.`;
+    billingText = `Your plan expired ${Math.abs(remaining)} days ago. Please renew to continue gym access.`;
+    billingIcon = "error";
   } else if (remaining <= 5) {
     billingStatus = "due";
     billingLabel = "Payment Due Soon";
-    billingText = `🔔 Your plan expires in ${remaining} days. Please renew to avoid access interruption.`;
+    billingText = `Your plan expires in ${remaining} days. Please renew to avoid access interruption.`;
+    billingIcon = "warning";
   }
 
   const billingWidgetHtml = `
     <section class="billing-status-widget status-${billingStatus}" style="margin-bottom: 20px;">
-      <div style="display:flex; flex-direction:column; gap:4px; text-align:left;">
-        <span style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; opacity:0.85;">Billing Status</span>
-        <strong style="font-size:1.15rem; color:var(--ink-soft);">${billingLabel}</strong>
-        <p style="font-size:0.85rem; color:var(--muted); margin: 2px 0 0 0; line-height: 1.3;">${billingText}</p>
+      <div style="display:flex; align-items:center; gap:12px; text-align:left;">
+        <span class="material-symbols-outlined" style="font-size: 28px; color: ${billingStatus === 'active' ? 'var(--teal)' : billingStatus === 'due' ? 'var(--warning)' : 'var(--danger)'};">${billingIcon}</span>
+        <div>
+          <span style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; opacity:0.85; display:block;">Billing Status</span>
+          <strong style="font-size:1.1rem; color:var(--ink-soft);">${billingLabel}</strong>
+          <p style="font-size:0.85rem; color:var(--muted); margin: 2px 0 0 0; line-height: 1.3;">${billingText}</p>
+        </div>
       </div>
       <div style="text-align:right; flex-shrink:0;">
         <a class="primary-button" href="#/progress" style="padding: 8px 12px; font-size:0.8rem; font-weight:700;">View History</a>

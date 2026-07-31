@@ -2350,6 +2350,9 @@ body, button, input, select, textarea, .profile-chip strong {
   stroke-linecap: round;
   stroke-linejoin: round;
   filter: drop-shadow(0px 3px 6px rgba(0, 194, 255, 0.35));
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: draw-chart-line 1.8s var(--ease-out) forwards;
 }
 .gymflow-chart .chart-bar-rect {
   fill: var(--primary);
@@ -2357,6 +2360,7 @@ body, button, input, select, textarea, .profile-chip strong {
   ry: var(--r-xs);
   filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.1));
   transition: fill var(--dur-fast) var(--ease-out);
+  animation: grow-chart-bar 1.2s var(--ease-spring) forwards;
 }
 .gymflow-chart .chart-bar-rect:hover {
   fill: var(--primary-strong);
@@ -2368,6 +2372,14 @@ body, button, input, select, textarea, .profile-chip strong {
 .gymflow-chart .chart-donut-slice:hover {
   stroke-width: 24;
   opacity: 0.95;
+}
+
+@keyframes draw-chart-line {
+  to { stroke-dashoffset: 0; }
+}
+@keyframes grow-chart-bar {
+  from { transform: scaleY(0); transform-origin: bottom; }
+  to { transform: scaleY(1); transform-origin: bottom; }
 }
 
 /* ===== Invoice / Receipt Layout ===== */
@@ -2413,6 +2425,36 @@ body, button, input, select, textarea, .profile-chip strong {
   color: var(--accent);
   padding-top: 12px;
 }
+
+/* ===== Invoice Print View Rules ===== */
+@media print {
+  body > :not(.modal-overlay.invoice-print-overlay) {
+    display: none !important;
+  }
+  .modal-overlay.invoice-print-overlay {
+    background: none !important;
+    backdrop-filter: none !important;
+    position: absolute !important;
+    top: 0 !important; left: 0 !important;
+    width: 100% !important; height: auto !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    display: block !important;
+  }
+  .invoice-modal {
+    box-shadow: none !important;
+    border: none !important;
+    background: #fff !important;
+    color: #000 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    padding: 0 !important;
+  }
+  .modal-close, .invoice-actions-btn {
+    display: none !important;
+  }
+}
+
 
 
 

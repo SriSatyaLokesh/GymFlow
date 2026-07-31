@@ -146,123 +146,59 @@ function row(payment, members, plans, currency) {
  
 function printReceipt(payment, member, plan, settings) {
   if (!payment) return;
-  const receipt = window.open("", "receipt", "width=460,height=680");
   const currency = settings?.currency || "INR";
-  receipt.document.write(`
-    <title>${payment.receiptNumber || "Receipt"}</title>
-    <style>
-      body {
-        font-family: 'Montserrat', 'Inter', sans-serif;
-        background: #f4f7f5;
-        margin: 0;
-        padding: 30px;
-        color: #121212;
-        display: flex;
-        justify-content: center;
-      }
-      .invoice-card {
-        background: #ffffff;
-        border-radius: 16px;
-        padding: 30px;
-        width: 100%;
-        max-width: 380px;
-        box-shadow: 6px 6px 12px #d1d9e6, -6px -6px 12px #ffffff;
-        box-sizing: border-box;
-      }
-      .header {
-        border-bottom: 2px dashed #e0e3e1;
-        padding-bottom: 20px;
-        margin-bottom: 20px;
-        text-align: center;
-      }
-      .gym-name {
-        font-size: 1.5rem;
-        font-weight: 800;
-        color: #0d9488;
-        margin: 0;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-      }
-      .receipt-no {
-        font-size: 0.8rem;
-        color: #6b716e;
-        margin: 6px 0 0 0;
-        font-weight: 600;
-      }
-      .table {
-        margin: 20px 0;
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-      }
-      .row {
-        display: flex;
-        justify-content: space-between;
-        padding-bottom: 8px;
-        border-bottom: 1px solid #eceeec;
-        font-size: 0.9rem;
-      }
-      .row:last-of-type {
-        border-bottom: none;
-      }
-      .label {
-        color: #6b716e;
-        font-weight: 500;
-      }
-      .value {
-        font-weight: 700;
-        text-align: right;
-      }
-      .total-row {
-        border-top: 2px solid #e0e3e1;
-        font-weight: 800;
-        font-size: 1.25rem;
-        color: #0d9488;
-        padding-top: 15px;
-        margin-top: 10px;
-      }
-      .notes-box {
-        background: #f8f8f8;
-        border-radius: 8px;
-        padding: 12px;
-        font-size: 0.8rem;
-        margin-top: 20px;
-        border-left: 4px solid #00c2ff;
-        text-align: left;
-        color: #2d3130;
-        line-height: 1.4;
-      }
-      .footer {
-        margin-top: 30px;
-        text-align: center;
-        font-size: 0.8rem;
-        color: #6b716e;
-        font-weight: 500;
-      }
-      @media print {
-        body { background: #ffffff; padding: 0; }
-        .invoice-card { box-shadow: none; border: none; padding: 0; }
-      }
-    </style>
-    <div class="invoice-card">
-      <div class="header">
-        <h1 class="gym-name">${escapeHtml(settings?.gymName || "GymFlow")}</h1>
-        <p class="receipt-no">Receipt: ${escapeHtml(payment.receiptNumber || payment.id)}</p>
-      </div>
-      <div class="table">
-        <div class="row"><span class="label">Member</span><span class="value">${escapeHtml(member?.fullName || "-")}</span></div>
-        <div class="row"><span class="label">Plan</span><span class="value">${escapeHtml(plan?.planName || "-")}</span></div>
-        <div class="row"><span class="label">Date</span><span class="value">${dateLabel(payment.date)}</span></div>
-        <div class="row"><span class="label">Method</span><span class="value">${escapeHtml(payment.method)}</span></div>
-        <div class="row"><span class="label">Status</span><span class="value">${escapeHtml(payment.status)}</span></div>
-        <div class="row total-row"><span class="label">Amount</span><span class="value">${money(payment.amount, currency)}</span></div>
-      </div>
-      ${payment.notes ? `<div class="notes-box"><strong>Remarks:</strong><br>${escapeHtml(payment.notes)}</div>` : ""}
-      <div class="footer">Thank you for your payment!</div>
+  
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay invoice-print-overlay";
+  overlay.style.zIndex = "3000";
+  
+  const notesHtml = payment.notes ? `
+    <div class="notes-box" style="background: var(--surface-soft); border-radius: var(--r-sm); padding: 12px; font-size: 0.8rem; margin-top: 15px; border-left: 4px solid var(--teal); text-align: left; color: var(--ink-soft); line-height: 1.4;">
+      <strong>Remarks:</strong><br>${escapeHtml(payment.notes)}
     </div>
-  `);
-  receipt.document.close();
-  receipt.focus();
-  receipt.print();
+  ` : "";
+
+  overlay.innerHTML = `
+    <div class="modal-card invoice-modal stack animate-scale" style="max-width: 420px; position: relative;">
+      <button class="modal-close" data-modal="close" style="position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted);">&times;</button>
+      
+      <div class="invoice-header">
+        <div>
+          <h2 style="font-size: 1.3rem; font-weight: 800; color: var(--accent); text-transform: uppercase; margin:0;">${escapeHtml(settings?.gymName || "GymFlow")}</h2>
+          <small style="color: var(--muted); font-weight: 600; display:block; margin-top:2px;">INVOICE RECEIPT</small>
+        </div>
+        <div class="invoice-meta">
+          <strong>Receipt No:</strong><br>${escapeHtml(payment.receiptNumber || payment.id)}
+        </div>
+      </div>
+      
+      <div class="invoice-table">
+        <div class="invoice-row"><span class="label" style="color: var(--muted); font-weight:500;">Member</span><span class="value" style="font-weight:700;">${escapeHtml(member?.fullName || "-")}</span></div>
+        <div class="invoice-row"><span class="label" style="color: var(--muted); font-weight:500;">Plan</span><span class="value" style="font-weight:700;">${escapeHtml(plan?.planName || "-")}</span></div>
+        <div class="invoice-row"><span class="label" style="color: var(--muted); font-weight:500;">Date</span><span class="value" style="font-weight:700;">${dateLabel(payment.date)}</span></div>
+        <div class="invoice-row"><span class="label" style="color: var(--muted); font-weight:500;">Method</span><span class="value" style="font-weight:700;">${escapeHtml(payment.method)}</span></div>
+        <div class="invoice-row"><span class="label" style="color: var(--muted); font-weight:500;">Status</span><span class="value" style="font-weight:700; color: var(--accent);">${escapeHtml(payment.status)}</span></div>
+        <div class="invoice-row total-row"><span class="label">Amount</span><span class="value">${money(payment.amount, currency)}</span></div>
+      </div>
+      
+      ${notesHtml}
+      
+      <div class="invoice-actions" style="display: flex; gap: 10px; margin-top: 20px; width: 100%;">
+        <button class="primary-button invoice-actions-btn" id="print-invoice-btn" style="flex:1;"><span class="material-symbols-outlined">print</span>Print Receipt</button>
+        <button class="ghost-button invoice-actions-btn" data-modal="close" style="flex:1;">Close</button>
+      </div>
+    </div>
+  `;
+  
+  function close() {
+    overlay.remove();
+  }
+  
+  overlay.querySelector("#print-invoice-btn").addEventListener("click", () => {
+    window.print();
+  });
+  
+  overlay.querySelectorAll("[data-modal='close']").forEach(btn => btn.addEventListener("click", close));
+  document.body.appendChild(overlay);
 }
 
