@@ -45,10 +45,11 @@ export const paymentsModule = {
               </select>
             </label>
             <label>Collected by<input name="collectedBy" value="Owner" maxlength="80" /></label>
+            <label class="wide" style="grid-column: span 2;">Notes<textarea name="notes" rows="2" placeholder="Transaction remarks/details (e.g. UPI Ref ID, Cash change details)"></textarea></label>
           </div>
           <button class="primary-button" type="submit">Save payment</button>
         </form>
-
+ 
         <section class="panel">
           <div class="panel-heading"><h2>Payment History</h2><span>${payments.length} records</span></div>
           ${
@@ -65,12 +66,12 @@ export const paymentsModule = {
   },
   bind(root, context) {
     const form = root.querySelector("#payment-form");
-
+ 
     form.planId.addEventListener("change", () => {
       const plan = context.data.membership_plans.find((item) => item.id === form.planId.value);
       if (plan) form.amount.value = plan.price || 0;
     });
-
+ 
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
       const payload = formData(form);
@@ -85,7 +86,7 @@ export const paymentsModule = {
         context.applyChange(collections.payments, saved);
       });
     });
-
+ 
     root.querySelectorAll("[data-receipt]").forEach((button) => {
       button.addEventListener("click", () => {
         const payment = context.data.payments.find((item) => item.id === button.dataset.receipt);
@@ -94,9 +95,36 @@ export const paymentsModule = {
         printReceipt(payment, member, plan, context.settings);
       });
     });
+
+    root.querySelectorAll("[data-share-receipt]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const payment = context.data.payments.find((item) => item.id === button.dataset.shareReceipt);
+        const member = context.data.members.find((item) => item.id === payment?.memberId);
+        const plan = context.data.membership_plans.find((item) => item.id === payment?.planId);
+        if (!payment || !member) return;
+        
+        const currency = context.settings?.currency || "INR";
+        const phone = member.whatsapp || member.mobile || "";
+        const formattedPhone = phone.replace(/[^0-9]/g, "");
+        
+        const text = `*Receipt from ${context.settings?.gymName || "GymFlow"}*\n\n` +
+          `*Receipt No:* ${payment.receiptNumber || payment.id}\n` +
+          `*Member:* ${member.fullName}\n` +
+          `*Plan:* ${plan?.planName || "Custom"}\n` +
+          `*Amount:* ${money(payment.amount, currency)}\n` +
+          `*Date:* ${dateLabel(payment.date)}\n` +
+          `*Payment Method:* ${payment.method}\n` +
+          `*Status:* ${payment.status}\n` +
+          `${payment.notes ? `*Remarks:* ${payment.notes}\n` : ""}\n` +
+          `Thank you for your payment!`;
+
+        const waUrl = `https://wa.me/${formattedPhone ? formattedPhone : ""}?text=${encodeURIComponent(text)}`;
+        window.open(waUrl, "_blank");
+      });
+    });
   }
 };
-
+ 
 function row(payment, members, plans, currency) {
   return `
     <div class="table-row">
@@ -107,37 +135,134 @@ function row(payment, members, plans, currency) {
       <span data-label="Member">${nameCell(findName(members, payment.memberId), "", members.find(m => m.id === payment.memberId)?.avatarUrl || "")}</span>
       <span data-label="Amount">${money(payment.amount, currency)}</span>
       <span data-label="Status"><mark class="status ${statusClass(payment.status)}">${escapeHtml(payment.status)}</mark></span>
-      <span class="row-actions"><button class="icon-button" data-receipt="${escapeHtml(payment.id)}" title="Print receipt"><span class="material-symbols-outlined">receipt_long</span>Receipt</button></span>
-      <small class="table-note">Plan: ${escapeHtml(findName(plans, payment.planId))}</small>
+      <span class="row-actions" style="display:flex; gap:6px;">
+        <button class="icon-button" data-receipt="${escapeHtml(payment.id)}" title="Print receipt"><span class="material-symbols-outlined">receipt_long</span>Receipt</button>
+        <button class="icon-button secondary" data-share-receipt="${escapeHtml(payment.id)}" title="Share receipt on WhatsApp"><span class="material-symbols-outlined">share</span>Share</button>
+      </span>
+      <small class="table-note">Plan: ${escapeHtml(findName(plans, payment.planId))} ${payment.notes ? `• Remarks: ${escapeHtml(payment.notes)}` : ""}</small>
     </div>
   `;
 }
-
+ 
 function printReceipt(payment, member, plan, settings) {
   if (!payment) return;
-  const receipt = window.open("", "receipt", "width=420,height=640");
+  const receipt = window.open("", "receipt", "width=460,height=680");
   const currency = settings?.currency || "INR";
   receipt.document.write(`
     <title>${payment.receiptNumber || "Receipt"}</title>
     <style>
-      body { font-family: Arial, sans-serif; margin: 32px; color: #17211d; }
-      h1 { margin-bottom: 4px; }
-      table { width: 100%; border-collapse: collapse; margin-top: 24px; }
-      td { padding: 10px 0; border-bottom: 1px solid #ddd; }
-      td:last-child { text-align: right; font-weight: 700; }
+      body {
+        font-family: 'Montserrat', 'Inter', sans-serif;
+        background: #f4f7f5;
+        margin: 0;
+        padding: 30px;
+        color: #121212;
+        display: flex;
+        justify-content: center;
+      }
+      .invoice-card {
+        background: #ffffff;
+        border-radius: 16px;
+        padding: 30px;
+        width: 100%;
+        max-width: 380px;
+        box-shadow: 6px 6px 12px #d1d9e6, -6px -6px 12px #ffffff;
+        box-sizing: border-box;
+      }
+      .header {
+        border-bottom: 2px dashed #e0e3e1;
+        padding-bottom: 20px;
+        margin-bottom: 20px;
+        text-align: center;
+      }
+      .gym-name {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: #0d9488;
+        margin: 0;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .receipt-no {
+        font-size: 0.8rem;
+        color: #6b716e;
+        margin: 6px 0 0 0;
+        font-weight: 600;
+      }
+      .table {
+        margin: 20px 0;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .row {
+        display: flex;
+        justify-content: space-between;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #eceeec;
+        font-size: 0.9rem;
+      }
+      .row:last-of-type {
+        border-bottom: none;
+      }
+      .label {
+        color: #6b716e;
+        font-weight: 500;
+      }
+      .value {
+        font-weight: 700;
+        text-align: right;
+      }
+      .total-row {
+        border-top: 2px solid #e0e3e1;
+        font-weight: 800;
+        font-size: 1.25rem;
+        color: #0d9488;
+        padding-top: 15px;
+        margin-top: 10px;
+      }
+      .notes-box {
+        background: #f8f8f8;
+        border-radius: 8px;
+        padding: 12px;
+        font-size: 0.8rem;
+        margin-top: 20px;
+        border-left: 4px solid #00c2ff;
+        text-align: left;
+        color: #2d3130;
+        line-height: 1.4;
+      }
+      .footer {
+        margin-top: 30px;
+        text-align: center;
+        font-size: 0.8rem;
+        color: #6b716e;
+        font-weight: 500;
+      }
+      @media print {
+        body { background: #ffffff; padding: 0; }
+        .invoice-card { box-shadow: none; border: none; padding: 0; }
+      }
     </style>
-    <h1>${escapeHtml(settings?.gymName || "GymFlow")}</h1>
-    <p>Receipt ${escapeHtml(payment.receiptNumber || payment.id)}</p>
-    <table>
-      <tr><td>Member</td><td>${escapeHtml(member?.fullName || "-")}</td></tr>
-      <tr><td>Plan</td><td>${escapeHtml(plan?.planName || "-")}</td></tr>
-      <tr><td>Date</td><td>${dateLabel(payment.date)}</td></tr>
-      <tr><td>Method</td><td>${escapeHtml(payment.method)}</td></tr>
-      <tr><td>Status</td><td>${escapeHtml(payment.status)}</td></tr>
-      <tr><td>Amount</td><td>${money(payment.amount, currency)}</td></tr>
-    </table>
+    <div class="invoice-card">
+      <div class="header">
+        <h1 class="gym-name">${escapeHtml(settings?.gymName || "GymFlow")}</h1>
+        <p class="receipt-no">Receipt: ${escapeHtml(payment.receiptNumber || payment.id)}</p>
+      </div>
+      <div class="table">
+        <div class="row"><span class="label">Member</span><span class="value">${escapeHtml(member?.fullName || "-")}</span></div>
+        <div class="row"><span class="label">Plan</span><span class="value">${escapeHtml(plan?.planName || "-")}</span></div>
+        <div class="row"><span class="label">Date</span><span class="value">${dateLabel(payment.date)}</span></div>
+        <div class="row"><span class="label">Method</span><span class="value">${escapeHtml(payment.method)}</span></div>
+        <div class="row"><span class="label">Status</span><span class="value">${escapeHtml(payment.status)}</span></div>
+        <div class="row total-row"><span class="label">Amount</span><span class="value">${money(payment.amount, currency)}</span></div>
+      </div>
+      ${payment.notes ? `<div class="notes-box"><strong>Remarks:</strong><br>${escapeHtml(payment.notes)}</div>` : ""}
+      <div class="footer">Thank you for your payment!</div>
+    </div>
   `);
   receipt.document.close();
   receipt.focus();
   receipt.print();
 }
+

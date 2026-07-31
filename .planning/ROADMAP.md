@@ -22,7 +22,7 @@ GymFlow is a zero-cost, self-hosted gym management PWA. Phases build out the ful
 - [x] **Phase 13: Phone number based login and WhatsApp invitation links** — Enable phone number sign-in with Firebase, support dual email/phone credentials, and send invitation links on registration. (completed 2026-07-30)
 - [ ] **Phase 14: Analytics & Insights** — Revenue trends, member growth, attendance heatmap, forecasting
 - [ ] **Phase 15: Multi-Branch Support** — Branch entity, per-branch scoping, cross-branch dashboard
-- [ ] **Phase 16: Owner UX Enhancements (Payments, Dashboard Visuals, Reports, Roster, Templates)** — Improve payment capture (custom amounts, modes), member activity checkups, visually rich owner KPIs, report custom styling, and streamlined workout template management.
+- [x] **Phase 16: Owner UX Enhancements (Payments, Dashboard Visuals, Reports, Roster, Templates)** — Improve payment capture (custom amounts, modes), member activity checkups, visually rich owner KPIs, report custom styling, and streamlined workout template management. (completed 2026-07-31)
 
 
 ## Phase Details
@@ -400,7 +400,7 @@ Plans:
 
 Plans:
 
-- [ ] 16-01: TBD
+- [x] 16-01: TBD
 
 ## Progress
 
@@ -422,5 +422,6 @@ Plans:
 | 13 | Phone number based login and WhatsApp invitation links | 1/1 | Complete | 2026-07-30 |
 | 14 | Analytics & Insights | 0/1 | Not started | — |
 | 15 | Multi-Branch Support | 0/1 | Not started | — |
-| 16 | Owner UX Enhancements | 0/1 | Not started | — |
+| 16 | Owner UX Enhancements | 1/1 | Complete | 2026-07-31 |
+
 

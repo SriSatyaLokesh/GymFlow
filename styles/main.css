@@ -2297,4 +2297,122 @@ body, button, input, select, textarea, .profile-chip strong {
   pointer-events: none;
 }
 
+/* ===== Billing Alerts Widget ===== */
+.billing-status-widget {
+  background: var(--surface);
+  border-radius: var(--r-lg);
+  padding: 20px;
+  box-shadow: var(--shadow);
+  border-left: 5px solid var(--muted);
+  transition: all 0.3s ease;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+}
+.billing-status-widget.status-active {
+  border-left-color: var(--teal);
+  box-shadow: 0 4px 15px rgba(0, 194, 255, 0.08), var(--shadow);
+}
+.billing-status-widget.status-due {
+  border-left-color: var(--warning);
+  box-shadow: 0 4px 15px rgba(212, 168, 0, 0.12), var(--shadow);
+}
+.billing-status-widget.status-overdue {
+  border-left-color: var(--danger);
+  box-shadow: 0 4px 15px rgba(255, 107, 107, 0.14), var(--shadow);
+}
+
+/* ===== SVG Charts Styling ===== */
+.gymflow-chart {
+  width: 100%;
+  height: auto;
+  font-family: inherit;
+}
+.gymflow-chart text {
+  fill: var(--muted);
+  font-size: 10px;
+  font-weight: 600;
+}
+.gymflow-chart .grid-line {
+  stroke: var(--line-soft);
+  stroke-width: 1px;
+  stroke-dasharray: 2 2;
+}
+.gymflow-chart .axis-line {
+  stroke: var(--line);
+  stroke-width: 1.5px;
+}
+.gymflow-chart .chart-line-path {
+  fill: none;
+  stroke: var(--teal);
+  stroke-width: 3.5px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0px 3px 6px rgba(0, 194, 255, 0.35));
+}
+.gymflow-chart .chart-bar-rect {
+  fill: var(--primary);
+  rx: var(--r-xs);
+  ry: var(--r-xs);
+  filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.1));
+  transition: fill var(--dur-fast) var(--ease-out);
+}
+.gymflow-chart .chart-bar-rect:hover {
+  fill: var(--primary-strong);
+}
+.gymflow-chart .chart-donut-slice {
+  stroke-linecap: round;
+  transition: stroke-width var(--dur-fast) var(--ease-out), opacity var(--dur-fast);
+}
+.gymflow-chart .chart-donut-slice:hover {
+  stroke-width: 24;
+  opacity: 0.95;
+}
+
+/* ===== Invoice / Receipt Layout ===== */
+.invoice-modal {
+  padding: 24px;
+  background: var(--surface);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-strong);
+  border: 1px solid var(--line-soft);
+}
+.invoice-header {
+  border-bottom: 2px dashed var(--line);
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+.invoice-meta {
+  text-align: right;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.invoice-table {
+  width: 100%;
+  margin: 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.invoice-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line-soft);
+  font-size: 0.9rem;
+}
+.invoice-row.total-row {
+  border-top: 2px solid var(--line);
+  border-bottom: none;
+  font-weight: 800;
+  font-size: 1.15rem;
+  color: var(--accent);
+  padding-top: 12px;
+}
+
+
 

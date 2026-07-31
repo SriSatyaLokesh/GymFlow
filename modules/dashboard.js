@@ -61,7 +61,24 @@ export const dashboardModule = {
             <h2>Revenue Trend</h2>
             <a href="#/reports">Reports</a>
           </div>
-          ${renderBars(payments, currency)}
+          ${renderRevenueChart(payments, currency)}
+        </section>
+      </div>
+
+      <div class="split-grid" style="margin-top:20px;">
+        <section class="panel">
+          <div class="panel-heading">
+            <h2>Plan Popularity</h2>
+            <span>Distribution of active plans</span>
+          </div>
+          ${renderPlanPopularityChart(members, data.membership_plans || [])}
+        </section>
+        <section class="panel">
+          <div class="panel-heading">
+            <h2>Trainer Clients Allocation</h2>
+            <span>Active client load per trainer</span>
+          </div>
+          ${renderTrainerAllocationChart(members, data.trainers || [])}
         </section>
       </div>
       ${renderCommunityFeed(context)}
@@ -121,13 +138,37 @@ function renderMemberDashboard(context) {
   const status = me.status === "Pending" ? "Pending" : memberStatus(me);
   const remaining = daysUntil(me.endDate);
 
+  // Calculate Payment / Renewal Status Warning
+  let billingStatus = "active";
+  let billingLabel = "Active";
+  let billingText = `Your next renewal is on ${me.endDate ? dateLabel(me.endDate) : "-"}.`;
+  
+  if (remaining < 0) {
+    billingStatus = "overdue";
+    billingLabel = "Payment Overdue";
+    billingText = `⚠️ Your plan expired ${Math.abs(remaining)} days ago. Please renew to continue gym access.`;
+  } else if (remaining <= 5) {
+    billingStatus = "due";
+    billingLabel = "Payment Due Soon";
+    billingText = `🔔 Your plan expires in ${remaining} days. Please renew to avoid access interruption.`;
+  }
+
+  const billingWidgetHtml = `
+    <section class="billing-status-widget status-${billingStatus}" style="margin-bottom: 20px;">
+      <div style="display:flex; flex-direction:column; gap:4px; text-align:left;">
+        <span style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; opacity:0.85;">Billing Status</span>
+        <strong style="font-size:1.15rem; color:var(--ink-soft);">${billingLabel}</strong>
+        <p style="font-size:0.85rem; color:var(--muted); margin: 2px 0 0 0; line-height: 1.3;">${billingText}</p>
+      </div>
+      <div style="text-align:right; flex-shrink:0;">
+        <a class="primary-button" href="#/progress" style="padding: 8px 12px; font-size:0.8rem; font-weight:700;">View History</a>
+      </div>
+    </section>
+  `;
+
   return `
     ${pageHeader(`Welcome, ${name}`)}
-    ${
-      me.status === "Pending"
-        ? `<div class="panel-hint" style="margin-bottom:18px">Your membership is pending approval from the gym.</div>`
-        : ""
-    }
+    ${me.status === "Pending" ? `<div class="panel-hint" style="margin-bottom:18px">Your membership is pending approval from the gym.</div>` : billingWidgetHtml}
     <div class="metric-grid">
       <article class="metric"><span>Membership</span><strong><mark class="status ${statusClass(status)}">${escapeHtml(status)}</mark></strong></article>
       <article class="metric"><span>Expires</span><strong>${me.endDate ? dateLabel(me.endDate) : "-"}</strong></article>
@@ -204,7 +245,7 @@ function renewalRow(member) {
   `;
 }
 
-function renderBars(payments, currency) {
+function renderRevenueChart(payments, currency) {
   const lastSix = Array.from({ length: 6 }, (_, index) => {
     const date = new Date();
     date.setMonth(date.getMonth() - (5 - index));
@@ -213,22 +254,139 @@ function renderBars(payments, currency) {
   const values = lastSix.map((month) => payments.filter((payment) => String(payment.date || "").startsWith(month)).reduce((sum, payment) => sum + Number(payment.amount || 0), 0));
   const max = Math.max(...values, 1);
 
+  const width = 380;
+  const height = 110;
+  const padding = 25;
+  const points = values.map((val, idx) => {
+    const x = padding + (idx * (width - 2 * padding) / 5);
+    const y = height - padding - (val / max * (height - 2 * padding));
+    return { x, y };
+  });
+  const pathD = points.map((p, idx) => `${idx === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(" ");
+
+  const labelsHtml = lastSix.map((m, idx) => {
+    const x = padding + (idx * (width - 2 * padding) / 5);
+    return `<text x="${x}" y="${height - 5}" text-anchor="middle">${m.slice(5)}</text>`;
+  }).join("");
+
+  const dotsHtml = points.map((p, idx) => {
+    return `<circle cx="${p.x}" cy="${p.y}" r="4" fill="var(--teal)" stroke="var(--surface)" stroke-width="2" />
+            <text x="${p.x}" y="${p.y - 8}" text-anchor="middle" font-size="8px" font-weight="700" fill="var(--ink)">${money(values[idx], currency)}</text>`;
+  }).join("");
+
   return `
-    <div class="bar-chart">
-      ${lastSix
-        .map(
-          (month, index) => `
-            <div class="bar-item">
-              <div class="bar-track"><span style="height:${Math.max(8, (values[index] / max) * 100)}%"></span></div>
-              <small>${month.slice(5)}</small>
-              <strong>${money(values[index], currency)}</strong>
-            </div>
-          `
-        )
-        .join("")}
+    <div style="width: 100%; display: flex; justify-content: center; align-items: center; padding-top: 10px;">
+      <svg viewBox="0 0 380 110" class="gymflow-chart">
+        <line x1="${padding}" y1="${height - padding}" x2="${width - padding}" y2="${height - padding}" class="grid-line" />
+        <path d="${pathD}" class="chart-line-path" />
+        ${dotsHtml}
+        ${labelsHtml}
+      </svg>
     </div>
   `;
 }
+
+function renderPlanPopularityChart(members, plans) {
+  const activeMembers = members.filter(m => memberStatus(m) === "Active");
+  const planCounts = {};
+  activeMembers.forEach(m => {
+    if (m.planId) {
+      planCounts[m.planId] = (planCounts[m.planId] || 0) + 1;
+    }
+  });
+
+  const data = plans.map(p => ({
+    name: p.planName,
+    count: planCounts[p.id] || 0
+  })).filter(p => p.count > 0);
+
+  if (data.length === 0) {
+    return `<div class="table-empty" style="height:110px; display:flex; align-items:center; justify-content:center;">No active plan data available.</div>`;
+  }
+
+  const total = data.reduce((sum, d) => sum + d.count, 0);
+  let currentOffset = 0;
+  const colors = ["var(--teal)", "var(--primary)", "var(--primary-strong)", "#c36f2d", "var(--ink-soft)"];
+  
+  const slicesHtml = data.map((d, idx) => {
+    const percentage = d.count / total;
+    const dashArray = `${percentage * 100} ${100 - (percentage * 100)}`;
+    const dashOffset = 100 - currentOffset + 25;
+    currentOffset += percentage * 100;
+    const strokeColor = colors[idx % colors.length];
+
+    return `
+      <circle cx="80" cy="55" r="30" fill="transparent"
+              stroke="${strokeColor}" stroke-width="16"
+              stroke-dasharray="${dashArray}" stroke-dashoffset="${dashOffset}"
+              pathLength="100" class="chart-donut-slice" />
+    `;
+  }).join("");
+
+  const legendHtml = data.map((d, idx) => {
+    const strokeColor = colors[idx % colors.length];
+    return `
+      <div style="display:flex; align-items:center; gap:8px; font-size:0.8rem; font-weight:600;">
+        <span style="width:10px; height:10px; border-radius:50%; background:${strokeColor}; flex-shrink:0;"></span>
+        <span style="text-overflow:ellipsis; overflow:hidden; white-space:nowrap; max-width:140px;">${escapeHtml(d.name)} (${d.count})</span>
+      </div>
+    `;
+  }).join("");
+
+  return `
+    <div style="display: flex; align-items: center; justify-content: space-around; width: 100%; height: 110px;">
+      <svg viewBox="0 0 160 110" style="width:140px; height:110px;" class="gymflow-chart">
+        <circle cx="80" cy="55" r="30" fill="transparent" stroke="var(--line-soft)" stroke-width="16" />
+        ${slicesHtml}
+        <text x="80" y="58" text-anchor="middle" font-size="11px" font-weight="800" fill="var(--ink)">${total}</text>
+      </svg>
+      <div style="display:flex; flex-direction:column; gap:4px; max-height:100px; overflow-y:auto; padding-right:10px;">
+        ${legendHtml}
+      </div>
+    </div>
+  `;
+}
+
+function renderTrainerAllocationChart(members, trainers) {
+  if (trainers.length === 0) {
+    return `<div class="table-empty" style="height:110px; display:flex; align-items:center; justify-content:center;">No trainer data available.</div>`;
+  }
+  const activeMembers = members.filter(m => memberStatus(m) === "Active");
+  const allocation = trainers.map(t => {
+    const count = activeMembers.filter(m => m.trainerId === t.id).length;
+    return { name: t.fullName.split(" ")[0], count };
+  });
+
+  const max = Math.max(...allocation.map(a => a.count), 1);
+  
+  const width = 380;
+  const height = 110;
+  const padding = 20;
+  const barWidth = 24;
+  const spacing = (width - 2 * padding) / allocation.length;
+
+  const barsHtml = allocation.map((a, idx) => {
+    const x = padding + idx * spacing + (spacing - barWidth) / 2;
+    const barHeight = (a.count / max) * (height - 2 * padding - 15);
+    const y = height - padding - 15 - barHeight;
+
+    return `
+      <rect x="${x}" y="${y}" width="${barWidth}" height="${barHeight}" class="chart-bar-rect" />
+      <text x="${x + barWidth/2}" y="${height - 5}" text-anchor="middle" font-size="8px">${escapeHtml(a.name)}</text>
+      <text x="${x + barWidth/2}" y="${y - 4}" text-anchor="middle" font-size="9px" font-weight="700" fill="var(--ink)">${a.count}</text>
+    `;
+  }).join("");
+
+  return `
+    <div style="width: 100%; display: flex; justify-content: center; align-items: center; padding-top: 10px;">
+      <svg viewBox="0 0 380 110" class="gymflow-chart">
+        <line x1="${padding}" y1="${height - padding - 15}" x2="${width - padding}" y2="${height - padding - 15}" class="axis-line" />
+        ${barsHtml}
+      </svg>
+    </div>
+  `;
+}
+
 
 function renderCommunityFeed(context) {
   const logs = context.data.workout_logs || [];
