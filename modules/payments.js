@@ -489,20 +489,22 @@ export const paymentsModule = {
 };
  
 function row(payment, members, plans, currency) {
+  const planName = findName(plans, payment.planId);
+  const method = escapeHtml(payment.method || "-");
+  const noteSuffix = payment.notes ? ` · ${escapeHtml(payment.notes)}` : "";
   return `
     <div class="table-row">
       <span data-label="Receipt">
         <strong>${escapeHtml(payment.receiptNumber || payment.id)}</strong>
-        <small>${dateLabel(payment.date)} via ${escapeHtml(payment.method)}</small>
+        <small class="row-meta">${dateLabel(payment.date)} · ${method} · ${escapeHtml(planName)}${noteSuffix}</small>
       </span>
       <span data-label="Member">${nameCell(findName(members, payment.memberId), "", members.find(m => m.id === payment.memberId)?.avatarUrl || "")}</span>
       <span data-label="Amount">${money(payment.amount, currency)}</span>
       <span data-label="Status"><mark class="status ${statusClass(payment.status)}">${escapeHtml(payment.status)}</mark></span>
-      <span class="row-actions" style="display:flex; gap:6px;">
-        <button class="icon-button" data-receipt="${escapeHtml(payment.id)}" title="View receipt"><span class="material-symbols-outlined">receipt_long</span>Receipt</button>
-        <button class="icon-button secondary" data-share-receipt="${escapeHtml(payment.id)}" title="Share receipt on WhatsApp"><span class="material-symbols-outlined">share</span>Share</button>
+      <span class="row-actions">
+        <button class="icon-btn" data-receipt="${escapeHtml(payment.id)}" title="View Receipt"><span class="material-symbols-outlined">receipt_long</span></button>
+        <button class="icon-btn" data-share-receipt="${escapeHtml(payment.id)}" title="Share via WhatsApp"><span class="material-symbols-outlined">share</span></button>
       </span>
-      <small class="table-note">Plan: ${escapeHtml(findName(plans, payment.planId))} ${payment.notes ? `• Remarks: ${escapeHtml(payment.notes)}` : ""}</small>
     </div>
   `;
 }
