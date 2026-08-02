@@ -28,7 +28,7 @@ export const trainersModule = {
         </div>
         ${
           currentAssignments.length
-            ? `<div class="data-table">
+            ? `<div class="data-table trainer-assignments-table">
                 <div class="table-head">
                   <span>Member</span>
                   <span>Trainer</span>
@@ -36,7 +36,7 @@ export const trainersModule = {
                   <span>Assigned</span>
                 </div>
                 ${currentAssignments.map(a => `
-                  <div class="table-row" style="grid-template-columns:1fr 1fr 1fr auto">
+                  <div class="table-row">
                     <span data-label="Member">${escapeHtml(findName(members, a.memberId, "—"))}</span>
                     <span data-label="Trainer">${escapeHtml(findName(trainers, a.trainerId, "—"))}</span>
                     <span data-label="Template">${escapeHtml(findName(templates, a.templateId, "—"))}</span>

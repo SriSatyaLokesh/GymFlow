@@ -68,7 +68,7 @@ export const renewalsModule = {
         <div class="panel-heading"><h2>Renewal Queue</h2><span>${watched.length} members</span></div>
         ${
           watched.length
-            ? `<div class="data-table">
+            ? `<div class="data-table renewals-table">
                 <div class="table-head"><span>Member</span><span>Plan</span><span>Expiry</span><span>Status</span><span></span></div>
                 ${watched.map((member) => renewalRow(member, plans, currency)).join("")}
               </div>`
