@@ -850,7 +850,30 @@ input:focus, select:focus, textarea:focus {
 .danger, .icon-button.danger { color: var(--danger); }
 .icon-button.danger:hover { border-color: var(--danger); background: var(--danger-bg); }
 
+/* Compact icon-only square button for table row actions */
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out), transform var(--dur-micro) var(--ease-spring);
+}
+.icon-btn:hover { background: var(--surface-strong); border-color: var(--ink); color: var(--ink); }
+.icon-btn:active { transform: scale(0.9); }
+.icon-btn .material-symbols-outlined { font-size: 18px; line-height: 1; }
+
+/* Compact secondary meta text inside table cells */
+.row-meta { display: block; font-size: 0.72rem; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
 .button-row, .row-actions, .page-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.table-row .row-actions { flex-wrap: nowrap; gap: 4px; justify-content: flex-end; }
 
 /* ===== Tables ===== */
 .data-table, .list-table { display: grid; gap: 6px; overflow-x: hidden; }
@@ -901,7 +924,7 @@ input:focus, select:focus, textarea:focus {
 
 .payments-table .table-head,
 .payments-table .table-row {
-  grid-template-columns: 1.5fr 1.2fr 0.8fr 0.8fr 180px;
+  grid-template-columns: 1.8fr 1.2fr 0.8fr 0.8fr 88px;
 }
 
 .checkins-table .table-head,
