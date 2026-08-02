@@ -261,29 +261,36 @@ export const paymentsModule = {
       `;
     }
 
+    this.activeView = this.activeView || "list";
+
     const { data, settings } = context;
     const payments = data.payments || [];
     const members = data.members || [];
     const plans = data.membership_plans || [];
     const currency = settings?.currency || "INR";
 
-    return `
-      ${pageHeader("Payments")}
-      <div class="work-grid">
-        <form class="panel stack" id="payment-form">
+    if (this.activeView === "add") {
+      return `
+        ${pageHeader(
+          "Record Payment",
+          `<button class="ghost-button" id="cancel-payment-btn" style="display:inline-flex; align-items:center; gap:6px; font-weight:600;">
+            <span class="material-symbols-outlined" style="font-size:1.2rem;">arrow_back</span> Back to Payments
+          </button>`
+        )}
+        <form class="panel stack" id="payment-form" style="max-width: 600px; margin: 20px auto;">
           <input type="hidden" name="id" />
-          <div class="panel-heading"><h2>Record Payment</h2></div>
+          <div class="panel-heading"><h2>Record Member Payment</h2></div>
           <div class="form-grid">
             <label>Member
               <select name="memberId" required>
                 <option value="">Select member</option>
-                ${optionList(members, "fullName")}
+                ${members.map(m => `<option value="${m.id}" ${this.prefilledMemberId === m.id ? "selected" : ""}>${escapeHtml(m.fullName)}</option>`).join("")}
               </select>
             </label>
             <label>Membership plan
               <select name="planId" required>
                 <option value="">Select plan</option>
-                ${optionList(plans, "planName")}
+                ${plans.map(p => `<option value="${p.id}">${escapeHtml(p.planName)}</option>`).join("")}
               </select>
             </label>
             <label>Amount<input name="amount" type="number" min="0" step="1" required /></label>
@@ -307,21 +314,32 @@ export const paymentsModule = {
             <label>Collected by<input name="collectedBy" value="Owner" maxlength="80" /></label>
             <label class="wide" style="grid-column: span 2;">Notes<textarea name="notes" rows="2" placeholder="Transaction remarks/details (e.g. UPI Ref ID, Cash change details)"></textarea></label>
           </div>
-          <button class="primary-button" type="submit">Save payment</button>
+          <div class="button-row" style="margin-top:15px;">
+            <button class="primary-button" type="submit">Save payment</button>
+            <button class="ghost-button" type="button" id="cancel-payment-btn-2">Cancel</button>
+          </div>
         </form>
- 
-        <section class="panel">
-          <div class="panel-heading"><h2>Payment History</h2><span>${payments.length} records</span></div>
-          ${
-            payments.length
-              ? `<div class="data-table">
-                  <div class="table-head"><span>Receipt</span><span>Member</span><span>Amount</span><span>Status</span><span></span></div>
-                  ${payments.map((payment) => row(payment, members, plans, currency)).join("")}
-                </div>`
-              : emptyState("No payments yet", "Record fees, renewals, pending payments, and refunds.")
-          }
-        </section>
-      </div>
+      `;
+    }
+
+    return `
+      ${pageHeader(
+        "Payments",
+        `<button class="primary-button" id="show-add-payment-btn" style="display:inline-flex; align-items:center; gap:6px; font-weight:600;">
+          <span class="material-symbols-outlined" style="font-size:1.2rem;">add</span> Record Payment
+        </button>`
+      )}
+      <section class="panel">
+        <div class="panel-heading"><h2>Payment History</h2><span>${payments.length} records</span></div>
+        ${
+          payments.length
+            ? `<div class="data-table">
+                <div class="table-head"><span>Receipt</span><span>Member</span><span>Amount</span><span>Status</span><span></span></div>
+                ${payments.map((payment) => row(payment, members, plans, currency)).join("")}
+              </div>`
+            : emptyState("No payments yet", "Record fees, renewals, pending payments, and refunds.")
+        }
+      </section>
     `;
   },
 
@@ -377,28 +395,63 @@ export const paymentsModule = {
       return;
     }
 
-    const form = root.querySelector("#payment-form");
- 
-    form.planId.addEventListener("change", () => {
-      const plan = context.data.membership_plans.find((item) => item.id === form.planId.value);
-      if (plan) form.amount.value = plan.price || 0;
-    });
- 
-    form.addEventListener("submit", async (event) => {
-      event.preventDefault();
-      const payload = formData(form);
-      payload.amount = Number(payload.amount);
-      payload.receiptNumber = payload.receiptNumber || `RCPT-${Date.now().toString().slice(-8)}`;
-      await withButtonLoading(form.querySelector("[type='submit']"), async () => {
-        const saved = await context.services.data.save(collections.payments, payload);
-        context.toast("Payment saved.");
-        form.reset();
-        form.date.value = today();
-        form.collectedBy.value = "Owner";
-        context.applyChange(collections.payments, saved);
+    if (this.activeView === "add") {
+      const form = root.querySelector("#payment-form");
+      if (!form) return;
+
+      const handleMemberChange = () => {
+        const member = context.data.members.find((item) => item.id === form.memberId.value);
+        if (member?.planId) {
+          form.planId.value = member.planId;
+          const plan = context.data.membership_plans.find((item) => item.id === member.planId);
+          if (plan) form.amount.value = plan.price || 0;
+        }
+      };
+
+      form.memberId.addEventListener("change", handleMemberChange);
+
+      form.planId.addEventListener("change", () => {
+        const plan = context.data.membership_plans.find((item) => item.id === form.planId.value);
+        if (plan) form.amount.value = plan.price || 0;
       });
+
+      // If we have a prefilled member, run selection logic immediately
+      if (this.prefilledMemberId) {
+        handleMemberChange();
+      }
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const payload = formData(form);
+        payload.amount = Number(payload.amount);
+        payload.receiptNumber = payload.receiptNumber || `RCPT-${Date.now().toString().slice(-8)}`;
+        await withButtonLoading(form.querySelector("[type='submit']"), async () => {
+          const saved = await context.services.data.save(collections.payments, payload);
+          context.toast("Payment saved.");
+          this.activeView = "list";
+          this.prefilledMemberId = null;
+          form.reset();
+          context.refreshView();
+        });
+      });
+
+      const handleCancel = () => {
+        this.activeView = "list";
+        this.prefilledMemberId = null;
+        context.refreshView();
+      };
+
+      root.querySelector("#cancel-payment-btn")?.addEventListener("click", handleCancel);
+      root.querySelector("#cancel-payment-btn-2")?.addEventListener("click", handleCancel);
+      return;
+    }
+
+    // List view bindings
+    root.querySelector("#show-add-payment-btn")?.addEventListener("click", () => {
+      this.activeView = "add";
+      context.refreshView();
     });
- 
+
     root.querySelectorAll("[data-receipt]").forEach((button) => {
       button.addEventListener("click", () => {
         this.activeReceiptPaymentId = button.dataset.receipt;
