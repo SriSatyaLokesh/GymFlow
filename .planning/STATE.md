@@ -2,12 +2,12 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Phase 14 complete — Analytics & Insights dashboard implemented
+status: planning
 stopped_at: Phase 14 complete
-last_updated: "2026-07-31T19:15:00.000Z"
+last_updated: "2026-08-02T07:15:04.386Z"
 progress:
-  total_phases: 16
-  completed_phases: 15
+  total_phases: 11
+  completed_phases: 10
   total_plans: 15
   completed_plans: 15
 ---
@@ -51,7 +51,7 @@ progress:
 ## In-Progress Work
 
 - **Branch:** `feature/member-view-refactor`
-- **Status:** Phase 14 complete, smoke test passed.
+- **Status:** Ready to plan
 
 ## Key Architectural Facts
 
