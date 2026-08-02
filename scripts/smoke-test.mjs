@@ -287,10 +287,20 @@ if (!trainersAssignmentsHtml.includes('data-label="Member"') || !trainersAssignm
 
 // 2. Mobile form usability and constraints validation
 console.info("-> Validating form fields constraints and placeholders for mobile usability...");
-if (!membersHtml.includes('maxlength="10"') || !membersHtml.includes('name="mobile"') || !membersHtml.includes('name="whatsappNumber"')) {
+membersModule.activeView = "add";
+const membersFormHtml = membersModule.render({
+  data: {
+    members: [{ id: "m1", fullName: "Test Member", mobile: "1234567890", planId: "p1", endDate: "2026-12-31", status: "Active" }],
+    membership_plans: [{ id: "p1", planName: "Basic Plan" }],
+    trainers: []
+  }
+});
+membersModule.activeView = "list"; // reset back
+
+if (!membersFormHtml.includes('maxlength="10"') || !membersFormHtml.includes('name="mobile"') || !membersFormHtml.includes('name="whatsappNumber"')) {
   throw new Error("UX Validation Failed: Form mobile number fields do not enforce maximum length constraint of 10.");
 }
-if (!membersHtml.includes('placeholder="Same as mobile"') || !membersHtml.includes('data-bmi-meter')) {
+if (!membersFormHtml.includes('placeholder="Same as mobile"') || !membersFormHtml.includes('data-bmi-meter')) {
   throw new Error("UX Validation Failed: Member form is missing clear UX placeholders or BMI Meter layout wrapper.");
 }
 

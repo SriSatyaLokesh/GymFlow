@@ -548,12 +548,63 @@ export function showExerciseModal(exercise) {
   document.body.appendChild(overlay);
 }
 
-export function showMemberProfileModal(member, context) {
-  const overlay = document.createElement("div");
-  overlay.className = "modal-overlay";
-  overlay.style.display = "flex";
-  overlay.style.alignItems = "center";
-  overlay.style.justifyContent = "center";
+export function renderMemberProfileDetail(member, context) {
+  const plans = context.data.membership_plans || [];
+  const trainers = context.data.trainers || [];
+  const logs = (context.data.workout_logs || [])
+    .filter(l => l.memberId === member.id)
+    .sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")));
+
+  const planName = findName(plans, member.planId);
+  const trainerName = findName(trainers, member.assignedTrainer, "Unassigned");
+  const avatarInitials = (member.fullName || "M").split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase() || "M";
+
+  return `
+    <div class="page-header" style="border-bottom: 1.5px solid var(--line); padding-bottom: 16px; margin-bottom: 15px;">
+      <div style="display:flex; flex-wrap: wrap; justify-content: space-between; align-items: center; width: 100%; gap: 12px;">
+        <div style="display:flex; gap:12px; align-items:center;">
+          <button class="ghost-button compact" id="back-to-roster-btn" style="min-width: unset; padding: 6px 12px; display: inline-flex; align-items: center; gap: 6px; font-weight:600;">
+            <span class="material-symbols-outlined" style="font-size: 1.25rem;">arrow_back</span>
+            Back to List
+          </button>
+          <div class="avatar" style="width:40px; height:40px; border-radius:50%; background:var(--primary); color:var(--on-primary); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:1rem; box-shadow: 0 0 8px rgba(0,0,0,0.15);">
+            ${avatarInitials}
+          </div>
+          <div>
+            <h2 style="margin: 0; font-size: 1.4rem; font-family: 'Montserrat', sans-serif; font-weight: 800; color: var(--text);">${escapeHtml(member.fullName)}</h2>
+            <small style="opacity: 0.85; color: var(--text-muted);">${escapeHtml(planName)} • Trainer: ${escapeHtml(trainerName)}</small>
+          </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:12px;">
+          ${context.profile?.role === "owner" ? `
+            <button class="primary-button compact" id="edit-member-btn" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 600; min-height: unset; padding: 6px 12px; font-size: 0.85rem;">
+              <span class="material-symbols-outlined" style="font-size:1.1rem; vertical-align: middle;">edit</span>
+              Edit
+            </button>
+          ` : ""}
+          <mark class="status ${statusClass(memberStatus(member))}" style="font-size: 0.85rem; font-weight: 700; padding: 6px 12px; border-radius: 20px;">
+            ${escapeHtml(memberStatus(member))}
+          </mark>
+        </div>
+      </div>
+    </div>
+
+    <div class="tabs-header profile-tabs" style="margin-bottom: 15px; border-bottom: 2px solid var(--line); display:flex; gap:10px;">
+      <button class="tab-btn active" data-profile-tab="info">Bio & Medical</button>
+      <button class="tab-btn" data-profile-tab="logs">Workout Logs (${logs.length})</button>
+      <button class="tab-btn" data-profile-tab="progress">Progress Timeline</button>
+      <button class="tab-btn" data-profile-tab="achievements">Achievements</button>
+    </div>
+
+    <div class="panel" style="padding: 20px; min-height: 400px; background: var(--surface); border-radius: var(--r-lg); box-shadow: var(--shadow-card); border: 1px solid var(--line);" id="profile-tab-content">
+      <!-- Tab content dynamically populated -->
+    </div>
+  `;
+}
+
+export function bindMemberProfileDetail(root, member, context, onBack, onEdit) {
+  const contentEl = root.querySelector("#profile-tab-content");
+  if (!contentEl) return;
 
   const plans = context.data.membership_plans || [];
   const trainers = context.data.trainers || [];
@@ -564,10 +615,6 @@ export function showMemberProfileModal(member, context) {
   const logs = (context.data.workout_logs || [])
     .filter(l => l.memberId === member.id)
     .sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")));
-
-  const planName = findName(plans, member.planId);
-  const trainerName = findName(trainers, member.assignedTrainer, "Unassigned");
-  const avatarInitials = (member.fullName || "M").split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase() || "M";
 
   const METRICS = [
     { key: "weight", label: "Weight (kg)", color: "var(--teal)" },
@@ -590,84 +637,83 @@ export function showMemberProfileModal(member, context) {
     return trendChart(series, { color: metric.color });
   };
 
-  overlay.innerHTML = `
-    <div class="modal stack" role="dialog" aria-modal="true" style="width: min(650px, 95%); max-height: 85vh; display: flex; flex-direction: column; padding: 20px;">
-      <div class="panel-heading" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--line); padding-bottom: 12px; margin-bottom: 12px;">
-        <div style="display:flex; gap:12px; align-items:center;">
-          <div class="avatar" style="width:44px; height:44px; border-radius:50%; background:var(--primary); color:var(--on-primary); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:1.1rem;">
-            ${avatarInitials}
-          </div>
-          <div>
-            <h2 style="margin: 0; font-size: 1.25rem;">${escapeHtml(member.fullName)}</h2>
-            <small style="opacity: 0.85;">${escapeHtml(planName)} • Trainer: ${escapeHtml(trainerName)}</small>
-          </div>
-        </div>
-        <button class="ghost-button" data-modal="close" style="min-width: unset; padding: 4px; border: none; background: transparent; cursor: pointer;" title="Close">
-          <span class="material-symbols-outlined">close</span>
-        </button>
-      </div>
-
-      <div class="tabs-header modal-tabs" style="margin-bottom: 12px;">
-        <button class="tab-btn active" data-modal-tab="info">Bio & Medical</button>
-        <button class="tab-btn" data-modal-tab="logs">Workout Logs (${logs.length})</button>
-        <button class="tab-btn" data-modal-tab="progress">Progress Timeline</button>
-        <button class="tab-btn" data-modal-tab="achievements">Achievements</button>
-      </div>
-
-      <div style="flex: 1; overflow-y: auto; display:flex; flex-direction:column; gap: 15px;" id="modal-tab-content">
-        <!-- Tab contents dynamic -->
-      </div>
-    </div>
-  `;
-
-  const contentEl = overlay.querySelector("#modal-tab-content");
   let activeTab = "info";
 
   function renderTab() {
     if (activeTab === "info") {
+      const isMobileLogin = member.email && member.email.endsWith("@gymflow.app");
       contentEl.innerHTML = `
-        <div class="stack" style="gap: 15px;">
-          <section class="stack" style="gap: 8px;">
-            <h3 style="margin:0; border-bottom: 1px solid var(--line); padding-bottom:4px; font-size: 1rem; color:var(--accent);">Personal Info</h3>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; font-size:0.9rem;">
-              <span><strong>Email:</strong> ${escapeHtml(member.email || "—")}</span>
-              <span><strong>Mobile:</strong> ${escapeHtml(member.mobile || "—")}</span>
-              <span><strong>Gender:</strong> ${escapeHtml(member.gender || "—")}</span>
-              <span><strong>DOB:</strong> ${escapeHtml(member.dateOfBirth ? dateLabel(member.dateOfBirth) : "—")}</span>
-              <span style="grid-column: span 2;"><strong>Address:</strong> ${escapeHtml(member.address || "—")}</span>
+        <div class="stack" style="gap: 20px;">
+          <!-- Top Row Grid: Contact and Personal Info -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
+            <div class="card-premium" style="background: var(--surface-soft); padding: 20px; border-radius: var(--r-md); border-top: 3px solid var(--primary); box-shadow: var(--shadow-card); border-left: 1px solid var(--line); border-right: 1px solid var(--line); border-bottom: 1px solid var(--line);">
+              <h3 style="margin: 0 0 12px 0; font-size: 1rem; color: var(--accent); font-weight: 700; border-bottom: 1.5px solid var(--line); padding-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+                <span class="material-symbols-outlined" style="font-size: 1.25rem; color: var(--primary);">contact_page</span> Personal Details
+              </h3>
+              <div class="stack" style="gap: 8px; font-size: 0.88rem;">
+                <div><span style="color: var(--text-muted);">Email:</span> <strong style="color: var(--text); float: right;">${isMobileLogin ? "Mobile-based login" : escapeHtml(member.email || "—")}</strong></div>
+                <div><span style="color: var(--text-muted);">Mobile:</span> <strong style="color: var(--text); float: right;">${escapeHtml(member.mobile || "—")}</strong></div>
+                <div><span style="color: var(--text-muted);">Gender:</span> <strong style="color: var(--text); float: right;">${escapeHtml(member.gender || "—")}</strong></div>
+                <div><span style="color: var(--text-muted);">DOB:</span> <strong style="color: var(--text); float: right;">${escapeHtml(member.dateOfBirth ? dateLabel(member.dateOfBirth) : "—")}</strong></div>
+                <div style="border-top: 1px dashed var(--line); padding-top: 6px; margin-top: 4px;">
+                  <span style="color: var(--text-muted); display: block; margin-bottom: 2px;">Address:</span>
+                  <strong style="color: var(--text); font-size: 0.85rem; line-height: 1.4;">${escapeHtml(member.address || "—")}</strong>
+                </div>
+              </div>
             </div>
-          </section>
 
-          <section class="stack" style="gap: 8px;">
-            <h3 style="margin:0; border-bottom: 1px solid var(--line); padding-bottom:4px; font-size: 1rem; color:var(--accent);">Emergency Contact</h3>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; font-size:0.9rem;">
-              <span><strong>Name:</strong> ${escapeHtml(member.emergencyName || "—")}</span>
-              <span><strong>Relationship:</strong> ${escapeHtml(member.emergencyRelationship || "—")}</span>
-              <span><strong>Phone:</strong> ${escapeHtml(member.emergencyPhone || "—")}</span>
+            <div class="card-premium" style="background: var(--surface-soft); padding: 20px; border-radius: var(--r-md); border-top: 3px solid var(--teal); box-shadow: var(--shadow-card); border-left: 1px solid var(--line); border-right: 1px solid var(--line); border-bottom: 1px solid var(--line);">
+              <h3 style="margin: 0 0 12px 0; font-size: 1rem; color: var(--accent); font-weight: 700; border-bottom: 1.5px solid var(--line); padding-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+                <span class="material-symbols-outlined" style="font-size: 1.25rem; color: var(--teal);">contact_emergency</span> Emergency Contact
+              </h3>
+              <div class="stack" style="gap: 10px; font-size: 0.88rem;">
+                <div><span style="color: var(--text-muted);">Contact Name:</span> <strong style="color: var(--text); float: right;">${escapeHtml(member.emergencyName || "—")}</strong></div>
+                <div><span style="color: var(--text-muted);">Relationship:</span> <strong style="color: var(--text); float: right;">${escapeHtml(member.emergencyRelationship || "—")}</strong></div>
+                <div><span style="color: var(--text-muted);">Phone Number:</span> <strong style="color: var(--text); float: right;">${escapeHtml(member.emergencyPhone || "—")}</strong></div>
+              </div>
             </div>
-          </section>
+          </div>
 
-          <section class="stack" style="gap: 8px;">
-            <h3 style="margin:0; border-bottom: 1px solid var(--line); padding-bottom:4px; font-size: 1rem; color:var(--accent);">Background & Metrics</h3>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; font-size:0.9rem;">
-              <span><strong>Blood Group:</strong> ${escapeHtml(member.bloodGroup || "—")}</span>
-              <span><strong>Occupation:</strong> ${escapeHtml(member.occupation || "—")}</span>
-              <span><strong>Activity Level:</strong> ${escapeHtml(member.activityLevel || "—")}</span>
-              <span><strong>Experience:</strong> ${escapeHtml(member.fitnessExperience || "—")}</span>
-              <span><strong>Gym Goal:</strong> ${escapeHtml(member.gymGoal || "—")}</span>
-              <span><strong>WhatsApp Consent:</strong> ${member.whatsappOptIn ? "Yes" : "No"}</span>
+          <!-- Bottom Row Grid: Physical Metrics and Health Declarations -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
+            <div class="card-premium" style="background: var(--surface-soft); padding: 20px; border-radius: var(--r-md); border-top: 3px solid var(--warning); box-shadow: var(--shadow-card); border-left: 1px solid var(--line); border-right: 1px solid var(--line); border-bottom: 1px solid var(--line);">
+              <h3 style="margin: 0 0 12px 0; font-size: 1rem; color: var(--accent); font-weight: 700; border-bottom: 1.5px solid var(--line); padding-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+                <span class="material-symbols-outlined" style="font-size: 1.25rem; color: var(--warning);">monitoring</span> Body Profile
+              </h3>
+              <div class="stack" style="gap: 8px; font-size: 0.88rem;">
+                <div><span style="color: var(--text-muted);">Blood Group:</span> <strong style="color: var(--text); float: right;">${escapeHtml(member.bloodGroup || "—")}</strong></div>
+                <div><span style="color: var(--text-muted);">Occupation:</span> <strong style="color: var(--text); float: right;">${escapeHtml(member.occupation || "—")}</strong></div>
+                <div><span style="color: var(--text-muted);">Activity Level:</span> <strong style="color: var(--text); float: right;">${escapeHtml(member.activityLevel || "—")}</strong></div>
+                <div><span style="color: var(--text-muted);">Fitness Experience:</span> <strong style="color: var(--text); float: right;">${escapeHtml(member.fitnessExperience || "—")}</strong></div>
+                <div><span style="color: var(--text-muted);">Primary Gym Goal:</span> <strong style="color: var(--text); float: right;">${escapeHtml(member.gymGoal || "—")}</strong></div>
+                <div><span style="color: var(--text-muted);">WhatsApp Reminders:</span> <strong style="color: var(--text); float: right;">${member.whatsappOptIn ? "Enabled" : "Disabled"}</strong></div>
+              </div>
             </div>
-          </section>
 
-          <section class="stack" style="gap: 8px;">
-            <h3 style="margin:0; border-bottom: 1px solid var(--line); padding-bottom:4px; font-size: 1rem; color:var(--accent);">Health & Medical</h3>
-            <div style="display:flex; flex-direction:column; gap:8px; font-size:0.9rem;">
-              <div><strong>Medical Conditions:</strong><p style="margin:4px 0; opacity:0.9;">${escapeHtml(member.medicalConditions || "None declared")}</p></div>
-              <div><strong>Current Medications:</strong><p style="margin:4px 0; opacity:0.9;">${escapeHtml(member.currentMedications || "None")}</p></div>
-              <div><strong>Allergies:</strong><p style="margin:4px 0; opacity:0.9;">${escapeHtml(member.allergies || "None")}</p></div>
-              <div><strong>Limitations / Injuries:</strong><p style="margin:4px 0; opacity:0.9;">${escapeHtml(member.physicalLimitations || "None")}</p></div>
+            <div class="card-premium" style="background: var(--surface-soft); padding: 20px; border-radius: var(--r-md); border-top: 3px solid var(--danger); box-shadow: var(--shadow-card); border-left: 1px solid var(--line); border-right: 1px solid var(--line); border-bottom: 1px solid var(--line);">
+              <h3 style="margin: 0 0 12px 0; font-size: 1rem; color: var(--accent); font-weight: 700; border-bottom: 1.5px solid var(--line); padding-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+                <span class="material-symbols-outlined" style="font-size: 1.25rem; color: var(--danger);">medical_information</span> Health & Medical
+              </h3>
+              <div class="stack" style="gap: 12px; font-size: 0.85rem;">
+                <div>
+                  <strong style="color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase;">Medical Conditions:</strong>
+                  <p style="margin: 3px 0 0 0; color: var(--text); line-height: 1.4;">${escapeHtml(member.medicalConditions || "None declared")}</p>
+                </div>
+                <div>
+                  <strong style="color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase;">Current Medications:</strong>
+                  <p style="margin: 3px 0 0 0; color: var(--text); line-height: 1.4;">${escapeHtml(member.currentMedications || "None declared")}</p>
+                </div>
+                <div>
+                  <strong style="color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase;">Allergies:</strong>
+                  <p style="margin: 3px 0 0 0; color: var(--text); line-height: 1.4;">${escapeHtml(member.allergies || "None declared")}</p>
+                </div>
+                <div>
+                  <strong style="color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase;">Injuries / Physical Limitations:</strong>
+                  <p style="margin: 3px 0 0 0; color: var(--text); line-height: 1.4;">${escapeHtml(member.physicalLimitations || "None declared")}</p>
+                </div>
+              </div>
             </div>
-          </section>
+          </div>
         </div>
       `;
     } else if (activeTab === "logs") {
@@ -753,7 +799,7 @@ export function showMemberProfileModal(member, context) {
 
       contentEl.innerHTML = `
         <div class="stack" style="gap: 15px;">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
             <h3 style="margin:0; font-size:1.1rem; color:var(--accent);">Trend Chart</h3>
             <select id="modal-metric-select" style="padding:4px 8px; border-radius:var(--r-sm); border:1px solid var(--line); background:var(--bg-alt); color:var(--text);">
               ${METRICS.map(m => `<option value="${m.key}">${m.label}</option>`).join("")}
@@ -771,7 +817,7 @@ export function showMemberProfileModal(member, context) {
                   <span>${dateLabel(r.date)}</span>
                   <span style="font-size:0.8rem; opacity:0.8;">${escapeHtml(r.notes || "Measurement")}</span>
                 </div>
-                <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:8px;">
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:8px;">
                   ${r.weight ? `<span><strong>Weight:</strong> ${escapeHtml(r.weight)} kg</span>` : ""}
                   ${r.bmi ? `<span><strong>BMI:</strong> ${escapeHtml(r.bmi)}</span>` : ""}
                   ${r.bodyFat ? `<span><strong>Body Fat:</strong> ${escapeHtml(r.bodyFat)}%</span>` : ""}
@@ -902,31 +948,24 @@ export function showMemberProfileModal(member, context) {
   }
 
   // Bind Tab clicks
-  overlay.querySelectorAll("[data-modal-tab]").forEach(btn => {
+  root.querySelectorAll("[data-profile-tab]").forEach(btn => {
     btn.addEventListener("click", () => {
-      overlay.querySelectorAll("[data-modal-tab]").forEach(b => b.classList.remove("active"));
+      root.querySelectorAll("[data-profile-tab]").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
-      activeTab = btn.dataset.modalTab;
+      activeTab = btn.dataset.profileTab;
       renderTab();
     });
   });
 
-  function close() {
-    document.removeEventListener("keydown", onKey);
-    overlay.remove();
-  }
-  function onKey(event) {
-    if (event.key === "Escape") close();
-  }
+  // Bind Back button click
+  root.querySelector("#back-to-roster-btn")?.addEventListener("click", onBack);
 
-  overlay.addEventListener("click", (event) => {
-    if (event.target === overlay) close();
+  // Bind Edit button click
+  root.querySelector("#edit-member-btn")?.addEventListener("click", () => {
+    if (onEdit) onEdit();
   });
-  overlay.querySelectorAll("[data-modal='close']").forEach(btn => btn.addEventListener("click", close));
-  document.addEventListener("keydown", onKey);
 
   renderTab();
-  document.body.appendChild(overlay);
 }
 
 export function calculateStreak(attendanceRecords, restDay = "Sunday") {
