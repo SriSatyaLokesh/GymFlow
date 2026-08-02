@@ -1,4 +1,5 @@
 import { collections, dateLabel, daysUntil, emptyState, escapeHtml, memberStatus, nameCell, pageHeader, statusClass, whatsappUrl } from "./utils.js";
+import { renewalsModule } from "./renewals.js";
 
 export const remindersModule = {
   render({ data, settings }) {
@@ -38,6 +39,14 @@ export const remindersModule = {
         context.applyChange(collections.reminders, saved);
       });
     });
+
+    root.querySelectorAll("[data-action='quick-renew']").forEach((button) => {
+      button.addEventListener("click", () => {
+        renewalsModule.activeView = "add";
+        renewalsModule.prefilledMemberId = button.dataset.memberId;
+        context.navigate("renewals");
+      });
+    });
   }
 };
 
@@ -46,12 +55,13 @@ function row(member, settings) {
   return `
     <div class="table-row">
       ${nameCell(member.fullName, member.mobile || "", member.avatarUrl || "")}
-      <span>${dateLabel(member.endDate)}</span>
-      <span><mark class="status ${statusClass(member.computedStatus)}">${escapeHtml(member.computedStatus)}</mark></span>
-      <span><small>${escapeHtml(message)}</small></span>
-      <span class="row-actions">
+      <span data-label="Expiry">${dateLabel(member.endDate)}</span>
+      <span data-label="Status"><mark class="status ${statusClass(member.computedStatus)}">${escapeHtml(member.computedStatus)}</mark></span>
+      <span data-label="Message"><small>${escapeHtml(message)}</small></span>
+      <span class="row-actions" style="display:flex; gap:6px;">
         <a class="primary-button" href="${whatsappUrl(member, message)}" target="_blank" rel="noreferrer"><span class="material-symbols-outlined">send</span>Send</a>
-        <button class="icon-button" data-reminder-sent="${escapeHtml(member.id)}"><span class="material-symbols-outlined">done</span></button>
+        <button class="icon-button" data-reminder-sent="${escapeHtml(member.id)}" title="Mark as Sent"><span class="material-symbols-outlined">done</span></button>
+        <button class="icon-button" data-action="quick-renew" data-member-id="${escapeHtml(member.id)}" title="Renew Membership"><span class="material-symbols-outlined">autorenew</span>Renew</button>
       </span>
     </div>
   `;
