@@ -333,7 +333,7 @@ export const paymentsModule = {
         <div class="panel-heading"><h2>Payment History</h2><span>${payments.length} records</span></div>
         ${
           payments.length
-            ? `<div class="data-table">
+            ? `<div class="data-table payments-table">
                 <div class="table-head"><span>Receipt</span><span>Member</span><span>Amount</span><span>Status</span><span></span></div>
                 ${payments.map((payment) => row(payment, members, plans, currency)).join("")}
               </div>`
