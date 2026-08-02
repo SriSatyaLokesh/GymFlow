@@ -1,3 +1,4 @@
+import { execSync } from "child_process";
 import { dashboardModule } from "../modules/dashboard.js";
 import { membersModule } from "../modules/members.js";
 import { membershipsModule } from "../modules/memberships.js";
@@ -201,4 +202,147 @@ for (const module of memberModules) checkRender(module, pendingMember, "member-p
 const pendingTrainer = { ...trainerContext, myTrainer: null, myTrainerId: null, data: makeData() };
 for (const module of trainerModules) checkRender(module, pendingTrainer, "trainer-pending");
 
-console.log("Smoke render passed (owner + member + trainer + pending).");
+// ===================================================================
+// ENHANCED COMPLEX UX & MOBILE EDGE CASE VERIFICATIONS
+// ===================================================================
+
+console.log("Starting enhanced complex UX & mobile edge case verifications...");
+
+// 1. Mobile responsive table data labels check
+console.info("-> Validating mobile responsive table data-label attributes...");
+const membersHtml = membersModule.render({
+  data: {
+    members: [{ id: "m1", fullName: "Test Member", mobile: "1234567890", planId: "p1", endDate: "2026-12-31", status: "Active" }],
+    membership_plans: [{ id: "p1", planName: "Basic Plan" }],
+    trainers: []
+  }
+});
+if (!membersHtml.includes('data-label="Plan"') || !membersHtml.includes('data-label="Expiry"') || !membersHtml.includes('data-label="Status"')) {
+  throw new Error("UX Validation Failed: Members table row is missing mobile responsive data-label attributes.");
+}
+
+const paymentsHtml = paymentsModule.render({
+  data: {
+    payments: [{ id: "pay1", receiptNumber: "REC-001", date: "2026-07-28", method: "Cash", memberId: "m1", amount: 500, status: "Paid", planId: "p1" }],
+    members: [{ id: "m1", fullName: "Test Member" }],
+    membership_plans: [{ id: "p1", planName: "Basic Plan" }]
+  }
+});
+if (!paymentsHtml.includes('data-label="Receipt"') || !paymentsHtml.includes('data-label="Amount"') || !paymentsHtml.includes('data-label="Status"')) {
+  throw new Error("UX Validation Failed: Payments table row is missing mobile responsive data-label attributes.");
+}
+
+const attendanceHtml = attendanceModule.render({
+  data: {
+    attendance: [{ id: "att1", memberId: "m1", date: "2026-07-28", time: "09:00", trainerId: "t1" }],
+    members: [{ id: "m1", fullName: "Test Member" }],
+    trainers: [{ id: "t1", name: "Trainer John" }]
+  }
+});
+if (!attendanceHtml.includes('data-label="Member"') || !attendanceHtml.includes('data-label="Date"') || !attendanceHtml.includes('data-label="Time"')) {
+  throw new Error("UX Validation Failed: Attendance table row is missing mobile responsive data-label attributes.");
+}
+
+const progressHtml = progressModule.render({
+  data: {
+    progress_records: [{ id: "prg1", memberId: "m1", date: "2026-07-28", weight: 70, bmi: 22.5, notes: "Feeling strong" }],
+    members: [{ id: "m1", fullName: "Test Member" }]
+  }
+});
+if (!progressHtml.includes('data-label="Weight"') || !progressHtml.includes('data-label="BMI"') || !progressHtml.includes('data-label="Notes"')) {
+  throw new Error("UX Validation Failed: Progress table row is missing mobile responsive data-label attributes.");
+}
+
+const renewalsHtml = renewalsModule.render({
+  data: {
+    members: [{ id: "m1", fullName: "Test Member", mobile: "1234567890", planId: "p1", endDate: "2026-07-28", remaining: -5, computedStatus: "Expired" }],
+    membership_plans: [{ id: "p1", planName: "Basic Plan", price: 1000 }]
+  }
+});
+if (!renewalsHtml.includes('data-label="Plan"') || !renewalsHtml.includes('data-label="Expiry"') || !renewalsHtml.includes('data-label="Status"')) {
+  throw new Error("UX Validation Failed: Renewals table row is missing mobile responsive data-label attributes.");
+}
+
+const remindersHtml = remindersModule.render({
+  data: {
+    members: [{ id: "m1", fullName: "Test Member", mobile: "1234567890", endDate: "2026-07-28", computedStatus: "Expired" }],
+    settings: { whatsappReminderTemplate: "Hello {name}, your plan expires on {date}." }
+  }
+});
+if (!remindersHtml.includes('data-label="Expiry"') || !remindersHtml.includes('data-label="Status"')) {
+  throw new Error("UX Validation Failed: Reminders table row is missing mobile responsive data-label attributes.");
+}
+
+const trainersAssignmentsHtml = trainersModule.render({
+  data: {
+    workout_assignments: [{ id: "a1", memberId: "m1", trainerId: "t1", templateId: "temp1", assignedAt: "2026-07-28" }],
+    members: [{ id: "m1", fullName: "Test Member" }],
+    trainers: [{ id: "t1", name: "Trainer John" }],
+    workout_templates: [{ id: "temp1", name: "Full Body workout" }]
+  }
+});
+if (!trainersAssignmentsHtml.includes('data-label="Member"') || !trainersAssignmentsHtml.includes('data-label="Template"') || !trainersAssignmentsHtml.includes('data-label="Assigned"')) {
+  throw new Error("UX Validation Failed: Trainers workout assignments table row is missing mobile responsive data-label attributes.");
+}
+
+// 2. Mobile form usability and constraints validation
+console.info("-> Validating form fields constraints and placeholders for mobile usability...");
+membersModule.activeView = "add";
+const membersFormHtml = membersModule.render({
+  data: {
+    members: [{ id: "m1", fullName: "Test Member", mobile: "1234567890", planId: "p1", endDate: "2026-12-31", status: "Active" }],
+    membership_plans: [{ id: "p1", planName: "Basic Plan" }],
+    trainers: []
+  }
+});
+membersModule.activeView = "list"; // reset back
+
+if (!membersFormHtml.includes('maxlength="10"') || !membersFormHtml.includes('name="mobile"') || !membersFormHtml.includes('name="whatsappNumber"')) {
+  throw new Error("UX Validation Failed: Form mobile number fields do not enforce maximum length constraint of 10.");
+}
+if (!membersFormHtml.includes('placeholder="Same as mobile"') || !membersFormHtml.includes('data-bmi-meter')) {
+  throw new Error("UX Validation Failed: Member form is missing clear UX placeholders or BMI Meter layout wrapper.");
+}
+
+// 3. Member Hevy-Style workout logger checks
+console.info("-> Validating workout active logger classes for custom mobile alignment...");
+// Mock localStorage globally to simulate an active workout session in Node environment
+global.localStorage = {
+  getItem(key) {
+    if (key === "gymflow.active_workout") {
+      return JSON.stringify({
+        templateId: "basic-1",
+        name: "Active Session",
+        startTime: new Date().toISOString(),
+        exercises: [{ name: "Squats", sets: [{ done: false, weight: 60, reps: 10, rpe: 8 }] }]
+      });
+    }
+    return null;
+  },
+  setItem() {},
+  removeItem() {}
+};
+const activeWorkoutHtml = myWorkoutModule.render(memberContext);
+delete global.localStorage; // Clean up mock
+if (!activeWorkoutHtml.includes("logger-table-head") || !activeWorkoutHtml.includes("logger-set-row")) {
+  throw new Error("UX Validation Failed: Member workout logger is missing custom logger-table-head or logger-set-row layout classes.");
+}
+
+// 4. Edge-case data rendering checks
+console.info("-> Validating edge-case data rendering (missing notes, null values)...");
+const edgeCaseContext = {
+  data: {
+    members: [{ id: "m1", fullName: "Edge Member", mobile: null, email: null, planId: null, endDate: null, status: "Pending" }],
+    membership_plans: [],
+    trainers: []
+  }
+};
+const edgeCaseMembersHtml = membersModule.render(edgeCaseContext);
+if (!edgeCaseMembersHtml.includes("Unassigned") || !edgeCaseMembersHtml.includes("Pending")) {
+  throw new Error("UX Validation Failed: Members list did not gracefully handle null/empty fields.");
+}
+
+console.log("-> Running gamification unit tests...");
+execSync("node scripts/test-gamification.mjs", { stdio: "inherit" });
+
+console.log("Smoke render and enhanced complex UX verification tests completed successfully!");

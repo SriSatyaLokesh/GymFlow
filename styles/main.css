@@ -875,6 +875,12 @@ input:focus, select:focus, textarea:focus {
 .button-row, .row-actions, .page-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .table-row .row-actions { flex-wrap: nowrap; gap: 4px; justify-content: flex-end; }
 
+/* Days-remaining urgency chips inside Expiry cell */
+.days-chip { display: inline-block; font-size: 0.68rem; font-weight: 600; padding: 1px 6px; border-radius: 20px; letter-spacing: 0.02em; margin-top: 3px; }
+.days-danger { background: rgba(239,68,68,0.12); color: var(--danger, #ef4444); }
+.days-warn   { background: rgba(234,179,8,0.12);  color: #b45309; }
+.days-ok     { background: rgba(34,197,94,0.10);  color: #15803d; }
+
 /* ===== Tables ===== */
 .data-table, .list-table { display: grid; gap: 6px; overflow-x: hidden; }
 
@@ -918,7 +924,7 @@ input:focus, select:focus, textarea:focus {
 }
 .reminder-table .table-head,
 .reminder-table .table-row {
-  grid-template-columns: 1.2fr 1fr 0.8fr 1.8fr 180px;
+  grid-template-columns: 1.4fr 1fr 0.8fr 116px;
 }
 .compact .table-row { grid-template-columns: 1fr auto; }
 
