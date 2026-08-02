@@ -896,6 +896,21 @@ input:focus, select:focus, textarea:focus {
 .reminder-table .table-row { grid-template-columns: 1fr 0.75fr 0.75fr 1.5fr auto; }
 .compact .table-row { grid-template-columns: 1fr auto; }
 
+.payments-table .table-head,
+.payments-table .table-row {
+  grid-template-columns: 1.5fr 1.2fr 0.8fr 0.8fr 180px;
+}
+
+.checkins-table .table-head,
+.checkins-table .table-row {
+  grid-template-columns: 1.5fr 1fr 1fr 1.2fr;
+}
+
+.inactive-table .table-head,
+.inactive-table .table-row {
+  grid-template-columns: 1.5fr 1fr 1fr;
+}
+
 /* Reports Specific Tables */
 .reports-plans-table .table-head,
 .reports-plans-table .table-row {
