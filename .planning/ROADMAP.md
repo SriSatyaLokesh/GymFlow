@@ -17,10 +17,12 @@ GymFlow is a zero-cost, self-hosted gym management PWA. Phases build out the ful
 - [x] **Phase 9: Membership Pause & Freeze** — Pause/resume membership, auto-extend end date, per-plan limits
 - [x] **Phase 10: Trainer Workout Module Library** — Trainers create reusable modules, publish Basic workouts for members, assign later to clients
 - [x] **Phase 10.1: Enhanced Member Intake Form & BMI Visual Meter** ⚡ URGENT NEXT — Full real-world intake fields, color-coded BMI horizontal meter, real-time duplicate phone/email detection, WhatsApp notification opt-in (completed 2026-07-23)
-- [ ] **Phase 11: Member Workout Logging & Exercise Library (Hevy-Style)** — Unrestricted workout logging, routine scheduling, last-week duplication, gym feed dashboard, search, and trainer/owner check.
-- [ ] **Phase 12: Implement PBL gamification strategy (points, badges, leaderboard, PRs, milestones)** — Gamify member workouts using points, custom badges, leaderboards per weight/gender/consistency, and PR milestones.
-- [ ] **Phase 13: Analytics & Insights** — Revenue trends, member growth, attendance heatmap, forecasting
-- [ ] **Phase 14: Multi-Branch Support** — Branch entity, per-branch scoping, cross-branch dashboard
+- [x] **Phase 11: Member Workout Logging & Exercise Library (Hevy-Style)** — Unrestricted workout logging, routine scheduling, last-week duplication, gym feed dashboard, search, and trainer/owner check. (completed 2026-07-28)
+- [x] **Phase 12: Implement PBL gamification strategy (points, badges, leaderboard, PRs, milestones)** — Gamify member workouts using points, custom badges, leaderboards per weight/gender/consistency, and PR milestones. (completed 2026-07-29)
+- [x] **Phase 13: Phone number based login and WhatsApp invitation links** — Enable phone number sign-in with Firebase, support dual email/phone credentials, and send invitation links on registration. (completed 2026-07-30)
+- [x] **Phase 14: Analytics & Insights** — Revenue trends, member growth, attendance heatmap, forecasting (completed 2026-07-31)
+- [ ] **Phase 15: Multi-Branch Support** — Branch entity, per-branch scoping, cross-branch dashboard
+- [x] **Phase 16: Owner UX Enhancements (Payments, Dashboard Visuals, Reports, Roster, Templates)** — Improve payment capture (custom amounts, modes), member activity checkups, visually rich owner KPIs, report custom styling, and streamlined workout template management. (completed 2026-07-31)
 
 ## Phase Details
 
@@ -309,7 +311,7 @@ Plans:
 
 Plans:
 
-- [ ] 11-01: TBD
+- [x] 11-01: TBD
 
 ### Phase 12: Implement PBL gamification strategy (points, badges, leaderboard, PRs, milestones)
 
@@ -325,13 +327,29 @@ Plans:
 
 Plans:
 
-- [ ] 12-01: TBD
+- [x] 12-01: TBD
 
-### Phase 13: Analytics & Insights
+### Phase 13: Phone number based login and WhatsApp invitation links
+
+**Goal**: Enable phone number sign-in with Firebase, support dual email/phone credentials, and send invitation links on registration.
+**Depends on**: Phase 12
+**Status**: Complete
+**Success Criteria** (what must be TRUE):
+
+  1. Users can log in using phone number and password mapped to synthetic emails.
+  2. Users can log in using their email/password.
+  3. Pre-filled WhatsApp invitation links are generated upon member registration.
+  4. Access to member dashboard is granted on credentials verification.
+
+Plans:
+
+- [x] 13-01: Synthetic email mapping, WhatsApp invitation links, onboarding prefill
+
+### Phase 14: Analytics & Insights
 
 **Goal**: Give gym owners actionable business intelligence to grow and retain members.
 **Depends on**: Phase 4
-**Status**: Not started
+**Status**: Complete
 **Success Criteria** (what must be TRUE):
 
   1. Revenue trend chart with monthly/weekly/daily toggle works
@@ -343,9 +361,9 @@ Plans:
 
 Plans:
 
-- [ ] 13-01: TBD
+- [x] 14-01-PLAN.md — Analytics & Insights panel implementation
 
-### Phase 14: Multi-Branch Support
+### Phase 15: Multi-Branch Support
 
 **Goal**: Allow a gym chain to manage multiple locations under one owner account.
 **Depends on**: Phase 5
@@ -360,7 +378,27 @@ Plans:
 
 Plans:
 
-- [ ] 14-01: TBD
+- [ ] 15-01: TBD
+
+### Phase 16: Owner UX Enhancements
+
+**Goal**: Elevate owner workflows, payments capturing, dashboard visuals, and reports to be highly user-friendly.
+**Depends on**: Phase 4, Phase 12
+**Status**: Not started
+**Success Criteria** (what must be TRUE):
+
+  1. Owner can capture payments with custom amounts, billing dates, payment modes (Cash, Card, UPI, NetBanking), and notes
+  2. Member viewing panel shows active/inactive statuses, payment alerts, and recent activities in one unified visual timeline
+  3. Owner dashboard displays rich visuals for monthly revenue, trainer performance, attendance heatmaps, and active membership ratios
+  4. Workout templates management is modernized with search filters, quick assigns, and responsive template editing
+  5. PDF/Excel reports have clean styling and configurable date ranges
+  6. Payment receipt is redesigned into a clean, modern neomorphic invoice/receipt view
+  7. Owner can share payment receipts directly to a member's WhatsApp with a prefilled template link
+  8. Member portal dashboard prominently shows a payment status widget (Active, Payment Due warning, or Overdue status) with the next billing date
+
+Plans:
+
+- [x] 16-01: TBD
 
 ## Progress
 
@@ -377,7 +415,20 @@ Plans:
 | 9 | Membership Pause & Freeze | 2/2 | Complete | — |
 | 10 | Trainer Workout Module Library | 1/1 | Complete | — |
 | 10.1 | Enhanced Member Intake Form & BMI Visual Meter | 3/3 | Complete    | 2026-07-23 |
-| 11 | Member Workout Logging & Exercise Library (Hevy-Style) | 0/1 | Not started | — |
-| 12 | Implement PBL gamification strategy (points, badges, leaderboard, PRs, milestones) | 0/1 | Not started | — |
-| 13 | Analytics & Insights | 0/1 | Not started | — |
-| 14 | Multi-Branch Support | 0/1 | Not started | — |
+| 11 | Member Workout Logging & Exercise Library (Hevy-Style) | 1/1 | Complete    | 2026-07-28 |
+| 12 | Implement PBL gamification strategy (points, badges, leaderboard, PRs, milestones) | 1/1 | Complete    | 2026-07-29 |
+| 13 | Phone number based login and WhatsApp invitation links | 1/1 | Complete | 2026-07-30 |
+| 14 | Analytics & Insights | 1/1 | Complete | 2026-07-31 |
+| 15 | Multi-Branch Support | 0/1 | Not started | — |
+| 16 | Owner UX Enhancements | 1/1 | Complete | 2026-07-31 |
+
+### Phase 17: Database Performance Optimization & Scoped Loading
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 16
+**Plans:** 0 plans
+
+Plans:
+
+- [ ] TBD (run /gsd-plan-phase 17 to break down)
