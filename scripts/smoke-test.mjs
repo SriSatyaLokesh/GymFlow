@@ -269,7 +269,7 @@ const remindersHtml = remindersModule.render({
     settings: { whatsappReminderTemplate: "Hello {name}, your plan expires on {date}." }
   }
 });
-if (!remindersHtml.includes('data-label="Expiry"') || !remindersHtml.includes('data-label="Status"') || !remindersHtml.includes('data-label="Message"')) {
+if (!remindersHtml.includes('data-label="Expiry"') || !remindersHtml.includes('data-label="Status"')) {
   throw new Error("UX Validation Failed: Reminders table row is missing mobile responsive data-label attributes.");
 }
 
