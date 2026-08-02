@@ -20,12 +20,12 @@ export const myPaymentsModule = {
         <div class="panel-heading"><h2>Payment History</h2><span>${mine.length} records</span></div>
         ${
           mine.length
-            ? `<div class="data-table">
+            ? `<div class="data-table member-payments-table">
                 <div class="table-head"><span>Receipt</span><span>Plan</span><span>Amount</span><span>Status</span></div>
                 ${mine
                   .map(
                     (payment) => `
-                      <div class="table-row" style="grid-template-columns:1.2fr 1fr 0.8fr 0.8fr">
+                      <div class="table-row">
                         <span><strong>${escapeHtml(payment.receiptNumber || payment.id)}</strong><small>${dateLabel(payment.date)} via ${escapeHtml(payment.method || "-")}</small></span>
                         <span>${escapeHtml(findName(plans, payment.planId))}</span>
                         <span>${money(payment.amount, currency)}</span>
