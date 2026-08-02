@@ -891,9 +891,12 @@ input:focus, select:focus, textarea:focus {
 .table-note { grid-column: 1 / -1; color: var(--muted); }
 .members-table .table-head,
 .members-table .table-row {
-  grid-template-columns: 1.25fr 0.85fr 0.8fr 0.7fr 0.7fr 0.6fr auto;
+  grid-template-columns: 1.25fr 0.85fr 0.8fr 0.7fr 0.7fr 0.6fr 100px;
 }
-.reminder-table .table-row { grid-template-columns: 1fr 0.75fr 0.75fr 1.5fr auto; }
+.reminder-table .table-head,
+.reminder-table .table-row {
+  grid-template-columns: 1.2fr 1fr 0.8fr 1.8fr 180px;
+}
 .compact .table-row { grid-template-columns: 1fr auto; }
 
 .payments-table .table-head,
@@ -911,6 +914,36 @@ input:focus, select:focus, textarea:focus {
   grid-template-columns: 1.5fr 1fr 1fr;
 }
 
+.renewals-table .table-head,
+.renewals-table .table-row {
+  grid-template-columns: 1.4fr 1.1fr 1.1fr 0.8fr 180px;
+}
+
+.trainer-assignments-table .table-head,
+.trainer-assignments-table .table-row {
+  grid-template-columns: 1.2fr 1.2fr 1.5fr 1.2fr;
+}
+
+.progress-history-table .table-head,
+.progress-history-table .table-row {
+  grid-template-columns: 1.5fr 1fr 1fr 0.8fr 2fr;
+}
+
+.member-progress-history-table .table-head,
+.member-progress-history-table .table-row {
+  grid-template-columns: 1fr 0.8fr 0.8fr 1.5fr;
+}
+
+.member-payments-table .table-head,
+.member-payments-table .table-row {
+  grid-template-columns: 1.2fr 1fr 0.8fr 0.8fr;
+}
+
+.two-col-table .table-head,
+.two-col-table .table-row {
+  grid-template-columns: 1fr 1fr;
+}
+
 /* Reports Specific Tables */
 .reports-plans-table .table-head,
 .reports-plans-table .table-row {
@@ -924,17 +957,17 @@ input:focus, select:focus, textarea:focus {
 
 .reports-inactive-table .table-head,
 .reports-inactive-table .table-row {
-  grid-template-columns: 1.8fr 1.2fr auto;
+  grid-template-columns: 1.8fr 1.2fr 120px;
 }
 
 .reports-pending-table .table-head,
 .reports-pending-table .table-row {
-  grid-template-columns: 1.8fr 1fr auto;
+  grid-template-columns: 1.8fr 1fr 120px;
 }
 
 .reports-points-table .table-head,
 .reports-points-table .table-row {
-  grid-template-columns: 0.5fr 1.4fr 1.2fr auto;
+  grid-template-columns: 0.6fr 1.4fr 1.2fr 100px;
 }
 
 /* Heatmap cell level styling */

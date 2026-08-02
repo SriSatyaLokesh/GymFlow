@@ -229,13 +229,13 @@ function renderMemberAttendance(context) {
         <div class="panel-heading"><h2>My Recent Check-ins</h2><span>${mine.length} total</span></div>
         ${
           mine.length
-            ? `<div class="data-table">
+            ? `<div class="data-table two-col-table">
                 <div class="table-head"><span>Date</span><span>Time</span></div>
                 ${mine
                   .slice(0, 15)
                   .map(
                     (record) => `
-                      <div class="table-row" style="grid-template-columns:1fr 1fr">
+                      <div class="table-row">
                         <span data-label="Date">${dateLabel(record.date)}</span>
                         <span data-label="Time">${escapeHtml(record.time || "-")}</span>
                       </div>
