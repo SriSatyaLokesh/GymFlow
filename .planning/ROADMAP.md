@@ -420,7 +420,7 @@ Plans:
 | 13 | Phone number based login and WhatsApp invitation links | 1/1 | Complete | 2026-07-30 |
 | 14 | Analytics & Insights | 1/1 | Complete | 2026-07-31 |
 | 15 | Multi-Branch Support | 0/1 | Not started | — |
-| 16 | Owner UX Enhancements | 1/1 | Complete | 2026-07-31 |
+| 16 | Owner UX Enhancements | 1/1 | Complete    | 2026-07-31 |
 
 ### Phase 17: Database Performance Optimization & Scoped Loading
 

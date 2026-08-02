@@ -3,22 +3,23 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-last_updated: "2026-07-23T03:19:37.946Z"
+stopped_at: Phase 14 complete
+last_updated: "2026-08-02T07:15:04.386Z"
 progress:
-  total_phases: 5
-  completed_phases: 5
-  total_plans: 10
-  completed_plans: 10
+  total_phases: 11
+  completed_phases: 10
+  total_plans: 15
+  completed_plans: 15
 ---
 
 # GymFlow — Project State
 
 ## Current Status
 
-- **Milestone:** v0.9 Beta
-- **Active Branch:** `phase/11-workout-logging`
-- **Last Phase Completed:** Phase 10.1 — Enhanced Member Intake Form & BMI Visual Meter
-- **Next Phase:** Phase 11 — Member Workout Logging & Exercise Library (Hevy-Style)
+- **Milestone:** v1.0
+- **Active Branch:** `feature/member-view-refactor`
+- **Last Phase Completed:** Phase 14 — Analytics & Insights
+- **Next Phase:** Phase 15 — Multi-Branch Support
 
 ## Completed Phases
 
@@ -35,20 +36,21 @@ progress:
 | 9 | Membership Pause & Freeze | main | — |
 | 10 | Trainer Workout Module Library | main (#12) | — |
 | 10.1 | Enhanced Member Intake Form & BMI Visual Meter | main | 2026-07-23 |
+| 11 | Member Workout Logging & Exercise Library (Hevy-Style) | main | 2026-07-28 |
+| 12 | Implement PBL gamification strategy (points, badges, leaderboard, PRs, milestones) | main | 2026-07-29 |
+| 13 | Phone number based login and WhatsApp invitation links | main | 2026-07-30 |
+| 14 | Analytics & Insights | feature/member-view-refactor | 2026-07-31 |
+| 16 | Owner UX Enhancements | feature/member-view-refactor | 2026-07-31 |
 
 ## Upcoming Phases (Priority Order)
 
 | Phase | Name | Priority |
 |---|---|---|
-| 11 | Member Workout Logging & Exercise Library (Hevy-Style) | HIGH |
-| 12 | Implement PBL gamification strategy (points, badges, leaderboard, PRs, milestones) | HIGH |
-| 13 | Analytics & Insights | MEDIUM |
-| 14 | Multi-Branch Support | MEDIUM |
+| 15 | Multi-Branch Support | MEDIUM |
 
 ## In-Progress Work
 
-- **Branch:** `main`
-- **Last merged commit:** `517a3ff` — Add trainer workout module library and basic member workouts (#12)
+- **Branch:** `feature/member-view-refactor`
 - **Status:** Ready to plan
 
 ## Key Architectural Facts
@@ -64,9 +66,7 @@ progress:
 
 ## Open Decisions
 
-- Phase 8 (Member Portal v2): needs UX design for notification opt-in flow
-- Phase 13 (Multi-Branch): Firestore security rules need significant redesign for branch scoping
-- Phase 14 (Payment Gateway): Firebase Functions needed for webhook; adds server-side complexity
+- Phase 15 (Multi-Branch): Firestore security rules need significant redesign for branch scoping
 
 ## Blockers
 
@@ -89,3 +89,12 @@ None currently.
 - Phase 11 edited: edited fields: title, goal, success_criteria to match Hevy-style requirements
 - Phase 16 added: Implement PBL gamification strategy (points, badges, leaderboard, PRs, milestones)
 - Phase 14 and 15 removed; re-sequenced remaining future phases to 12 (PBL), 13 (Analytics), and 14 (Multi-Branch)
+- Phase 12.1 inserted: Phone number based login and WhatsApp invitation links
+- Phase 12.1 renumbered to Phase 13: to allow Phase 12 improvement revisions in future
+- Phase 14 (Analytics & Insights) and Phase 16 (Owner UX Enhancements) completed on 2026-07-31
+
+## Session
+
+**Last session:** 2026-07-31T19:15:00.000Z
+**Stopped at:** Phase 14 complete
+**Resume file:** .planning/phases/14-analytics-insights/14-CONTEXT.md
