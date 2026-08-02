@@ -24,7 +24,6 @@ GymFlow is a zero-cost, self-hosted gym management PWA. Phases build out the ful
 - [ ] **Phase 15: Multi-Branch Support** — Branch entity, per-branch scoping, cross-branch dashboard
 - [x] **Phase 16: Owner UX Enhancements (Payments, Dashboard Visuals, Reports, Roster, Templates)** — Improve payment capture (custom amounts, modes), member activity checkups, visually rich owner KPIs, report custom styling, and streamlined workout template management. (completed 2026-07-31)
 
-
 ## Phase Details
 
 ### Phase 1: Core Member Lifecycle
@@ -397,7 +396,6 @@ Plans:
   7. Owner can share payment receipts directly to a member's WhatsApp with a prefilled template link
   8. Member portal dashboard prominently shows a payment status widget (Active, Payment Due warning, or Overdue status) with the next billing date
 
-
 Plans:
 
 - [x] 16-01: TBD
@@ -424,4 +422,13 @@ Plans:
 | 15 | Multi-Branch Support | 0/1 | Not started | — |
 | 16 | Owner UX Enhancements | 1/1 | Complete | 2026-07-31 |
 
+### Phase 17: Database Performance Optimization & Scoped Loading
 
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 16
+**Plans:** 0 plans
+
+Plans:
+
+- [ ] TBD (run /gsd-plan-phase 17 to break down)
