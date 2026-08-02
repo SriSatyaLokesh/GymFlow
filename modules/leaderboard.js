@@ -39,11 +39,11 @@ function getAgeGroupId(age) {
   return "master";
 }
 
-// ── Rank display helpers — use CSS token names so light/dark both pass WCAG ──
+// ── Rank display helpers — use theme-aware core variables ─────────────────────
 const RANK_STYLES = [
-  { colorVar: "var(--gold-ink)",   shadowRgb: "255,215,0",   bgVar: "var(--gold-bg)",   borderVar: "rgba(255,215,0,0.3)",   icon: "military_tech" },
-  { colorVar: "var(--silver-ink)", shadowRgb: "192,192,192", bgVar: "var(--silver-bg)", borderVar: "rgba(192,192,192,0.25)", icon: "military_tech" },
-  { colorVar: "var(--bronze-ink)", shadowRgb: "205,127,50",  bgVar: "var(--bronze-bg)", borderVar: "rgba(205,127,50,0.25)",  icon: "military_tech" },
+  { colorVar: "var(--green-ink)",  barColorVar: "var(--primary)", borderVar: "var(--primary)", icon: "military_tech" }, // 1st Place
+  { colorVar: "var(--teal-ink)",   barColorVar: "var(--accent)",  borderVar: "var(--accent)",  icon: "military_tech" }, // 2nd Place
+  { colorVar: "var(--text-muted)", barColorVar: "var(--line)",    borderVar: "var(--line)",    icon: "military_tech" }, // 3rd Place
 ];
 
 export const leaderboardModule = {
@@ -153,8 +153,7 @@ export const leaderboardModule = {
         ? `<span class="material-symbols-outlined" style="font-size:1.4rem; color:${rs.colorVar}; font-variation-settings:'FILL' 1;">${rs.icon}</span>`
         : `<span style="font-size:0.82rem; font-weight:800; color:var(--text-muted); display:inline-block; width:24px; text-align:center; font-variant-numeric:tabular-nums;">#${rank}</span>`;
 
-      const rowBg     = rs ? rs.bgVar : "transparent";
-      const rowBorder = rs ? rs.borderVar : "var(--line)";
+      const rowBorderLeft = rs ? `4px solid ${rs.borderVar}` : "4px solid transparent";
 
       return `
         <div class="lb-list-row" style="
@@ -165,8 +164,9 @@ export const leaderboardModule = {
           padding: 11px 16px;
           border-radius: var(--r-md);
           margin-bottom: 5px;
-          background: ${rowBg};
-          border: 1px solid ${rowBorder};
+          background: var(--surface);
+          border: 1px solid var(--line);
+          border-left: ${rowBorderLeft} !important;
           transition: background 0.18s ease, border-color 0.18s ease, transform 0.15s ease;
           cursor: default;
         ">
@@ -191,14 +191,14 @@ export const leaderboardModule = {
           <!-- Score + bar -->
           <div style="text-align:right;">
             <div style="display:flex; justify-content:flex-end; align-items:baseline; gap:3px; margin-bottom:5px;">
-              <span style="font-weight:900; font-size:1rem; color:${rs ? rs.colorVar : "var(--text)"}; font-variant-numeric:tabular-nums; letter-spacing:-0.3px;">
+              <span style="font-weight:900; font-size:1rem; color:${rs && rank <= 2 ? rs.colorVar : "var(--text)"}; font-variant-numeric:tabular-nums; letter-spacing:-0.3px;">
                 ${Number(val).toLocaleString()}
               </span>
               <small style="font-size:0.7rem; color:var(--text-muted); font-weight:600;">${displayUnit}</small>
             </div>
             <div style="height:3px; background:var(--line); border-radius:99px; overflow:hidden;">
               <div style="height:100%; width:${barW}%; border-radius:99px;
-                background:${rs ? rs.colorVar : "var(--teal-text);"};
+                background:${rs ? rs.barColorVar : "var(--accent)"};
               "></div>
             </div>
           </div>
@@ -391,33 +391,33 @@ export const leaderboardModule = {
 
       <!-- Summary Cards -->
       <div class="metric-grid" style="margin-bottom:24px;">
-        <article class="metric" style="border-top:3px solid var(--gold-ink);">
+        <article class="metric">
           <span style="display:flex; align-items:center; gap:5px;">
-            <span class="material-symbols-outlined" style="font-size:1rem; color:var(--gold-ink); font-variation-settings:'FILL' 1;">emoji_events</span>
+            <span class="material-symbols-outlined" style="font-size:1rem; color:var(--green-ink); font-variation-settings:'FILL' 1;">emoji_events</span>
             Points Champion
           </span>
           <strong style="color:var(--text);">${escapeHtml(champion?.fullName || "—")}</strong>
-          <small style="color:var(--gold-ink); font-weight:700;">${(champion?.points || 0).toLocaleString()} pts</small>
+          <small style="color:var(--text-muted); font-weight:600;">${(champion?.points || 0).toLocaleString()} pts</small>
         </article>
-        <article class="metric" style="border-top:3px solid var(--warning);">
+        <article class="metric">
           <span style="display:flex; align-items:center; gap:5px;">
             <span class="material-symbols-outlined" style="font-size:1rem; color:var(--warning); font-variation-settings:'FILL' 1;">local_fire_department</span>
             Streak King
           </span>
-          <strong>${escapeHtml(byStreak?.fullName || "—")}</strong>
-          <small style="color:var(--warning); font-weight:700;">${byStreak?.streak || 0}d streak</small>
+          <strong style="color:var(--text);">${escapeHtml(byStreak?.fullName || "—")}</strong>
+          <small style="color:var(--text-muted); font-weight:600;">${byStreak?.streak || 0}d streak</small>
         </article>
-        <article class="metric" style="border-top:3px solid var(--teal-text);">
+        <article class="metric">
           <span style="display:flex; align-items:center; gap:5px;">
             <span class="material-symbols-outlined" style="font-size:1rem; color:var(--teal-text); font-variation-settings:'FILL' 1;">how_to_reg</span>
             Most Active
           </span>
-          <strong>${escapeHtml(byActive?.fullName || "—")}</strong>
-          <small style="color:var(--teal-text); font-weight:700;">${byActive?.monthlyCheckins || 0} check-ins / month</small>
+          <strong style="color:var(--text);">${escapeHtml(byActive?.fullName || "—")}</strong>
+          <small style="color:var(--text-muted); font-weight:600;">${byActive?.monthlyCheckins || 0} check-ins</small>
         </article>
-        <article class="metric" style="border-top:3px solid var(--primary-ink);">
+        <article class="metric">
           <span>Category Points</span>
-          <strong style="color:var(--primary-ink);">${totalPts.toLocaleString()}</strong>
+          <strong style="color:var(--text);">${totalPts.toLocaleString()}</strong>
           <small style="color:var(--text-muted);">${isFiltered ? filterParts.join(" · ") : `All ${filtered.length} members`}</small>
         </article>
       </div>
@@ -426,7 +426,7 @@ export const leaderboardModule = {
       <section class="panel stack">
         <!-- Header row: title + ranking tabs -->
         <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
-          <h2 style="margin:0; font-size:1.05rem; font-weight:800; display:flex; align-items:center; gap:8px;">
+          <h2 style="margin:0; font-size:1.05rem; font-weight:800; display:flex; align-items:center; gap:8px; color:var(--text);">
             <span class="material-symbols-outlined" style="color:var(--primary-ink); font-size:1.2rem; font-variation-settings:'FILL' 1;">leaderboard</span>
             Rankings
             <span style="font-size:0.78rem; font-weight:600; color:var(--text-muted); margin-left:4px;">${filtered.length} members</span>
