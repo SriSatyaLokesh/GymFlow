@@ -1,12 +1,13 @@
-import { dateLabel, emptyState, escapeHtml, findName, money, pageHeader, statusClass } from "./utils.js";
+import { dateLabel, emptyState, escapeHtml, findName, getAugmentedPayments, money, pageHeader, statusClass } from "./utils.js";
 
 export const myPaymentsModule = {
   render(context) {
     const me = context.myMember;
     const currency = context.settings?.currency || "INR";
     const plans = context.data.membership_plans || [];
+    const allPayments = getAugmentedPayments(context);
     const mine = me
-      ? (context.data.payments || []).filter((payment) => payment.memberId === me.id)
+      ? allPayments.filter((payment) => payment.memberId === me.id)
       : [];
     const total = mine.reduce((sum, payment) => sum + Number(payment.amount || 0), 0);
 

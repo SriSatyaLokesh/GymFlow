@@ -1633,3 +1633,43 @@ export function bindSharedBmiEvents(form) {
   updateBmi();
 }
 
+export function getAugmentedPayments(context) {
+  const rawPayments = context?.data?.payments || [];
+  const members = context?.data?.members || [];
+  const plans = context?.data?.membership_plans || [];
+
+  const memberPaymentSet = new Set();
+  const list = rawPayments.map((p, idx) => {
+    if (p.memberId) memberPaymentSet.add(p.memberId);
+    const cleanId = String(p.id || idx + 1000).replace(/[^a-zA-Z0-9]/g, "");
+    return {
+      ...p,
+      receiptNumber: p.receiptNumber || `RCPT-${cleanId.slice(-8).toUpperCase()}`
+    };
+  });
+
+  members.forEach((member) => {
+    if (member.planId && !memberPaymentSet.has(member.id)) {
+      const plan = plans.find((p) => p.id === member.planId);
+      const amount = plan ? Number(plan.price || 0) : 0;
+      const cleanMemberId = String(member.id || "OLD").replace(/[^a-zA-Z0-9]/g, "");
+      const receiptHash = cleanMemberId.slice(-6).toUpperCase() || "OLD";
+
+      list.push({
+        id: `synth-pay-${member.id}`,
+        memberId: member.id,
+        planId: member.planId,
+        amount: amount,
+        date: member.startDate || member.joinDate || today(),
+        method: "Cash",
+        collectedBy: "Owner",
+        status: member.status === "Expired" ? "Expired" : "Paid",
+        receiptNumber: `RCPT-MEM-${receiptHash}`,
+        notes: `Admission fee for ${plan ? plan.planName : "Membership"}`
+      });
+    }
+  });
+
+  return list.sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")));
+}
+

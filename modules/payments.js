@@ -1,4 +1,4 @@
-import { collections, dateLabel, emptyState, escapeHtml, findName, formData, money, nameCell, optionList, pageHeader, statusClass, today, withButtonLoading } from "./utils.js";
+import { collections, dateLabel, emptyState, escapeHtml, findName, formData, getAugmentedPayments, money, nameCell, optionList, pageHeader, statusClass, today, withButtonLoading } from "./utils.js";
 
 async function _drawReceiptCanvas(payment, member, plan, settings) {
   const DPR    = 2;
@@ -264,7 +264,7 @@ export const paymentsModule = {
     this.activeView = this.activeView || "list";
 
     const { data, settings } = context;
-    const payments = data.payments || [];
+    const payments = getAugmentedPayments(context);
     const members = data.members || [];
     const plans = data.membership_plans || [];
     const currency = settings?.currency || "INR";
@@ -344,8 +344,10 @@ export const paymentsModule = {
   },
 
   bind(root, context) {
+    const payments = getAugmentedPayments(context);
+
     if (this.activeReceiptPaymentId) {
-      const payment = context.data.payments.find((item) => item.id === this.activeReceiptPaymentId);
+      const payment = payments.find((item) => item.id === this.activeReceiptPaymentId);
       const member = context.data.members.find((item) => item.id === payment?.memberId);
       const plan = context.data.membership_plans.find((item) => item.id === payment?.planId);
 
@@ -461,7 +463,7 @@ export const paymentsModule = {
 
     root.querySelectorAll("[data-share-receipt]").forEach((button) => {
       button.addEventListener("click", () => {
-        const payment = context.data.payments.find((item) => item.id === button.dataset.shareReceipt);
+        const payment = payments.find((item) => item.id === button.dataset.shareReceipt);
         const member = context.data.members.find((item) => item.id === payment?.memberId);
         const plan = context.data.membership_plans.find((item) => item.id === payment?.planId);
         if (!payment || !member) return;
