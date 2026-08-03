@@ -57,7 +57,7 @@ export const progressModule = {
         <div class="panel-heading"><h2>Progress History</h2><span>${records.length} records</span></div>
         ${
           records.length
-            ? `<div class="data-table">
+            ? `<div class="data-table progress-history-table">
                 <div class="table-head"><span>Member</span><span>Date</span><span>Weight</span><span>BMI</span><span>Notes</span></div>
                 ${records.map((record) => row(record, members)).join("")}
               </div>`
@@ -138,12 +138,12 @@ function renderMemberProgress(context) {
         <div class="panel-heading"><h2>History</h2><span>${records.length} records</span></div>
         ${
           records.length
-            ? `<div class="data-table">
+            ? `<div class="data-table member-progress-history-table">
                 <div class="table-head"><span>Date</span><span>Weight</span><span>BMI</span><span>Notes</span></div>
                 ${records
                   .map(
                     (record) => `
-                      <div class="table-row" style="grid-template-columns:1fr 0.7fr 0.7fr 1.4fr">
+                      <div class="table-row">
                         <span data-label="Date">${dateLabel(record.date)}</span>
                         <span data-label="Weight">${escapeHtml(record.weight || "-")} kg</span>
                         <span data-label="BMI">${escapeHtml(record.bmi || "-")}</span>

@@ -399,6 +399,25 @@ export const membersModule = {
             const savedProgress = await context.services.data.save(collections.progress, progressRecord);
             context.applyChange(collections.progress, savedProgress);
           }
+
+          if (isNew && saved.planId) {
+            const plan = context.data.membership_plans.find((p) => p.id === saved.planId);
+            const amount = plan ? Number(plan.price || 0) : 0;
+            const paymentRecord = {
+              memberId: saved.id,
+              planId: saved.planId,
+              amount,
+              date: saved.startDate || today(),
+              method: "Cash",
+              collectedBy: context.profile?.name || "Owner",
+              status: "Paid",
+              receiptNumber: `RCPT-${Date.now().toString().slice(-8)}`,
+              notes: `Auto-recorded admission payment for ${plan ? plan.planName : "plan"}`
+            };
+            const savedPayment = await context.services.data.save(collections.payments, paymentRecord);
+            context.applyChange(collections.payments, savedPayment);
+          }
+
           context.toast(isNew ? "Member added." : "Member updated.");
           context.applyChange(collections.members, saved);
 

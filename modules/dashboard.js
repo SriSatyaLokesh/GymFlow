@@ -447,9 +447,9 @@ function renderCommunityFeed(context) {
               return `
                 <div class="feed-item" style="display:flex; flex-direction:column; gap:8px; padding:12px; border:1px solid var(--line); border-radius:var(--r-md); background:var(--bg-alt);">
                   <div style="display:flex; gap:10px; align-items:center;">
-                    <div class="avatar-circle" style="width:36px; height:36px; border-radius:50%; background:var(--primary); color:var(--on-primary); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.9rem;">
+                    <span class="avatar small" style="width:36px; height:36px;">
                       ${initials}
-                    </div>
+                    </span>
                     <div>
                       <strong style="font-size:0.95rem; color:var(--text);">${escapeHtml(member.fullName)}</strong>
                       <div style="font-size:0.75rem; opacity:0.8; color:var(--text-muted);">${dateLabel(log.date)}</div>
@@ -457,9 +457,9 @@ function renderCommunityFeed(context) {
                   </div>
                   
                   <div style="padding-left:46px;">
-                    <h4 style="margin:0 0 4px 0; color:var(--accent); font-size:1rem;">${escapeHtml(log.routineName || "Workout")}</h4>
+                    <h4 style="margin:0 0 4px 0; color:var(--teal-ink); font-size:1rem;">${escapeHtml(log.routineName || "Workout")}</h4>
                     <small style="opacity:0.9; font-weight:600; font-size:0.8rem;">Duration: ${log.durationMinutes || 0} mins</small>
-                    ${log.notes ? `<p style="font-style:italic; font-size:0.85rem; margin:4px 0; opacity:0.95;">"${escapeHtml(log.notes)}"</p>` : ""}
+                    ${log.notes ? `<p style="font-style:italic; font-size:0.85rem; margin:4px 0; opacity:0.95; color:var(--text);">"${escapeHtml(log.notes)}"</p>` : ""}
                     
                     ${hasExercises ? `
                       <button class="ghost-button compact" data-toggle-feed-workout="${log.id}" data-exercise-count="${exercises.length}" style="font-size:0.75rem; padding: 4px 8px; margin-top: 6px; display:inline-flex; align-items:center; gap:4px; font-weight:600;">

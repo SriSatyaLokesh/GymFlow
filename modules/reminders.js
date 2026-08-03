@@ -1,4 +1,5 @@
 import { collections, dateLabel, daysUntil, emptyState, escapeHtml, memberStatus, nameCell, pageHeader, statusClass, whatsappUrl } from "./utils.js";
+import { renewalsModule } from "./renewals.js";
 
 export const remindersModule = {
   render({ data, settings }) {
@@ -14,7 +15,7 @@ export const remindersModule = {
         ${
           members.length
             ? `<div class="data-table reminder-table">
-                <div class="table-head"><span>Member</span><span>Expiry</span><span>Status</span><span>Message</span><span></span></div>
+                <div class="table-head"><span>Member</span><span>Expiry</span><span>Status</span><span></span></div>
                 ${members.map((member) => row(member, settings)).join("")}
               </div>`
             : emptyState("No reminders due", "Upcoming renewals and expired memberships will appear here.")
@@ -38,20 +39,34 @@ export const remindersModule = {
         context.applyChange(collections.reminders, saved);
       });
     });
+
+    root.querySelectorAll("[data-action='quick-renew']").forEach((button) => {
+      button.addEventListener("click", () => {
+        renewalsModule.activeView = "add";
+        renewalsModule.prefilledMemberId = button.dataset.memberId;
+        context.navigate("renewals");
+      });
+    });
   }
 };
 
 function row(member, settings) {
   const message = buildMessage(member, settings);
+  const days = member.remaining;
+  const daysLabel = days < 0 ? `${Math.abs(days)}d overdue` : days === 0 ? "Today" : `${days}d left`;
+  const daysClass = days < 0 ? "danger" : days <= 7 ? "warn" : "ok";
   return `
     <div class="table-row">
       ${nameCell(member.fullName, member.mobile || "", member.avatarUrl || "")}
-      <span data-label="Expiry">${dateLabel(member.endDate)}</span>
+      <span data-label="Expiry">
+        ${dateLabel(member.endDate)}
+        <small class="row-meta days-chip days-${daysClass}">${daysLabel}</small>
+      </span>
       <span data-label="Status"><mark class="status ${statusClass(member.computedStatus)}">${escapeHtml(member.computedStatus)}</mark></span>
-      <span data-label="Message"><small>${escapeHtml(message)}</small></span>
       <span class="row-actions">
-        <a class="primary-button" href="${whatsappUrl(member, message)}" target="_blank" rel="noreferrer"><span class="material-symbols-outlined">send</span>Send</a>
-        <button class="icon-button" data-reminder-sent="${escapeHtml(member.id)}"><span class="material-symbols-outlined">done</span></button>
+        <a class="icon-btn" href="${whatsappUrl(member, message)}" target="_blank" rel="noreferrer" title="Send WhatsApp Reminder"><span class="material-symbols-outlined">send</span></a>
+        <button class="icon-btn" data-reminder-sent="${escapeHtml(member.id)}" title="Mark as Sent"><span class="material-symbols-outlined">done</span></button>
+        <button class="icon-btn" data-action="quick-renew" data-member-id="${escapeHtml(member.id)}" title="Renew Membership"><span class="material-symbols-outlined">autorenew</span></button>
       </span>
     </div>
   `;

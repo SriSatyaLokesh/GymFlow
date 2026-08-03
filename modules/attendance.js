@@ -84,7 +84,7 @@ export const attendanceModule = {
           </div>
           ${
             filteredRecords.length
-              ? `<div class="data-table">
+              ? `<div class="data-table checkins-table">
                   <div class="table-head"><span>Member</span><span>Date</span><span>Time</span><span>Trainer</span></div>
                   ${filteredRecords.slice(0, 50).map((record) => row(record, members, trainers)).join("")}
                 </div>`
@@ -229,13 +229,13 @@ function renderMemberAttendance(context) {
         <div class="panel-heading"><h2>My Recent Check-ins</h2><span>${mine.length} total</span></div>
         ${
           mine.length
-            ? `<div class="data-table">
+            ? `<div class="data-table two-col-table">
                 <div class="table-head"><span>Date</span><span>Time</span></div>
                 ${mine
                   .slice(0, 15)
                   .map(
                     (record) => `
-                      <div class="table-row" style="grid-template-columns:1fr 1fr">
+                      <div class="table-row">
                         <span data-label="Date">${dateLabel(record.date)}</span>
                         <span data-label="Time">${escapeHtml(record.time || "-")}</span>
                       </div>
@@ -303,13 +303,13 @@ function inactiveList(members, records, days) {
   }
 
   return `
-    <div class="data-table">
+    <div class="data-table inactive-table">
       <div class="table-head"><span>Member</span><span>Last Check-in</span><span>Days Inactive</span></div>
       ${inactive
         .map(({ member, last }) => {
           const gap = last ? -daysUntil(last) : null;
           return `
-            <div class="table-row" style="grid-template-columns:1.5fr 1fr 1fr">
+            <div class="table-row">
               <span data-label="Member">${nameCell(member.fullName, member.mobile || "", member.avatarUrl || "")}</span>
               <span data-label="Last Check-in">${last ? dateLabel(last) : "Never"}</span>
               <span data-label="Days Inactive"><mark class="status ${gap !== null && gap >= 30 ? "expired" : "expiring-soon"}">${gap !== null ? `${gap} days` : "No visits"}</mark></span>

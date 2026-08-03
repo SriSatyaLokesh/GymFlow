@@ -130,6 +130,10 @@ async function boot() {
     if (trainerMembersModule.activeMemberId) trainerMembersModule.activeMemberId = null;
     if (trainerMembersModule.activeView) trainerMembersModule.activeView = "list";
     if (paymentsModule.activeReceiptPaymentId) paymentsModule.activeReceiptPaymentId = null;
+    if (paymentsModule.activeView) paymentsModule.activeView = "list";
+    if (paymentsModule.prefilledMemberId) paymentsModule.prefilledMemberId = null;
+    if (renewalsModule.activeView) renewalsModule.activeView = "list";
+    if (renewalsModule.prefilledMemberId) renewalsModule.prefilledMemberId = null;
     reportsModule.activeTab = "analytics";
     render();
   });
