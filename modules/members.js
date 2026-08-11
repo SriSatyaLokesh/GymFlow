@@ -56,7 +56,7 @@ function renderMemberForm(member, plans, trainers) {
         ${renderSharedMemberFields(member || {})}
       </div>
       <label class="wide checkbox-label" style="margin-top: 10px;">
-        <input type="checkbox" name="whatsappOptIn" value="true" ${member?.whatsappOptIn ? "checked" : ""} />
+        <input type="checkbox" name="whatsappOptIn" value="true" ${(isEdit ? member.whatsappOptIn : true) ? "checked" : ""} />
         Consent to WhatsApp reminders about membership &amp; renewals
       </label>
       <label class="wide checkbox-label">

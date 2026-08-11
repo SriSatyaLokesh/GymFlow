@@ -34,7 +34,7 @@ const appRoot = document.querySelector("#app");
 // 4th element = roles allowed to see this nav item / route. Defaults to owner+member.
 const ALL_ROLES = ["owner", "member"];
 const nav = [
-  ["dashboard", "Dashboard", "grid_view", ["owner", "member", "trainer"]],
+  ["dashboard", "Dashboard", "grid_view", ["owner", "member", "trainer", "guest"]],
   ["members", "Members", "group", ["owner"]],
   ["leaderboard", "Leaderboard", "leaderboard", ["owner", "trainer"]],
   ["plans", "Plans", "layers", ["owner"]],
@@ -44,15 +44,15 @@ const nav = [
   ["trainers", "Trainers", "badge", ["owner"]],
   ["attendance", "Check-ins", "how_to_reg", ALL_ROLES],
   ["workouts", "Workouts", "fitness_center", ["owner", "trainer"]],
-  ["progress", "Progress", "trending_up", ALL_ROLES],
+  ["progress", "Progress", "trending_up", ["owner", "member", "guest"]],
   ["reports", "Reports", "bar_chart", ["owner"]],
-  ["my-membership", "My Membership", "card_membership", ["member"]],
+  ["my-membership", "My Membership", "card_membership", ["member", "guest"]],
   ["my-payments", "My Payments", "receipt_long", ["member"]],
-  ["my-workout", "My Workout", "fitness_center", ["member"]],
+  ["my-workout", "My Workout", "fitness_center", ["member", "guest"]],
   ["trainer-checkin", "Check In", "how_to_reg", ["trainer"]],
   ["my-checkins", "My Check-ins", "history", ["trainer"]],
   ["trainer-members", "My Clients", "group", ["trainer"]],
-  ["profile", "Profile", "person", ["member"]], // owner/trainer use the sidebar profile chip
+  ["profile", "Profile", "person", ["member", "guest"]], // owner/trainer use the sidebar profile chip
   ["settings", "Settings", "settings", ["owner"]]
 ];
 
@@ -116,6 +116,50 @@ const state = {
   toast: ""
 };
 
+async function migrateGuestData(newProfile) {
+  try {
+    const templatesJson = localStorage.getItem("gymflow.guest.workout_templates");
+    const progressJson = localStorage.getItem("gymflow.guest.progress_records");
+    const logsJson = localStorage.getItem("gymflow.guest.workout_logs");
+
+    if (templatesJson) {
+      const templates = JSON.parse(templatesJson);
+      for (const t of templates) {
+        delete t.id;
+        t.createdByUid = newProfile.uid;
+        t.gymId = newProfile.gymId || "default-gym";
+        t.createdByRole = newProfile.role;
+        await state.services.data.save("workout_templates", t);
+      }
+      localStorage.removeItem("gymflow.guest.workout_templates");
+    }
+
+    if (progressJson) {
+      const records = JSON.parse(progressJson);
+      for (const r of records) {
+        delete r.id;
+        r.uid = newProfile.uid;
+        r.gymId = newProfile.gymId || "default-gym";
+        await state.services.data.save("progress_records", r);
+      }
+      localStorage.removeItem("gymflow.guest.progress_records");
+    }
+
+    if (logsJson) {
+      const logs = JSON.parse(logsJson);
+      for (const l of logs) {
+        delete l.id;
+        l.uid = newProfile.uid;
+        l.gymId = newProfile.gymId || "default-gym";
+        await state.services.data.save("workout_logs", l);
+      }
+      localStorage.removeItem("gymflow.guest.workout_logs");
+    }
+  } catch (e) {
+    console.error("Failed to migrate guest data:", e);
+  }
+}
+
 boot();
 
 async function boot() {
@@ -125,6 +169,13 @@ async function boot() {
 
   window.addEventListener("hashchange", async () => {
     state.route = getRoute();
+    if (state.profile?.role === "guest") {
+      const allowedGuestRoutes = ["dashboard", "my-workout", "progress", "my-membership", "profile"];
+      if (!allowedGuestRoutes.includes(state.route)) {
+        location.hash = "#/dashboard";
+        return;
+      }
+    }
     if (membersModule.activeMemberId) membersModule.activeMemberId = null;
     if (membersModule.activeView) membersModule.activeView = "list";
     if (trainerMembersModule.activeMemberId) trainerMembersModule.activeMemberId = null;
@@ -141,10 +192,27 @@ async function boot() {
 
   state.services.auth.onAuthChange(async (profile) => {
     state.authReady = true;
-    state.profile = profile;
     if (profile) {
+      const oldProfile = state.profile;
+      state.profile = profile;
+      if (oldProfile?.role === "guest") {
+        await migrateGuestData(profile);
+      }
+      localStorage.removeItem("gymflow.guest.profile");
       await refreshData();
     } else {
+      const guestProfile = localStorage.getItem("gymflow.guest.profile");
+      if (guestProfile) {
+        try {
+          state.profile = JSON.parse(guestProfile);
+          state.settings = { gymName: "Guest Workspace", currency: "INR", currencySymbol: "₹", ownerName: "Guest Explorer" };
+          await refreshData();
+          return;
+        } catch (e) {
+          localStorage.removeItem("gymflow.guest.profile");
+        }
+      }
+      state.profile = null;
       state.loading = false;
       render();
     }
@@ -244,6 +312,49 @@ async function reloadData(targetRoute = state.route) {
   try {
     const routeCollections = ROUTE_SCOPES[targetRoute] || [];
     const needed = [...new Set([...GLOBAL_COLLECTIONS, ...routeCollections])];
+
+    if (state.profile?.role === "guest") {
+      if (!state.settings) {
+        state.settings = {
+          gymName: "Guest Workspace",
+          currency: "INR",
+          currencySymbol: "₹",
+          ownerName: "Guest Explorer"
+        };
+      }
+      needed.forEach((name) => {
+        if (state.data[name] === undefined) {
+          if (name === "membership_plans") {
+            const saved = localStorage.getItem("gymflow.guest.membership_plans");
+            state.data[name] = saved ? JSON.parse(saved) : [
+              { id: "plan-monthly", planName: "Monthly Membership", durationDays: 30, price: 1000, description: "Standard monthly access", benefits: "Full gym access, locker rooms" },
+              { id: "plan-quarterly", planName: "3 Months Membership", durationDays: 90, price: 2700, description: "Discounted quarterly access", benefits: "Save 10%, full gym access" }
+            ];
+          } else if (name === "workout_templates") {
+            const saved = localStorage.getItem("gymflow.guest.workout_templates");
+            state.data[name] = saved ? JSON.parse(saved) : [];
+          } else if (name === "progress_records") {
+            const saved = localStorage.getItem("gymflow.guest.progress_records");
+            state.data[name] = saved ? JSON.parse(saved) : [];
+          } else if (name === "workout_logs") {
+            const saved = localStorage.getItem("gymflow.guest.workout_logs");
+            state.data[name] = saved ? JSON.parse(saved) : [];
+          } else if (name === "exercise_library") {
+            state.data[name] = [
+              { id: "ex-bench-press", name: "Bench Press", category: "Chest" },
+              { id: "ex-squat", name: "Barbell Squat", category: "Legs" },
+              { id: "ex-deadlift", name: "Deadlift", category: "Back" },
+              { id: "ex-shoulder-press", name: "Dumbbell Shoulder Press", category: "Shoulders" },
+              { id: "ex-bicep-curl", name: "Bicep Curl", category: "Arms" }
+            ];
+          } else {
+            state.data[name] = [];
+          }
+        }
+      });
+      state.error = "";
+      return;
+    }
 
     // Filter out collections already loaded in state.data
     const toFetch = needed.filter((name) => !state.data[name]);
@@ -655,12 +766,18 @@ function applyChange(collectionName, savedDoc) {
     list.unshift(savedDoc); // newest first, matches list() sort by updatedAt desc
   }
   state.data[collectionName] = list;
+  if (state.profile?.role === "guest") {
+    localStorage.setItem("gymflow.guest." + collectionName, JSON.stringify(list));
+  }
   renderView();
 }
 
 // Remove a doc from local state (after a successful delete) and re-render.
 function applyRemoval(collectionName, id) {
   state.data[collectionName] = (state.data[collectionName] || []).filter((item) => item.id !== id);
+  if (state.profile?.role === "guest") {
+    localStorage.setItem("gymflow.guest." + collectionName, JSON.stringify(state.data[collectionName]));
+  }
   renderView();
 }
 
@@ -682,7 +799,15 @@ function render() {
     renderAuth(appRoot, {
       services: state.services,
       mode: state.services?.mode,
-      onToast: showToast
+      onToast: showToast,
+      onGuestLogin: async () => {
+        state.profile = { role: "guest", uid: "guest-user", name: "Guest Explorer", gymId: "guest-gym" };
+        state.settings = { gymName: "Guest Workspace", currency: "INR", currencySymbol: "₹", ownerName: "Guest Explorer" };
+        localStorage.setItem("gymflow.guest.profile", JSON.stringify(state.profile));
+        location.hash = "#/dashboard";
+        await reloadData();
+        render();
+      }
     });
     return;
   }
@@ -918,11 +1043,41 @@ function makeContext() {
   );
   const myMember = myMembers.find((m) => memberStatus(m) !== "Pending") || myMembers[0] || null;
   const myTrainer = (state.data.trainers || []).find((t) => t.uid === state.profile?.uid) || null;
+
+  const services = { ...state.services };
+  if (state.profile?.role === "guest") {
+    services.data = {
+      ...services.data,
+      async save(collection, doc) {
+        let savedDoc = { ...doc };
+        if (!savedDoc.id) {
+          savedDoc.id = "guest-" + collection + "-" + Math.random().toString(36).substr(2, 9);
+        }
+        savedDoc.updatedAt = new Date().toISOString();
+        const list = state.data[collection] || [];
+        const index = list.findIndex(item => item.id === savedDoc.id);
+        if (index >= 0) {
+          list[index] = savedDoc;
+        } else {
+          list.unshift(savedDoc);
+        }
+        localStorage.setItem("gymflow.guest." + collection, JSON.stringify(list));
+        state.data[collection] = list;
+        return savedDoc;
+      },
+      async remove(collection, id) {
+        const list = (state.data[collection] || []).filter(item => item.id !== id);
+        localStorage.setItem("gymflow.guest." + collection, JSON.stringify(list));
+        state.data[collection] = list;
+      }
+    };
+  }
+
   return {
     profile: state.profile,
     settings: state.settings,
     data: state.data,
-    services: state.services,
+    services: services,
     refresh: refreshData,
     refreshView,
     applyChange,
@@ -944,6 +1099,19 @@ function bindAppEvents() {
   });
 
   document.querySelector("[data-action='logout']")?.addEventListener("click", async () => {
+    if (state.profile?.role === "guest") {
+      const confirm = window.confirm("⚠️ Loss Warning: You are about to lose your custom workout routines and BMI graphs. Register a free account now to protect your work!");
+      if (!confirm) return;
+      localStorage.removeItem("gymflow.guest.profile");
+      localStorage.removeItem("gymflow.guest.workout_templates");
+      localStorage.removeItem("gymflow.guest.progress_records");
+      localStorage.removeItem("gymflow.guest.workout_logs");
+      state.profile = null;
+      state.settings = null;
+      state.data = {};
+      render();
+      return;
+    }
     await state.services.auth.logout();
     showToast("Signed out.");
   });

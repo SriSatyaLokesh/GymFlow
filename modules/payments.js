@@ -297,8 +297,8 @@ export const paymentsModule = {
             <label>Date<input name="date" type="date" value="${today()}" required /></label>
             <label>Method
               <select name="method">
-                <option>Cash</option>
                 <option>UPI</option>
+                <option>Cash</option>
                 <option>Card</option>
                 <option>Bank Transfer</option>
               </select>
@@ -311,7 +311,7 @@ export const paymentsModule = {
                 <option>Refunded</option>
               </select>
             </label>
-            <label>Collected by<input name="collectedBy" value="Owner" maxlength="80" /></label>
+            <label>Collected by<input name="collectedBy" value="${escapeHtml(context.profile?.name || "Owner")}" maxlength="80" /></label>
             <label class="wide" style="grid-column: span 2;">Notes<textarea name="notes" rows="2" placeholder="Transaction remarks/details (e.g. UPI Ref ID, Cash change details)"></textarea></label>
           </div>
           <div class="button-row" style="margin-top:15px;">
