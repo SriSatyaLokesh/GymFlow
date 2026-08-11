@@ -167,8 +167,25 @@ async function boot() {
   registerServiceWorker();
   getExercises().catch(() => {});
 
+  let isReverting = false;
   window.addEventListener("hashchange", async () => {
-    state.route = getRoute();
+    if (isReverting) return;
+    const nextRoute = getRoute();
+    if (state.route === "my-workout" && nextRoute !== "my-workout") {
+      const hasActiveWorkout = localStorage.getItem("gymflow.active_workout");
+      if (hasActiveWorkout) {
+        const leave = window.confirm("⚠️ You will lose your current workout log and active progress. Save now to log your consistency points!");
+        if (!leave) {
+          isReverting = true;
+          location.hash = "#/my-workout";
+          setTimeout(() => { isReverting = false; }, 50);
+          return;
+        } else {
+          localStorage.removeItem("gymflow.active_workout");
+        }
+      }
+    }
+    state.route = nextRoute;
     if (state.profile?.role === "guest") {
       const allowedGuestRoutes = ["dashboard", "my-workout", "progress", "my-membership", "profile"];
       if (!allowedGuestRoutes.includes(state.route)) {
@@ -188,6 +205,15 @@ async function boot() {
     reportsModule.activeTab = "analytics";
     await reloadData(state.route);
     render();
+  });
+
+  window.addEventListener("beforeunload", (event) => {
+    const hasActiveWorkout = localStorage.getItem("gymflow.active_workout");
+    if (hasActiveWorkout) {
+      event.preventDefault();
+      event.returnValue = "⚠️ You will lose your current workout log and active progress. Save now to log your consistency points!";
+      return event.returnValue;
+    }
   });
 
   state.services.auth.onAuthChange(async (profile) => {

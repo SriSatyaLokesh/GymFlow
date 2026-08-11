@@ -5,7 +5,7 @@ export const dashboardModule = {
   selectedGender: null,
   selectedWeightClass: null,
   render(context) {
-    if (context.profile?.role === "member") {
+    if (context.profile?.role === "member" || context.profile?.role === "guest") {
       return renderMemberDashboard(context);
     }
     if (context.profile?.role === "trainer") {
@@ -18,7 +18,7 @@ export const dashboardModule = {
     const currency = settings?.currency || "INR";
     const today = new Date().toISOString().slice(0, 10);
     const month = today.slice(0, 7);
-
+ 
     const active = members.filter((member) => memberStatus(member) === "Active").length;
     const expiring = members.filter((member) => daysUntil(member.endDate) >= 0 && daysUntil(member.endDate) <= 15).length;
     const expired = members.filter((member) => memberStatus(member) === "Expired").length;
@@ -31,7 +31,7 @@ export const dashboardModule = {
       .filter((member) => member.computedStatus !== "Paused" && member.remaining <= 7)
       .sort((a, b) => a.remaining - b.remaining)
       .slice(0, 6);
-
+ 
     return `
       ${pageHeader("Dashboard")}
       <div class="metric-grid">
@@ -40,14 +40,14 @@ export const dashboardModule = {
         ${metric("Revenue Month", money(revenueMonth, currency))}
         ${metric("Attendance Today", attendanceToday)}
       </div>
-
+ 
       <div style="margin: -10px 0 20px 0; text-align: left;">
         <button class="ghost-button compact" id="toggle-more-metrics" style="display:inline-flex; align-items:center; gap:4px; font-weight:600;">
           <span class="material-symbols-outlined" style="font-size:1.15rem;">expand_more</span>
           Show More Metrics
         </button>
       </div>
-
+ 
       <div class="metric-grid hidden" id="more-metrics-panel" style="margin-bottom: 20px;">
         ${metric("Revenue Today", money(revenueToday, currency))}
         ${metric("Expiring Soon", expiring)}
@@ -55,7 +55,7 @@ export const dashboardModule = {
         ${metric("Paused Members", paused)}
         ${metric("Pending Payments", payments.filter((payment) => payment.status === "Pending" || payment.status === "Partial").length)}
       </div>
-
+ 
       <div class="split-grid">
         <section class="panel">
           <div class="panel-heading">
@@ -74,7 +74,7 @@ export const dashboardModule = {
           ${renderRevenueChart(payments, currency)}
         </section>
       </div>
-
+ 
       <div class="split-grid" style="margin-top:20px;">
         <section class="panel">
           <div class="panel-heading">
@@ -103,20 +103,20 @@ export const dashboardModule = {
         context.refreshView();
       });
     });
-
+ 
     // Bind dropdown changes
     const genderSelect = root.querySelector("#leaderboard-gender-select");
     genderSelect?.addEventListener("change", () => {
       this.selectedGender = genderSelect.value;
       context.refreshView();
     });
-
+ 
     const weightSelect = root.querySelector("#leaderboard-weight-select");
     weightSelect?.addEventListener("change", () => {
       this.selectedWeightClass = weightSelect.value;
       context.refreshView();
     });
-
+ 
     // Toggle Metrics
     const toggleBtn = root.querySelector("#toggle-more-metrics");
     const panel = root.querySelector("#more-metrics-panel");
@@ -129,7 +129,7 @@ export const dashboardModule = {
           : `<span class="material-symbols-outlined" style="font-size:1.15rem;">expand_more</span>Show More Metrics`;
       });
     }
-
+ 
     // Toggle Feed Workouts
     root.querySelectorAll("[data-toggle-feed-workout]").forEach(btn => {
       btn.addEventListener("click", () => {
@@ -147,7 +147,7 @@ export const dashboardModule = {
     });
   }
 };
-
+ 
 function metric(label, value) {
   return `
     <article class="metric">
@@ -156,9 +156,22 @@ function metric(label, value) {
     </article>
   `;
 }
-
+ 
 function renderMemberDashboard(context) {
-  const me = context.myMember;
+  const isGuest = context.profile?.role === "guest";
+  let me = context.myMember;
+  if (isGuest && !me) {
+    me = {
+      status: "Active",
+      endDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+      dateOfBirth: "",
+      address: "",
+      initWeight: null,
+      emergencyName: "",
+      emergencyPhone: ""
+    };
+  }
+ 
   const name = context.profile?.name || "there";
   if (!me) {
     return `
@@ -169,14 +182,14 @@ function renderMemberDashboard(context) {
       </section>
     `;
   }
-
+ 
   const today = new Date().toISOString().slice(0, 10);
   const attendance = context.data.attendance || [];
   const myAttendance = attendance.filter((record) => record.memberId === me.id);
   const checkedInToday = myAttendance.some((record) => record.date === today);
   const status = me.status === "Pending" ? "Pending" : memberStatus(me);
   const remaining = daysUntil(me.endDate);
-
+ 
   // Calculate Payment / Renewal Status Warning
   let billingStatus = "active";
   let billingLabel = "Active";
@@ -186,15 +199,15 @@ function renderMemberDashboard(context) {
   if (remaining < 0) {
     billingStatus = "overdue";
     billingLabel = "Payment Overdue";
-    billingText = `Your plan expired ${Math.abs(remaining)} days ago. Please renew to continue gym access.`;
+    billingText = `⚠️ Expiry Warning: Your attendance streak and consistency points ledger have frozen. Renew today to protect your progress.`;
     billingIcon = "error";
   } else if (remaining <= 5) {
     billingStatus = "due";
     billingLabel = "Payment Due Soon";
-    billingText = `Your plan expires in ${remaining} days. Please renew to avoid access interruption.`;
+    billingText = `⚠️ Expiry Warning: Your active attendance streak and consistency points ledger will freeze in ${remaining} days. Renew today to protect your progress.`;
     billingIcon = "warning";
   }
-
+ 
   const billingWidgetHtml = `
     <section class="billing-status-widget status-${billingStatus}" style="margin-bottom: 20px;">
       <div style="display:flex; align-items:center; gap:12px; text-align:left;">
@@ -206,14 +219,60 @@ function renderMemberDashboard(context) {
         </div>
       </div>
       <div style="text-align:right; flex-shrink:0;">
-        <a class="primary-button" href="#/progress" style="padding: 8px 12px; font-size:0.8rem; font-weight:700;">View History</a>
+        <a class="primary-button" href="#/my-membership" style="padding: 8px 12px; font-size:0.8rem; font-weight:700;">View Membership</a>
       </div>
     </section>
   `;
 
+  // Goal Gradient Checklist Calculations
+  const checklist = [
+    { label: "Account Activated", completed: true, desc: "Welcome aboard! Your session is initialized." },
+    { label: "Complete Profile Details", completed: !!(me.dateOfBirth && me.address), desc: "Enter your Date of Birth & Address in Profile.", link: "#/profile" },
+    { label: "Record Initial Measurements", completed: !!(me.initWeight), desc: "Record your initial weight in Progress.", link: "#/progress" },
+    { label: "Add Emergency Contact", completed: !!(me.emergencyName && me.emergencyPhone), desc: "Add an emergency contact name & phone in Profile.", link: "#/profile" },
+    { label: "Log Your First Workout", completed: (context.data.workout_logs || []).length > 0, desc: "Record your first workout session in My Workout.", link: "#/my-workout" }
+  ];
+
+  const completedCount = checklist.filter(c => c.completed).length;
+  const completionPercentage = completedCount * 20;
+
+  const checklistHtml = `
+    <section class="panel onboarding-checklist-widget" style="margin-bottom: 20px;">
+      <div class="panel-heading" style="margin-bottom:12px; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <h2 style="margin:0;">Profile Completeness &amp; Readiness</h2>
+          <span style="font-size: 0.85rem; color: var(--muted);">Build momentum: Complete these 5 steps to start your gym journey!</span>
+        </div>
+        <strong style="font-size: 1.35rem; color: var(--teal); font-weight: 800;">${completionPercentage}%</strong>
+      </div>
+      
+      <div class="progress-bar-container" style="background:var(--line, #e2e8f0); border-radius:10px; height:10px; overflow:hidden; margin-bottom:15px; border: 1px solid var(--border-color, #cbd5e1);">
+        <div class="progress-bar-fill" style="width:${completionPercentage}%; height:100%; background:linear-gradient(90deg, var(--teal, #14b8a6), var(--accent, #6366f1)); transition:width 0.4s ease;"></div>
+      </div>
+
+      <div class="checklist-items-grid" style="display:flex; flex-direction:column; gap:10px;">
+        ${checklist.map((item, idx) => `
+          <div class="checklist-item" style="display:flex; align-items:flex-start; gap:10px; padding:8px 12px; border-radius:6px; background: ${item.completed ? 'rgba(20, 184, 166, 0.05)' : 'var(--card-bg-light, #fafafa)'}; border: 1px solid ${item.completed ? 'rgba(20, 184, 166, 0.2)' : 'var(--border-color, #e2e8f0)'};">
+            <span class="material-symbols-outlined" style="font-size: 20px; color: ${item.completed ? 'var(--teal, #14b8a6)' : 'var(--muted, #94a3b8)'}; flex-shrink: 0; margin-top: 1px;">
+              ${item.completed ? 'check_circle' : 'radio_button_unchecked'}
+            </span>
+            <div style="flex-grow:1; text-align:left;">
+              <strong style="font-size:0.9rem; color:${item.completed ? 'var(--teal-ink, #0f766e)' : 'var(--ink, #1e293b)'}; display:block;">${item.label}</strong>
+              <span style="font-size:0.8rem; color:var(--muted);">${item.desc}</span>
+            </div>
+            ${!item.completed && item.link ? `
+              <a href="${item.link}" class="ghost-button compact" style="padding: 4px 8px; font-size:0.75rem; font-weight:700; flex-shrink: 0; align-self: center;">Complete</a>
+            ` : ""}
+          </div>
+        `).join("")}
+      </div>
+    </section>
+  `;
+ 
   return `
     ${pageHeader(`Welcome, ${name}`)}
     ${me.status === "Pending" ? `<div class="panel-hint" style="margin-bottom:18px">Your membership is pending approval from the gym.</div>` : billingWidgetHtml}
+    ${checklistHtml}
     <div class="metric-grid">
       <article class="metric"><span>Membership</span><strong><mark class="status ${statusClass(status)}">${escapeHtml(status)}</mark></strong></article>
       <article class="metric"><span>Expires</span><strong>${me.endDate ? dateLabel(me.endDate) : "-"}</strong></article>

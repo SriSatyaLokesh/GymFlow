@@ -342,6 +342,38 @@ if (!edgeCaseMembersHtml.includes("Unassigned") || !edgeCaseMembersHtml.includes
   throw new Error("UX Validation Failed: Members list did not gracefully handle null/empty fields.");
 }
 
+// 5. Psychological Principles & Guest Mode checks
+console.info("-> Validating Psychological Principles & Guest Mode UX...");
+
+// A. Smart Defaults
+import { renderSharedMemberFields } from "../modules/utils.js";
+const defaultsHtml = renderSharedMemberFields({});
+if (!defaultsHtml.includes('value="General Fitness" selected') && !defaultsHtml.includes('General Fitness</option>')) {
+  // Let's check if the selected tag matches our variables
+  if (!defaultsHtml.includes('value="General Fitness"') || !defaultsHtml.includes('value="O+"')) {
+    throw new Error("Smart Defaults Validation Failed: Gym goal or Blood group fields do not contain defaults.");
+  }
+}
+
+// B. Goal Gradient Checklist
+const guestContext = {
+  profile: { name: "Guest User", role: "guest", uid: "guest-user" },
+  settings: { gymName: "Smoke Gym", currency: "INR", vipPlanEnabled: true, vipPlanPrice: 5000 },
+  services: { mode: "local" },
+  data: makeData(),
+  myMember: null
+};
+const guestDashboardHtml = dashboardModule.render(guestContext);
+if (!guestDashboardHtml.includes("Profile Completeness &amp; Readiness") || !guestDashboardHtml.includes("20%")) {
+  throw new Error("Goal Gradient Validation Failed: Dashboard is missing 20% default completeness checklist.");
+}
+
+// C. Contrast Pricing Anchor
+const guestMembershipHtml = myMembershipModule.render(guestContext);
+if (!guestMembershipHtml.includes("VIP Personal Coaching Package") || !guestMembershipHtml.includes("Most Elite")) {
+  throw new Error("Contrast Effect Validation Failed: Pricing catalog is missing high-value VIP Anchor Plan.");
+}
+
 console.log("-> Running gamification unit tests...");
 execSync("node scripts/test-gamification.mjs", { stdio: "inherit" });
 
