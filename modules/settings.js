@@ -18,6 +18,14 @@ export const settingsModule = {
               </select>
             </label>
             <label class="wide">Address<textarea name="address" rows="3">${escapeHtml(settings?.address || "")}</textarea></label>
+            <div class="form-section-heading wide">VIP Pricing Anchor</div>
+            <label class="wide checkbox-label">
+              <input type="checkbox" name="vipPlanEnabled" value="true" ${settings?.vipPlanEnabled !== false ? "checked" : ""} />
+              Enable VIP Anchor Plan
+            </label>
+            <label>VIP Plan Name<input name="vipPlanName" value="${escapeHtml(settings?.vipPlanName || "VIP Personal Coaching Package")}" /></label>
+            <label>VIP Plan Price<input name="vipPlanPrice" type="number" min="0" value="${escapeHtml(String(settings?.vipPlanPrice ?? 5000))}" /></label>
+            <label class="wide">VIP Plan Description<textarea name="vipPlanDescription" rows="2">${escapeHtml(settings?.vipPlanDescription || "1-on-1 private trainer, customized nutrition and supplement guidelines, weekly body metrics tracking, and priority equipment booking.")}</textarea></label>
           </div>
           <button class="primary-button" type="submit">Save settings</button>
         </form>
@@ -58,6 +66,13 @@ export const settingsModule = {
             <label class="file-button">Import JSON<input type="file" accept="application/json" data-action="import" /></label>
           </div>
         </section>
+        <section class="panel stack settings-footer">
+          <div class="panel-heading"><h2>About GymFlow</h2></div>
+          <p class="panel-hint">Open-source Gym Management &amp; Tracking Platform.</p>
+          <div class="attribution-text">
+            Made with <span class="heart">❤️</span> by <a href="https://github.com/SriSatyaLokesh" target="_blank" rel="noopener noreferrer">SriSatyaLokesh</a> &amp; <a href="https://github.com/ravitej18" target="_blank" rel="noopener noreferrer">Raviteja</a>
+          </div>
+        </section>
       </div>
     `;
   },
@@ -66,6 +81,8 @@ export const settingsModule = {
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
       const payload = formData(form);
+      payload.vipPlanEnabled = form.vipPlanEnabled.checked;
+      payload.vipPlanPrice = Number(payload.vipPlanPrice || 0);
       // The gym name shows in the sidebar, so only a name change needs a full
       // shell re-render; everything else can use the lightweight scoped update.
       const nameChanged = (payload.gymName || "") !== (context.settings?.gymName || "");

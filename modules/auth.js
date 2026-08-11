@@ -34,6 +34,7 @@ export function renderAuth(root, context) {
           <button class="primary-button" type="submit">Login</button>
           <button class="link-button" type="button" data-action="reset-password">Forgot password</button>
           ${context.mode === "local" ? `<button class="ghost-button" type="button" data-action="demo">Open demo workspace</button>` : ""}
+          <button class="ghost-button" type="button" data-action="guest" style="margin-top: 12px; background: rgba(16, 185, 129, 0.08); border-color: var(--teal); color: var(--teal-ink); font-weight: 600; width: 100%;">Try GymFlow as a Guest</button>
         </form>
 
         <div id="register-panel" class="stack ${isInvite ? "" : "hidden"}">
@@ -116,6 +117,9 @@ export function renderAuth(root, context) {
         </div>
 
         <p class="auth-note">${escapeHtml(context.mode === "firebase" ? "Your gym data is saved and synced automatically." : "Running in demo mode on this device.")}</p>
+        <footer class="auth-footer">
+          Made with <span class="heart">❤️</span> by <a href="https://github.com/SriSatyaLokesh" target="_blank" rel="noopener noreferrer">SriSatyaLokesh</a> &amp; <a href="https://github.com/ravitej18" target="_blank" rel="noopener noreferrer">Raviteja</a>
+        </footer>
       </section>
     </main>
     <div class="toast" data-auth-toast></div>
@@ -232,6 +236,14 @@ function bindAuth(root, context) {
     await run(root, context, async () => {
       await context.services.auth.useDemo();
       context.onToast("Demo workspace loaded.");
+    });
+  });
+
+  root.querySelector("[data-action='guest']")?.addEventListener("click", async () => {
+    await run(root, context, async () => {
+      if (typeof context.onGuestLogin === "function") {
+        await context.onGuestLogin();
+      }
     });
   });
 

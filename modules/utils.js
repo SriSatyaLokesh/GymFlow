@@ -1428,6 +1428,11 @@ export function bmiCategory(bmi, gender) {
 
 export function renderSharedMemberFields(member = {}) {
   const { feet, inches } = cmToFeetInches(member.initHeight);
+  const isNew = !member.id;
+  const gymGoal = member.gymGoal || (isNew ? "General Fitness" : "");
+  const bloodGroup = member.bloodGroup || (isNew ? "O+" : "");
+  const activityLevel = member.activityLevel || (isNew ? "Moderately Active" : "");
+  const fitnessExperience = member.fitnessExperience || (isNew ? "Beginner" : "");
   
   return `
     <label>WhatsApp Number
@@ -1447,7 +1452,7 @@ export function renderSharedMemberFields(member = {}) {
     <label class="wide">Address
       <textarea name="address" rows="2">${escapeHtml(member.address || "")}</textarea>
     </label>
-
+ 
     <div class="form-section-heading wide">Emergency Contact</div>
     <label>Contact name
       <input name="emergencyName" maxlength="80" value="${escapeHtml(member.emergencyName || "")}" />
@@ -1466,7 +1471,7 @@ export function renderSharedMemberFields(member = {}) {
     <label>Contact phone
       <input name="emergencyPhone" type="tel" maxlength="10" value="${escapeHtml(member.emergencyPhone || "")}" />
     </label>
-
+ 
     <div class="form-section-heading wide">Initial Measurements</div>
     <label>Weight kg
       <input name="initWeight" type="number" min="0" step="0.1" value="${escapeHtml(member.initWeight != null ? String(member.initWeight) : "")}" />
@@ -1487,7 +1492,7 @@ export function renderSharedMemberFields(member = {}) {
     
     <!-- Hidden input to store converted height in cm -->
     <input type="hidden" name="initHeight" value="${escapeHtml(member.initHeight != null ? String(member.initHeight) : "")}" />
-
+ 
     <!-- Obesity Meter -->
     <div class="bmi-meter-wrapper wide hidden" data-bmi-meter>
       <div class="bmi-meter-header">
@@ -1506,7 +1511,7 @@ export function renderSharedMemberFields(member = {}) {
       </div>
       <input type="hidden" name="initBmi" data-bmi-hidden value="${escapeHtml(member.initBmi || "")}" />
     </div>
-
+ 
     <label>Body fat %
       <input name="initBodyFat" type="number" min="0" step="0.1" value="${escapeHtml(member.initBodyFat != null ? String(member.initBodyFat) : "")}" />
     </label>
@@ -1528,29 +1533,29 @@ export function renderSharedMemberFields(member = {}) {
     
     <label class="wide">Gym goal
       <select name="gymGoal">
-        <option value="" ${!member.gymGoal ? "selected" : ""}>Not specified</option>
-        <option value="Weight Loss" ${member.gymGoal === "Weight Loss" ? "selected" : ""}>Weight Loss</option>
-        <option value="Muscle Gain" ${member.gymGoal === "Muscle Gain" ? "selected" : ""}>Muscle Gain</option>
-        <option value="General Fitness" ${member.gymGoal === "General Fitness" ? "selected" : ""}>General Fitness</option>
-        <option value="Endurance / Cardio" ${member.gymGoal === "Endurance / Cardio" ? "selected" : ""}>Endurance / Cardio</option>
-        <option value="Body Toning" ${member.gymGoal === "Body Toning" ? "selected" : ""}>Body Toning</option>
-        <option value="Flexibility / Mobility" ${member.gymGoal === "Flexibility / Mobility" ? "selected" : ""}>Flexibility / Mobility</option>
-        <option value="Rehabilitation" ${member.gymGoal === "Rehabilitation" ? "selected" : ""}>Rehabilitation</option>
+        <option value="" ${!gymGoal ? "selected" : ""}>Not specified</option>
+        <option value="Weight Loss" ${gymGoal === "Weight Loss" ? "selected" : ""}>Weight Loss</option>
+        <option value="Muscle Gain" ${gymGoal === "Muscle Gain" ? "selected" : ""}>Muscle Gain</option>
+        <option value="General Fitness" ${gymGoal === "General Fitness" ? "selected" : ""}>General Fitness</option>
+        <option value="Endurance / Cardio" ${gymGoal === "Endurance / Cardio" ? "selected" : ""}>Endurance / Cardio</option>
+        <option value="Body Toning" ${gymGoal === "Body Toning" ? "selected" : ""}>Body Toning</option>
+        <option value="Flexibility / Mobility" ${gymGoal === "Flexibility / Mobility" ? "selected" : ""}>Flexibility / Mobility</option>
+        <option value="Rehabilitation" ${gymGoal === "Rehabilitation" ? "selected" : ""}>Rehabilitation</option>
       </select>
     </label>
-
+ 
     <div class="form-section-heading wide">Background</div>
     <label>Blood group
       <select name="bloodGroup">
-        <option value="" ${!member.bloodGroup ? "selected" : ""}>Not specified</option>
-        <option value="A+" ${member.bloodGroup === "A+" ? "selected" : ""}>A+</option>
-        <option value="A-" ${member.bloodGroup === "A-" ? "selected" : ""}>A-</option>
-        <option value="B+" ${member.bloodGroup === "B+" ? "selected" : ""}>B+</option>
-        <option value="B-" ${member.bloodGroup === "B-" ? "selected" : ""}>B-</option>
-        <option value="O+" ${member.bloodGroup === "O+" ? "selected" : ""}>O+</option>
-        <option value="O-" ${member.bloodGroup === "O-" ? "selected" : ""}>O-</option>
-        <option value="AB+" ${member.bloodGroup === "AB+" ? "selected" : ""}>AB+</option>
-        <option value="AB-" ${member.bloodGroup === "AB-" ? "selected" : ""}>AB-</option>
+        <option value="" ${!bloodGroup ? "selected" : ""}>Not specified</option>
+        <option value="A+" ${bloodGroup === "A+" ? "selected" : ""}>A+</option>
+        <option value="A-" ${bloodGroup === "A-" ? "selected" : ""}>A-</option>
+        <option value="B+" ${bloodGroup === "B+" ? "selected" : ""}>B+</option>
+        <option value="B-" ${bloodGroup === "B-" ? "selected" : ""}>B-</option>
+        <option value="O+" ${bloodGroup === "O+" ? "selected" : ""}>O+</option>
+        <option value="O-" ${bloodGroup === "O-" ? "selected" : ""}>O-</option>
+        <option value="AB+" ${bloodGroup === "AB+" ? "selected" : ""}>AB+</option>
+        <option value="AB-" ${bloodGroup === "AB-" ? "selected" : ""}>AB-</option>
       </select>
     </label>
     <label>Occupation
@@ -1558,19 +1563,19 @@ export function renderSharedMemberFields(member = {}) {
     </label>
     <label>Activity level
       <select name="activityLevel">
-        <option value="" ${!member.activityLevel ? "selected" : ""}>Not specified</option>
-        <option value="Sedentary" ${member.activityLevel === "Sedentary" ? "selected" : ""}>Sedentary</option>
-        <option value="Lightly Active" ${member.activityLevel === "Lightly Active" ? "selected" : ""}>Lightly Active</option>
-        <option value="Moderately Active" ${member.activityLevel === "Moderately Active" ? "selected" : ""}>Moderately Active</option>
-        <option value="Very Active" ${member.activityLevel === "Very Active" ? "selected" : ""}>Very Active</option>
+        <option value="" ${!activityLevel ? "selected" : ""}>Not specified</option>
+        <option value="Sedentary" ${activityLevel === "Sedentary" ? "selected" : ""}>Sedentary</option>
+        <option value="Lightly Active" ${activityLevel === "Lightly Active" ? "selected" : ""}>Lightly Active</option>
+        <option value="Moderately Active" ${activityLevel === "Moderately Active" ? "selected" : ""}>Moderately Active</option>
+        <option value="Very Active" ${activityLevel === "Very Active" ? "selected" : ""}>Very Active</option>
       </select>
     </label>
     <label>Fitness experience
       <select name="fitnessExperience">
-        <option value="" ${!member.fitnessExperience ? "selected" : ""}>Not specified</option>
-        <option value="Beginner" ${member.fitnessExperience === "Beginner" ? "selected" : ""}>Beginner</option>
-        <option value="Intermediate" ${member.fitnessExperience === "Intermediate" ? "selected" : ""}>Intermediate</option>
-        <option value="Advanced" ${member.fitnessExperience === "Advanced" ? "selected" : ""}>Advanced</option>
+        <option value="" ${!fitnessExperience ? "selected" : ""}>Not specified</option>
+        <option value="Beginner" ${fitnessExperience === "Beginner" ? "selected" : ""}>Beginner</option>
+        <option value="Intermediate" ${fitnessExperience === "Intermediate" ? "selected" : ""}>Intermediate</option>
+        <option value="Advanced" ${fitnessExperience === "Advanced" ? "selected" : ""}>Advanced</option>
       </select>
     </label>
 
