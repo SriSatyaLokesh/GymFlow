@@ -42,8 +42,8 @@ export const renewalsModule = {
             <label>Amount<input name="amount" type="number" min="0" step="1" required /></label>
             <label>Payment method
               <select name="method">
-                <option>Cash</option>
                 <option>UPI</option>
+                <option>Cash</option>
                 <option>Card</option>
                 <option>Bank Transfer</option>
               </select>
