@@ -422,7 +422,7 @@ Plans:
 | 15 | Multi-Branch Support | 0/1 | Not started | — |
 | 16 | Owner UX Enhancements | 1/1 | Complete    | 2026-07-31 |
 | 17 | Database Performance Optimization & Scoped Loading | 2/2 | Complete    | 2026-08-10 |
-| 18 | Psychological Principles & UX Optimization | 0/2 | Not started | — |
+| 18 | Psychological Principles & UX Optimization | 1/1 | Complete    | 2026-08-11 |
 
 ### Phase 17: Database Performance Optimization & Scoped Loading
 
@@ -452,5 +452,5 @@ Plans:
 
 Plans:
 
-- [ ] 18-01-PLAN.md — Smart Defaults, Guest/Explorer Router, and Local Guest Data Persistence
+- [x] 18-01-PLAN.md — Smart Defaults, Guest/Explorer Router, and Local Guest Data Persistence
 - [ ] 18-02-PLAN.md — Goal Gradient Checklist, Loss Aversion Warning Dialogs, and pricing contrast matrix
