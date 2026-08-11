@@ -422,6 +422,7 @@ Plans:
 | 15 | Multi-Branch Support | 0/1 | Not started | — |
 | 16 | Owner UX Enhancements | 1/1 | Complete    | 2026-07-31 |
 | 17 | Database Performance Optimization & Scoped Loading | 2/2 | Complete    | 2026-08-10 |
+| 18 | Psychological Principles & UX Optimization | 0/2 | Not started | — |
 
 ### Phase 17: Database Performance Optimization & Scoped Loading
 
@@ -434,3 +435,22 @@ Plans:
 - [x] 17-01: Tab-scoped & role-filtered data loading engine (`app.js` & `lib/firebase-init.js`)
 - [x] 17-02: Optimistic local state updates (`my-workout.js`, `payments.js`, `renewals.js`)
 
+### Phase 18: Psychological Principles & UX Optimization
+
+**Goal**: Implement six core psychological principles (Smart Defaults, Goal Gradient, Reciprocity, IKEA/Endowment effects, Loss Aversion, and Contrast Effect) across GymFlow to reduce user friction, build ownership, establish momentum, prevent abandonment, and anchor values.
+**Depends on**: Phase 17
+**Status**: Not started
+**Success Criteria** (what must be TRUE):
+
+  1. Smart Defaults are pre-selected in forms: Member form (WhatsApp Opt-in = true, activityLevel = Moderately Active, fitnessExperience = Beginner, gymGoal = General Fitness, bloodGroup = O+) and Payment form (method = UPI, status = Paid, collectedBy = user name).
+  2. Member dashboard renders a Goal Gradient "Profile Completeness & Readiness" checklist starting at 20% progress (momentum).
+  3. Guest / Explorer Mode is accessible with one click from login screen, setting state.profile with role = "guest" and redirecting to guest dashboard.
+  4. Guest users can build workout templates in "My Workout" and calculate/view BMI visual meter in "Progress", saved locally to `localStorage` under `gymflow.guest.*`.
+  5. Sign out/navigation warnings are displayed to guest users framing data deletion as a high-stakes loss (Loss Aversion).
+  6. Expiration alerts for members are framed around losing consistency streaks and points.
+  7. "My Membership" page for guest users displays a pricing plan comparison with a high-tier anchor package ($150/mo VIP coaching) shown first to trigger the Contrast Effect.
+
+Plans:
+
+- [ ] 18-01-PLAN.md — Smart Defaults, Guest/Explorer Router, and Local Guest Data Persistence
+- [ ] 18-02-PLAN.md — Goal Gradient Checklist, Loss Aversion Warning Dialogs, and pricing contrast matrix
