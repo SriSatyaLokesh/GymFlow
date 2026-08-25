@@ -999,19 +999,16 @@ Total members listed: ${(state.data.members || []).length}</pre>
           .join("")}
       </nav>
       <div class="sidebar-footer">
-        <div class="profile-chip" style="cursor: pointer;" title="Edit Profile">
+        <div class="profile-chip" title="Edit Profile">
           <span class="avatar">
             ${state.profile.avatarUrl 
               ? `<img src="${escapeHtml(getAvatarUrl(state.profile.avatarUrl))}" alt="" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;" />` 
               : initials(state.profile.name)}
           </span>
           <div>
-            <strong>${state.profile.name}</strong>
-            <span>${state.profile.role}</span>
+            <strong>${escapeHtml(state.profile.name)}</strong>
+            <span>${escapeHtml(state.profile.role)}</span>
           </div>
-        </div>
-        <div class="sidebar-attribution">
-          Made with <span class="heart">❤️</span> by <a href="https://github.com/SriSatyaLokesh" target="_blank" rel="noopener noreferrer">SriSatyaLokesh</a> &amp; <a href="https://github.com/ravitej18" target="_blank" rel="noopener noreferrer">Raviteja</a>
         </div>
       </div>
     </aside>
