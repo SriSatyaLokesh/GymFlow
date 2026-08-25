@@ -1737,6 +1737,7 @@ code { padding: 2px 6px; border-radius: 5px; background: var(--surface-strong); 
   .profile-chip strong, .profile-chip span { display: none; }
   .profile-chip { justify-content: center; padding: 8px; }
   .sidebar-footer { width: 100%; }
+  .sidebar-attribution { display: none; }
 
   .topbar { padding: 0 20px; }
   .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
