@@ -10,6 +10,7 @@ firebase-admin*.json
 # Local environment files
 .env
 .env.*
+gym.config.js
 
 # OS/editor noise
 .DS_Store
