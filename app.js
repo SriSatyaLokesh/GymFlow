@@ -1010,9 +1010,6 @@ Total members listed: ${(state.data.members || []).length}</pre>
             <span>${escapeHtml(state.profile.role)}</span>
           </div>
         </div>
-        <div class="sidebar-attribution">
-          Made with <span class="heart">❤️</span> by <a href="https://github.com/SriSatyaLokesh" target="_blank" rel="noopener noreferrer">SriSatyaLokesh</a> &amp; <a href="https://github.com/ravitej18" target="_blank" rel="noopener noreferrer">Raviteja</a>
-        </div>
       </div>
     </aside>
     <main class="workspace">
