@@ -245,14 +245,14 @@ function bindAuth(root, context) {
   });
 
   root.querySelector("[data-action='reset-password']")?.addEventListener("click", async () => {
-    const email = loginForm.email.value;
-    if (!email) {
-      authMessage(root, "Enter your email first.", "error");
+    const inputVal = (loginForm.email?.value || "").trim();
+    if (!inputVal) {
+      authMessage(root, "Enter your email or phone number first.", "error");
       return;
     }
     await run(root, context, async () => {
-      await context.services.auth.resetPassword(email);
-      const msg = context.mode === "firebase" ? "Password reset email sent." : "Local account found. Use its saved password.";
+      const res = await context.services.auth.resetPassword(inputVal);
+      const msg = typeof res === "string" ? res : "Password reset link sent to email.";
       authMessage(root, msg, "success");
       authToast(root, msg);
     });
