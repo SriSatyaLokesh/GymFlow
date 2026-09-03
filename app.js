@@ -382,6 +382,11 @@ async function reloadData(targetRoute = state.route) {
       return;
     }
 
+    // For owner role, bypass cache for check-ins so attendance is always freshly fetched from database
+    if (state.profile?.role === "owner" && needed.includes("attendance")) {
+      delete state.data.attendance;
+    }
+
     // Filter out collections already loaded in state.data
     const toFetch = needed.filter((name) => !state.data[name]);
 

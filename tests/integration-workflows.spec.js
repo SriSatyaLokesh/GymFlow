@@ -499,6 +499,65 @@ test.describe("Real-World Workflows & Edge Cases across All Logins", () => {
     }
   });
 
+  test("9. Member Self Check-in & Owner Live Uncached Attendance Refresh", async ({ page }) => {
+    // 1. Reset & initialize clean demo workspace
+    await page.goto("/?local=1");
+    await page.evaluate(() => localStorage.removeItem("gymflow.local.v1"));
+    await page.goto("/?local=1");
+    await page.click("button:has-text('Open demo workspace')");
+    await expect(page.locator(".sidebar")).toBeVisible();
+
+    // 2. Switch session to Member Ravi Kumar
+    const foundMember = await page.evaluate(() => {
+      const stateStr = localStorage.getItem("gymflow.local.v1");
+      if (!stateStr) return false;
+      const state = JSON.parse(stateStr);
+      const memberUser = state.users?.find(u => u.email === "ravi@example.com");
+      if (memberUser) {
+        state.sessionUserId = memberUser.id;
+        localStorage.setItem("gymflow.local.v1", JSON.stringify(state));
+        return true;
+      }
+      return false;
+    });
+    expect(foundMember).toBe(true);
+
+    await page.goto("/?local=1");
+    await expect(page.locator(".sidebar")).toBeVisible();
+
+    // 2. Member navigates to Check-ins & logs visit
+    await page.click(".nav-list a[href='#/attendance']");
+    await expect(page.locator("#view")).toContainText("Check In");
+
+    const checkinBtn = page.locator("[data-self-checkin]");
+    await expect(checkinBtn).toBeVisible();
+    await checkinBtn.click();
+    await expect(page.locator("#view")).toContainText(/My Recent Check-ins|already checked in/i);
+
+    // 3. Log in as Owner
+    await page.evaluate(() => {
+      const stateStr = localStorage.getItem("gymflow.local.v1");
+      if (!stateStr) return;
+      const state = JSON.parse(stateStr);
+      const ownerUser = state.users.find(u => u.role === "owner");
+      if (ownerUser) {
+        state.sessionUserId = ownerUser.id;
+        localStorage.setItem("gymflow.local.v1", JSON.stringify(state));
+      }
+    });
+
+    await page.goto("/?local=1");
+    await expect(page.locator(".sidebar")).toBeVisible();
+
+    // 4. Owner navigates to Check-ins page & clicks Refresh
+    await page.click(".nav-list a[href='#/attendance']");
+    await expect(page.locator("#view")).toContainText("Recent Check-ins");
+
+    const refreshBtn = page.locator("[data-action='refresh-checkins']");
+    await expect(refreshBtn).toBeVisible();
+    await refreshBtn.click();
+
+    // 5. Verify Member Ravi Kumar's check-in is listed in Owner view
+    await expect(page.locator(".checkins-table")).toContainText("Ravi Kumar");
+  });
 });
-
-

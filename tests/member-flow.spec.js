@@ -98,11 +98,19 @@ test.describe("Member Flow & Functionality", () => {
     }
   });
 
-  test("Member can navigate to Check-ins self-checkin", async ({ page }) => {
+  test("Member can navigate to Check-ins and perform self-checkin", async ({ page }) => {
     const attendanceNav = page.locator(".nav-list a[href='#/attendance']");
     if (await attendanceNav.isVisible()) {
       await attendanceNav.click();
       await expect(page.locator("#view")).toContainText(/Attendance|Check-in/i);
+
+      // Perform member self check-in
+      const checkinBtn = page.locator("[data-self-checkin]");
+      if (await checkinBtn.isVisible()) {
+        await checkinBtn.click();
+        await expect(page.locator("#view")).toContainText(/already checked in|My Recent Check-ins/i);
+        await expect(page.locator(".data-table")).toBeVisible();
+      }
     }
   });
 });
