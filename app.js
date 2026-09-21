@@ -19,7 +19,7 @@ import { trainerMembersModule } from "./modules/trainer-members.js";
 import { myWorkoutModule } from "./modules/my-workout.js";
 import { profileModule } from "./modules/profile.js";
 import { leaderboardModule } from "./modules/leaderboard.js";
-import { CARTOON_AVATARS, addDays, dateLabel, daysUntil, escapeHtml, getExercises, memberStatus, getAvatarUrl, initials, today } from "./modules/utils.js";
+import { CARTOON_AVATARS, addDays, dateLabel, daysUntil, escapeHtml, getExercises, memberStatus, getAvatarUrl, today } from "./modules/utils.js";
 
 const appRoot = document.querySelector("#app");
 
