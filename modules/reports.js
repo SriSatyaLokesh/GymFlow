@@ -149,14 +149,50 @@ export const reportsModule = {
       const maxHeat = Math.max(...heatmapData.flat(), 1);
 
       // ── 4. Plan Popularity ────────────────────────────────────────────────
-      const activeMembers = members.filter(m => memberStatus(m) === "Active");
-      const planStats = plans.map(p => {
-        const count = activeMembers.filter(m => m.planId === p.id).length;
-        const totalRevenue = payments
-          .filter(pay => pay.planId === p.id && pay.status === "Paid")
-          .reduce((sum, pay) => sum + Number(pay.amount || 0), 0);
-        return { name: p.planName, count, revenue: totalRevenue };
-      }).sort((a, b) => b.revenue - a.revenue);
+      const activeMembers = members.filter(m => {
+        const s = memberStatus(m);
+        return s === "Active" || s === "Expiring Soon";
+      });
+      const planStatsMap = new Map();
+
+      // Index known plans by normalized name
+      plans.forEach(p => {
+        const rawName = (p.planName || "").trim();
+        if (!rawName) return;
+        const key = rawName.toLowerCase();
+        if (!planStatsMap.has(key)) {
+          planStatsMap.set(key, { name: rawName, count: 0, revenue: 0 });
+        }
+      });
+
+      // Count active members per plan name
+      activeMembers.forEach(m => {
+        const plan = plans.find(p => p.id === m.planId) ||
+                     plans.find(p => (p.planName || "").trim().toLowerCase() === String(m.planId || "").trim().toLowerCase());
+        const rawName = (plan?.planName || m.planName || m.planId || "").trim();
+        if (!rawName) return;
+        const key = rawName.toLowerCase();
+        if (!planStatsMap.has(key)) {
+          planStatsMap.set(key, { name: rawName, count: 0, revenue: 0 });
+        }
+        planStatsMap.get(key).count += 1;
+      });
+
+      // Sum paid payments revenue per plan name
+      payments.filter(pay => pay.status === "Paid").forEach(pay => {
+        const plan = plans.find(p => p.id === pay.planId) ||
+                     plans.find(p => (p.planName || "").trim().toLowerCase() === String(pay.planId || "").trim().toLowerCase());
+        const rawName = (plan?.planName || pay.planName || pay.planId || "").trim();
+        if (!rawName) return;
+        const key = rawName.toLowerCase();
+        if (planStatsMap.has(key)) {
+          planStatsMap.get(key).revenue += Number(pay.amount || 0);
+        }
+      });
+
+      const planStats = Array.from(planStatsMap.values())
+        .filter(s => s.count > 0 || s.revenue > 0)
+        .sort((a, b) => b.revenue - a.revenue || b.count - a.count);
 
       // ── 5. Forecasted Renewals (Next 30 Days) ──────────────────────────────
       const upcomingRenewals = members

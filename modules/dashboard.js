@@ -391,18 +391,38 @@ function renderRevenueChart(payments, currency) {
 }
 
 function renderPlanPopularityChart(members, plans) {
-  const activeMembers = members.filter(m => memberStatus(m) === "Active");
-  const planCounts = {};
-  activeMembers.forEach(m => {
-    if (m.planId) {
-      planCounts[m.planId] = (planCounts[m.planId] || 0) + 1;
+  const activeMembers = members.filter(m => {
+    const s = memberStatus(m);
+    return s === "Active" || s === "Expiring Soon";
+  });
+  const planMap = new Map();
+
+  // Index known plans by normalized name
+  plans.forEach(p => {
+    const rawName = (p.planName || "").trim();
+    if (!rawName) return;
+    const key = rawName.toLowerCase();
+    if (!planMap.has(key)) {
+      planMap.set(key, { name: rawName, count: 0 });
     }
   });
 
-  const data = plans.map(p => ({
-    name: p.planName,
-    count: planCounts[p.id] || 0
-  })).filter(p => p.count > 0).sort((a, b) => b.count - a.count);
+  // Count active members by matching planId or direct name
+  activeMembers.forEach(m => {
+    const plan = plans.find(p => p.id === m.planId) ||
+                 plans.find(p => (p.planName || "").trim().toLowerCase() === String(m.planId || "").trim().toLowerCase());
+    const rawName = (plan?.planName || m.planName || m.planId || "").trim();
+    if (!rawName) return;
+    const key = rawName.toLowerCase();
+    if (!planMap.has(key)) {
+      planMap.set(key, { name: rawName, count: 0 });
+    }
+    planMap.get(key).count += 1;
+  });
+
+  const data = Array.from(planMap.values())
+    .filter(p => p.count > 0)
+    .sort((a, b) => b.count - a.count);
 
   if (data.length === 0) {
     return `<div class="table-empty" style="height:110px; display:flex; align-items:center; justify-content:center;">No active plan data available.</div>`;

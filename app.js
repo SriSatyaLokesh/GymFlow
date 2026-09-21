@@ -80,6 +80,7 @@ const modules = {
 };
 
 function roleAllows(route, role) {
+  if (route === "profile") return true;
   const entry = nav.find(([key]) => key === route);
   const roles = entry?.[3] || ALL_ROLES;
   return roles.includes(role);
@@ -461,6 +462,10 @@ async function seedGripGymPlansIfNeeded() {
   ];
 
   for (const plan of gripPlans) {
+    const alreadyExists = plans.some(
+      (p) => (p.planName || "").trim().toLowerCase() === (plan.planName || "").trim().toLowerCase()
+    );
+    if (alreadyExists) continue;
     try {
       const saved = await state.services.data.save("membership_plans", plan);
       plans.push(saved);
@@ -1009,7 +1014,7 @@ Total members listed: ${(state.data.members || []).length}</pre>
         <div class="profile-chip" title="Edit Profile">
           <span class="avatar">
             ${state.profile.avatarUrl 
-              ? `<img src="${escapeHtml(getAvatarUrl(state.profile.avatarUrl))}" alt="" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;" />` 
+              ? `<img src="${escapeHtml(getAvatarUrl(state.profile.avatarUrl))}" alt="" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;" onerror="this.onerror=null; this.parentElement.textContent='${escapeHtml(initials(state.profile.name))}';" />` 
               : initials(state.profile.name)}
           </span>
           <div>
@@ -1036,7 +1041,7 @@ Total members listed: ${(state.data.members || []).length}</pre>
             <button class="topbar-profile-btn" id="topbar-profile-trigger" aria-haspopup="true" aria-expanded="false" title="User Menu">
               <span class="avatar small topbar-avatar">
                 ${state.profile.avatarUrl 
-                  ? `<img src="${escapeHtml(getAvatarUrl(state.profile.avatarUrl))}" alt="" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;" />` 
+                  ? `<img src="${escapeHtml(getAvatarUrl(state.profile.avatarUrl))}" alt="" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;" onerror="this.onerror=null; this.parentElement.textContent='${escapeHtml(initials(state.profile.name))}';" />` 
                   : escapeHtml(initials(state.profile.name))}
               </span>
               <div class="topbar-user">
