@@ -438,15 +438,15 @@ h2 {
 
 .topbar-search {
   flex: 1;
-  max-width: 400px;
+  max-width: 520px;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 0 14px;
-  min-height: 40px;
+  gap: 10px;
+  padding: 0 16px;
+  min-height: 42px;
   border-radius: var(--r-pill);
   background: var(--surface);
-  border: 1px solid var(--line);
+  border: 1.5px solid var(--line);
   color: var(--muted);
   transition: border-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out), background var(--dur-base) var(--ease-out);
 }
@@ -458,7 +458,7 @@ h2 {
 }
 
 .topbar-search .material-symbols-outlined {
-  font-size: 18px;
+  font-size: 20px;
   flex-shrink: 0;
   color: var(--muted);
 }
@@ -471,7 +471,7 @@ h2 {
   box-shadow: none;
   color: var(--ink);
   width: 100%;
-  font-size: 0.9rem;
+  font-size: 0.92rem;
 }
 
 .topbar-search input::placeholder { color: var(--muted); }
@@ -480,8 +480,86 @@ h2 {
 .topbar-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   margin-left: auto;
+}
+
+/* Profile Dropdown in Topbar */
+.topbar-profile-menu {
+  position: relative;
+  display: inline-block;
+}
+
+.topbar-profile-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  padding: 5px 12px 5px 14px;
+  cursor: pointer;
+  transition: all var(--dur-fast) var(--ease-out);
+  color: var(--ink);
+}
+
+.topbar-profile-btn:hover {
+  background: var(--surface-strong);
+  border-color: var(--teal);
+}
+
+.profile-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 190px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-strong);
+  padding: 6px 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-dropdown-menu.hidden {
+  display: none;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  color: var(--ink);
+  font-size: 0.88rem;
+  font-weight: 500;
+  text-decoration: none;
+  background: transparent;
+  border: 0;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out);
+}
+
+.dropdown-item:hover {
+  background: var(--surface-soft);
+}
+
+.dropdown-item.danger {
+  color: var(--danger);
+}
+
+.dropdown-item.danger:hover {
+  background: var(--danger-bg, rgba(239, 68, 68, 0.1));
+}
+
+.dropdown-divider {
+  height: 1px;
+  background: var(--line);
+  margin: 6px 0;
 }
 
 /* Theme toggle */
