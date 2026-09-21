@@ -1030,15 +1030,29 @@ Total members listed: ${(state.data.members || []).length}</pre>
           <a class="pill-button" href="#/${state.profile.role === "trainer" ? "trainer-checkin" : "attendance"}">
             <span class="material-symbols-outlined">login</span><span>Check-in</span>
           </a>
-          <div class="topbar-user">
-            <span class="eyebrow">${state.profile.role}</span>
-            <strong>${state.profile.name}</strong>
+          <div class="topbar-profile-menu">
+            <button class="topbar-profile-btn" id="topbar-profile-trigger" aria-haspopup="true" aria-expanded="false" title="User Menu">
+              <div class="topbar-user">
+                <span class="eyebrow">${state.profile.role}</span>
+                <strong>${state.profile.name}</strong>
+              </div>
+              <span class="material-symbols-outlined dropdown-arrow" style="font-size: 1.2rem; opacity: 0.7;">expand_more</span>
+            </button>
+            <div class="profile-dropdown-menu hidden" id="topbar-profile-dropdown">
+              <a href="#/profile" class="dropdown-item">
+                <span class="material-symbols-outlined">person</span> My Profile
+              </a>
+              ${state.profile.role === "owner" ? `
+                <a href="#/settings" class="dropdown-item">
+                  <span class="material-symbols-outlined">settings</span> Settings
+                </a>
+              ` : ""}
+              <div class="dropdown-divider"></div>
+              <button class="dropdown-item danger" data-action="logout">
+                <span class="material-symbols-outlined">logout</span> Sign out
+              </button>
+            </div>
           </div>
-          <button class="theme-toggle" data-action="toggle-theme" aria-label="Toggle theme" title="Toggle dark/light mode">
-            <span class="material-symbols-outlined theme-icon-light">dark_mode</span>
-            <span class="material-symbols-outlined theme-icon-dark">light_mode</span>
-          </button>
-          <button class="ghost-button" data-action="logout">Sign out</button>
         </div>
       </header>
       <section class="content-panel" id="view">${currentModule.render(makeContext())}</section>
@@ -1180,6 +1194,22 @@ function bindAppEvents() {
       }
     });
   });
+
+  const profileTrigger = document.querySelector("#topbar-profile-trigger");
+  const profileDropdown = document.querySelector("#topbar-profile-dropdown");
+  if (profileTrigger && profileDropdown) {
+    profileTrigger.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const isHidden = profileDropdown.classList.toggle("hidden");
+      profileTrigger.setAttribute("aria-expanded", String(!isHidden));
+    });
+    document.addEventListener("click", (e) => {
+      if (!profileDropdown.contains(e.target) && !profileTrigger.contains(e.target)) {
+        profileDropdown.classList.add("hidden");
+        profileTrigger.setAttribute("aria-expanded", "false");
+      }
+    });
+  }
 }
 
 function showToast(message) {
