@@ -130,7 +130,7 @@
 html, body {
   margin: 0;
   max-width: 100vw;
-  overflow-x: hidden;
+  overflow-x: clip;
   min-height: 100svh;
   background: var(--bg);
   color: var(--ink);
@@ -223,7 +223,10 @@ h2 {
 
 /* ===== Sidebar ===== */
 .sidebar {
-  min-height: 100svh;
+  height: 100vh;
+  height: 100svh;
+  max-height: 100vh;
+  max-height: 100svh;
   padding: 20px 12px 20px 14px;
   background: var(--charcoal);
   color: rgba(255,255,255,0.62);
@@ -233,9 +236,10 @@ h2 {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  overflow: hidden;
   overflow-y: auto;
+  overflow-x: hidden;
   scrollbar-width: none;
+  z-index: 50;
   transition: transform var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out);
 }
 
