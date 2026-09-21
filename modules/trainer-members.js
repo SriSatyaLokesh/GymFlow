@@ -50,7 +50,7 @@ export const trainerMembersModule = {
                         <span>${escapeHtml(m.fullName)}</span>
                       </label>
                     `).join("")
-                    : `<span style="font-size:0.85rem; color:var(--text-muted);">No clients assigned to you.</span>`
+                    : `<span style="font-size:0.85rem; color:var(--text-muted);">${context.profile?.role === "owner" ? "No clients assigned to you yet. You can assign members to yourself in the <a href=\"#/members\" style=\"color:var(--primary); font-weight:600;\">Members</a> roster." : "No clients assigned to you."}</span>`
                   }
                 </div>
               </div>
@@ -114,7 +114,12 @@ export const trainerMembersModule = {
           ${
             myMembers.length
               ? `<div class="card-grid">${myMembers.map((member) => memberCard(member, currentTemplateName(member), templates)).join("")}</div>`
-              : emptyState("No clients assigned", "Clients are assigned to you from their member profile.")
+              : emptyState(
+                  "No clients assigned",
+                  context.profile?.role === "owner"
+                    ? "As a gym owner and trainer, you can assign members to yourself in the Members roster to track their training here."
+                    : "Clients are assigned to you from their member profile."
+                )
           }
         </section>
       </div>
