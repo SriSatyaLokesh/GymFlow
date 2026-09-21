@@ -19,7 +19,7 @@ import { trainerMembersModule } from "./modules/trainer-members.js";
 import { myWorkoutModule } from "./modules/my-workout.js";
 import { profileModule } from "./modules/profile.js";
 import { leaderboardModule } from "./modules/leaderboard.js";
-import { CARTOON_AVATARS, escapeHtml, getExercises, memberStatus, getAvatarUrl, initials } from "./modules/utils.js";
+import { CARTOON_AVATARS, addDays, dateLabel, daysUntil, escapeHtml, getExercises, memberStatus, getAvatarUrl, initials, today } from "./modules/utils.js";
 
 const appRoot = document.querySelector("#app");
 
@@ -1062,6 +1062,7 @@ Total members listed: ${(state.data.members || []).length}</pre>
           </div>
         </div>
       </header>
+      <div id="holiday-banner-container">${renderHolidayBanner(state.settings?.holidays)}</div>
       <section class="content-panel" id="view">${currentModule.render(makeContext())}</section>
     </main>
     <div class="toast ${state.toast ? "show" : ""}">${state.toast}</div>
@@ -1079,6 +1080,11 @@ function renderView() {
   if (!view) {
     render();
     return;
+  }
+  const bannerContainer = document.querySelector("#holiday-banner-container");
+  if (bannerContainer) {
+    bannerContainer.innerHTML = renderHolidayBanner(state.settings?.holidays);
+    bindHolidayBannerEvents();
   }
   const currentModule = modules[state.route] || dashboardModule;
   view.innerHTML = currentModule.render(makeContext());
@@ -1217,6 +1223,67 @@ function bindAppEvents() {
       }
     });
   }
+
+  bindHolidayBannerEvents();
+}
+
+function renderHolidayBanner(holidays) {
+  if (!Array.isArray(holidays) || holidays.length === 0) return "";
+  const t = today();
+
+  const activeHolidays = holidays.filter((h) => {
+    if (!h.startDate || !h.endDate) return false;
+    if (sessionStorage.getItem(`gymflow_dismissed_holiday_${h.id}`)) return false;
+    const triggerDate = addDays(h.startDate, -4);
+    return t >= triggerDate && t <= h.endDate;
+  }).sort((a, b) => a.startDate.localeCompare(b.startDate));
+
+  if (activeHolidays.length === 0) return "";
+
+  return activeHolidays.map((h) => {
+    const isOngoing = t >= h.startDate;
+    const daysLeft = daysUntil(h.startDate);
+    const countdownText = isOngoing
+      ? "Gym Closure Notice • Active Today"
+      : `Upcoming Holiday • In ${daysLeft} Day${daysLeft === 1 ? "" : "s"}`;
+
+    return `
+      <div class="holiday-banner" data-holiday-id="${escapeHtml(h.id)}" style="background: linear-gradient(90deg, #9a3412 0%, #ea580c 50%, #d97706 100%); color: #ffffff; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; gap: 14px; box-shadow: 0 4px 12px rgba(234, 88, 12, 0.2); border-bottom: 1px solid rgba(255,255,255,0.25); z-index: 20; position: relative;">
+        <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0;">
+          <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            <span class="material-symbols-outlined" style="font-size: 1.3rem; color: #ffffff;">campaign</span>
+          </div>
+          <div style="min-width: 0; line-height: 1.35;">
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+              <span style="font-size: 0.72rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.6px; background: rgba(0,0,0,0.3); padding: 2px 8px; border-radius: 4px;">
+                ${escapeHtml(countdownText)}
+              </span>
+              <strong style="font-size: 0.98rem; font-weight: 700; color: #ffffff;">${escapeHtml(h.title)}</strong>
+              <span style="font-size: 0.82rem; opacity: 0.92;">(${dateLabel(h.startDate)} – ${dateLabel(h.endDate)} • ${escapeHtml(h.hours || "Closed")})</span>
+            </div>
+            <div style="font-size: 0.86rem; opacity: 0.95; margin-top: 3px; word-break: break-word;">
+              ${escapeHtml(h.message)}
+            </div>
+          </div>
+        </div>
+        <button type="button" class="dismiss-holiday-btn" data-dismiss-id="${escapeHtml(h.id)}" title="Dismiss for now" style="background: rgba(255,255,255,0.2); border: none; color: #ffffff; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.2s ease;">
+          <span class="material-symbols-outlined" style="font-size: 1.1rem;">close</span>
+        </button>
+      </div>
+    `;
+  }).join("");
+}
+
+function bindHolidayBannerEvents() {
+  document.querySelectorAll(".dismiss-holiday-btn").forEach((btn) => {
+    btn.onclick = () => {
+      const id = btn.dataset.dismissId;
+      if (id) {
+        sessionStorage.setItem(`gymflow_dismissed_holiday_${id}`, "1");
+        btn.closest(".holiday-banner")?.remove();
+      }
+    };
+  });
 }
 
 function showToast(message) {

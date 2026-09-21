@@ -1,4 +1,4 @@
-import { downloadJson, escapeHtml, formData, pageHeader, withButtonLoading } from "./utils.js";
+import { dateLabel, daysUntil, downloadJson, escapeHtml, formData, pageHeader, today, withButtonLoading } from "./utils.js";
 
 export const settingsModule = {
   render({ settings, services, profile }) {
@@ -68,9 +68,82 @@ export const settingsModule = {
             <label class="file-button">Import JSON<input type="file" accept="application/json" data-action="import" /></label>
           </div>
         </section>
-        <section class="panel stack">
-          <div class="panel-heading"><h2>About GymFlow</h2></div>
-          <p class="panel-hint">Gym Management &amp; Tracking Platform.</p>
+        <section class="panel stack" style="grid-column: 1 / -1;">
+          <div class="panel-heading">
+            <h2 style="display: flex; align-items: center; gap: 8px;">
+              <span class="material-symbols-outlined" style="color: var(--primary);">event_available</span>
+              Holiday Announcements &amp; Closure Notices
+            </h2>
+          </div>
+          <p class="panel-hint">Schedule upcoming gym holidays or modified operating hours. An announcement countdown banner automatically appears on Member, Trainer, and Owner dashboards 4 days before the holiday starts and remains active through the end date.</p>
+          
+          <form id="holiday-announcement-form" class="stack" style="background: var(--bg-alt); padding: 16px; border-radius: var(--r-md); border: 1px solid var(--line); gap: 12px;">
+            <input type="hidden" name="holidayId" id="holiday-id-field" />
+            <div class="form-grid">
+              <label>Holiday Title<input name="title" id="holiday-title-field" placeholder="e.g. Diwali Holiday, Christmas Break" required /></label>
+              <label>Operating Hours / Status<input name="hours" id="holiday-hours-field" placeholder="e.g. Fully Closed or Open 6am - 10am" required /></label>
+              <label>Start Date<input name="startDate" id="holiday-start-field" type="date" required /></label>
+              <label>End Date<input name="endDate" id="holiday-end-field" type="date" required /></label>
+              <label class="wide">Announcement Message<textarea name="message" id="holiday-message-field" rows="2" placeholder="Custom note for members &amp; trainers (e.g. Wish you all a Happy Diwali! Normal schedule resumes Monday)." required></textarea></label>
+            </div>
+            <div class="button-row">
+              <button class="primary-button" type="submit" id="save-holiday-btn">Schedule Holiday</button>
+              <button class="ghost-button hidden" type="button" id="cancel-holiday-edit-btn">Cancel Edit</button>
+            </div>
+          </form>
+
+          <div class="stack" style="gap: 10px; margin-top: 10px;">
+            <h3 style="font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--accent); margin: 0;">Scheduled Holidays (${(settings?.holidays || []).length})</h3>
+            ${(settings?.holidays || []).length ? `
+              <div class="table-responsive">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Title</th>
+                      <th>Dates</th>
+                      <th>Hours</th>
+                      <th>Message</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${(settings.holidays).map(h => {
+                      const t = today();
+                      let statusBadge = "";
+                      if (t > h.endDate) {
+                        statusBadge = '<mark class="status" style="background: var(--bg-alt); color: var(--text-muted); padding: 3px 8px; border-radius: 12px; font-size: 0.78rem;">Passed</mark>';
+                      } else if (t >= h.startDate) {
+                        statusBadge = '<mark class="status" style="background: #22c55e22; color: #16a34a; padding: 3px 8px; border-radius: 12px; font-size: 0.78rem; font-weight: 700;">Active Today</mark>';
+                      } else {
+                        const days = daysUntil(h.startDate);
+                        statusBadge = `<mark class="status" style="background: #f59e0b22; color: #d97706; padding: 3px 8px; border-radius: 12px; font-size: 0.78rem; font-weight: 700;">In ${days} day${days === 1 ? '' : 's'}</mark>`;
+                      }
+                      return `
+                        <tr>
+                          <td data-label="Title"><strong>${escapeHtml(h.title)}</strong></td>
+                          <td data-label="Dates">${dateLabel(h.startDate)} – ${dateLabel(h.endDate)}</td>
+                          <td data-label="Hours">${escapeHtml(h.hours || "Closed")}</td>
+                          <td data-label="Message" style="max-width: 250px; font-size: 0.85rem;">${escapeHtml(h.message)}</td>
+                          <td data-label="Status">${statusBadge}</td>
+                          <td data-label="Actions">
+                            <div class="table-actions">
+                              <button type="button" class="ghost-button compact edit-holiday-btn" data-id="${escapeHtml(h.id)}" title="Edit">
+                                <span class="material-symbols-outlined" style="font-size: 1.1rem;">edit</span>
+                              </button>
+                              <button type="button" class="ghost-button compact danger delete-holiday-btn" data-id="${escapeHtml(h.id)}" title="Delete">
+                                <span class="material-symbols-outlined" style="font-size: 1.1rem;">delete</span>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      `;
+                    }).join("")}
+                  </tbody>
+                </table>
+              </div>
+            ` : `<div class="table-empty">No holidays scheduled yet.</div>`}
+          </div>
         </section>
 
         ${
@@ -210,6 +283,86 @@ export const settingsModule = {
       await context.services.data.saveSettings(payload);
       context.toast("Pause limits saved.");
       await context.refreshView();
+    });
+
+    // Holiday Announcement CRUD
+    const holidayForm = root.querySelector("#holiday-announcement-form");
+    const cancelHolidayEditBtn = root.querySelector("#cancel-holiday-edit-btn");
+    const saveHolidayBtn = root.querySelector("#save-holiday-btn");
+
+    holidayForm?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const raw = formData(holidayForm);
+      if (raw.endDate < raw.startDate) {
+        context.toast("End date must be on or after start date.");
+        return;
+      }
+      const holidays = Array.isArray(context.settings?.holidays) ? [...context.settings.holidays] : [];
+      if (raw.holidayId) {
+        const idx = holidays.findIndex(h => h.id === raw.holidayId);
+        if (idx !== -1) {
+          holidays[idx] = {
+            ...holidays[idx],
+            title: raw.title.trim(),
+            hours: raw.hours.trim(),
+            startDate: raw.startDate,
+            endDate: raw.endDate,
+            message: raw.message.trim(),
+            updatedAt: new Date().toISOString()
+          };
+        }
+      } else {
+        holidays.push({
+          id: "hol_" + Date.now(),
+          title: raw.title.trim(),
+          hours: raw.hours.trim(),
+          startDate: raw.startDate,
+          endDate: raw.endDate,
+          message: raw.message.trim(),
+          createdBy: context.profile?.name || "Owner",
+          createdAt: new Date().toISOString()
+        });
+      }
+      await context.services.data.saveSettings({ holidays });
+      context.settings.holidays = holidays;
+      context.toast("Holiday announcement saved.");
+      await context.refresh();
+    });
+
+    cancelHolidayEditBtn?.addEventListener("click", () => {
+      holidayForm.reset();
+      root.querySelector("#holiday-id-field").value = "";
+      cancelHolidayEditBtn.classList.add("hidden");
+      saveHolidayBtn.textContent = "Schedule Holiday";
+    });
+
+    root.querySelectorAll(".edit-holiday-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const id = btn.dataset.id;
+        const h = (context.settings?.holidays || []).find(item => item.id === id);
+        if (!h) return;
+        root.querySelector("#holiday-id-field").value = h.id;
+        root.querySelector("#holiday-title-field").value = h.title || "";
+        root.querySelector("#holiday-hours-field").value = h.hours || "";
+        root.querySelector("#holiday-start-field").value = h.startDate || "";
+        root.querySelector("#holiday-end-field").value = h.endDate || "";
+        root.querySelector("#holiday-message-field").value = h.message || "";
+        cancelHolidayEditBtn.classList.remove("hidden");
+        saveHolidayBtn.textContent = "Update Holiday";
+        holidayForm.scrollIntoView({ behavior: "smooth", block: "center" });
+      });
+    });
+
+    root.querySelectorAll(".delete-holiday-btn").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const id = btn.dataset.id;
+        if (!confirm("Are you sure you want to delete this holiday announcement?")) return;
+        const holidays = (context.settings?.holidays || []).filter(item => item.id !== id);
+        await context.services.data.saveSettings({ holidays });
+        context.settings.holidays = holidays;
+        context.toast("Holiday announcement deleted.");
+        await context.refresh();
+      });
     });
 
     // Delete Gym Double Confirmation & Password Verification logic
