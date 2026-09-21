@@ -653,7 +653,7 @@ export function bindMemberProfileDetail(root, member, context, onBack, onEdit) {
       contentEl.innerHTML = `
         <div class="stack" style="gap: 20px;">
           <!-- Top Row Grid: Contact and Personal Info -->
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 16px;">
             <div class="card-premium" style="background: var(--surface-soft); padding: 20px; border-radius: var(--r-md); border-top: 3px solid var(--primary); box-shadow: var(--shadow-card); border-left: 1px solid var(--line); border-right: 1px solid var(--line); border-bottom: 1px solid var(--line);">
               <h3 style="margin: 0 0 12px 0; font-size: 1rem; color: var(--accent); font-weight: 700; border-bottom: 1.5px solid var(--line); padding-bottom: 6px; display: flex; align-items: center; gap: 6px;">
                 <span class="material-symbols-outlined" style="font-size: 1.25rem; color: var(--primary);">contact_page</span> Personal Details
@@ -683,7 +683,7 @@ export function bindMemberProfileDetail(root, member, context, onBack, onEdit) {
           </div>
 
           <!-- Bottom Row Grid: Physical Metrics and Health Declarations -->
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 16px;">
             <div class="card-premium" style="background: var(--surface-soft); padding: 20px; border-radius: var(--r-md); border-top: 3px solid var(--warning); box-shadow: var(--shadow-card); border-left: 1px solid var(--line); border-right: 1px solid var(--line); border-bottom: 1px solid var(--line);">
               <h3 style="margin: 0 0 12px 0; font-size: 1rem; color: var(--accent); font-weight: 700; border-bottom: 1.5px solid var(--line); padding-bottom: 6px; display: flex; align-items: center; gap: 6px;">
                 <span class="material-symbols-outlined" style="font-size: 1.25rem; color: var(--warning);">monitoring</span> Body Profile
@@ -758,7 +758,7 @@ export function bindMemberProfileDetail(root, member, context, onBack, onEdit) {
 
       contentEl.innerHTML = `
         <div class="stack" style="gap: 15px;">
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 15px; border-bottom: 1px solid var(--line); padding-bottom: 15px;">
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 15px; border-bottom: 1px solid var(--line); padding-bottom: 15px;">
             <div class="panel stack" style="padding: 12px; font-size: 0.85rem; background: var(--bg-alt); border-radius: var(--r-md); border:1px solid var(--line);">
               <h4 style="margin: 0 0 10px 0; color: var(--accent); font-size: 0.95rem; border-bottom: 1px solid var(--line); padding-bottom: 4px;">Weekly Schedule</h4>
               <div style="display: flex; flex-direction: column; gap: 4px;">
