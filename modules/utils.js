@@ -166,6 +166,14 @@ export function normalizePhone10(value = "") {
   return digits.slice(-10);
 }
 
+export function getAppBaseUrl() {
+  const customDomain = window.GYM_CONFIG?.domain || "app.gripgym.in";
+  if (customDomain && typeof window !== "undefined" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1") {
+    return `https://${customDomain}/`;
+  }
+  return typeof window !== "undefined" ? (window.location.origin + window.location.pathname) : "https://app.gripgym.in/";
+}
+
 export function whatsappUrl(member, message) {
   const phone = normalizePhone(member.mobile);
   return `https://wa.me/${encodeURIComponent(phone)}?text=${encodeURIComponent(message)}`;

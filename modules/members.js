@@ -1,4 +1,4 @@
-import { addDays, byName, collections, confirmDialog, dateLabel, emptyState, escapeHtml, findName, formData, memberStatus, nameCell, normalizePhone10, optionList, pageHeader, renderMemberProfileDetail, bindMemberProfileDetail, statusClass, today, withButtonLoading, cmToFeetInches, feetInchesToCm, calcBmi, bmiCategory, renderSharedMemberFields, bindSharedBmiEvents } from "./utils.js";
+import { addDays, byName, collections, confirmDialog, dateLabel, emptyState, escapeHtml, findName, formData, getAppBaseUrl, memberStatus, nameCell, normalizePhone10, optionList, pageHeader, renderMemberProfileDetail, bindMemberProfileDetail, statusClass, today, withButtonLoading, cmToFeetInches, feetInchesToCm, calcBmi, bmiCategory, renderSharedMemberFields, bindSharedBmiEvents } from "./utils.js";
 
 function renderMemberForm(member, plans, trainers) {
   const isEdit = !!member;
@@ -601,7 +601,7 @@ export const membersModule = {
               if (ok) {
                 const gymName = context.settings?.gymName || "our Gym";
                 const gymCode = context.settings?.gymCode || "";
-                const appUrl = window.location.origin + window.location.pathname;
+                const appUrl = getAppBaseUrl();
                 const normalizedMob = normalizePhone10(saved.mobile);
                 const inviteText = `Hello ${saved.fullName}! Welcome to ${gymName}.\n\nTo register and access your workouts, schedules, and consistency points, please open the GymFlow App and set your password:\n${appUrl}#register?invite=${saved.id}&phone=${normalizedMob}&code=${gymCode}`;
                 const waUrl = `https://wa.me/${encodeURIComponent(normalizedMob)}?text=${encodeURIComponent(inviteText)}`;
@@ -665,7 +665,7 @@ export const membersModule = {
         if (!member) return;
         const gymName = context.settings?.gymName || "our Gym";
         const gymCode = context.settings?.gymCode || "";
-        const appUrl = window.location.origin + window.location.pathname;
+        const appUrl = getAppBaseUrl();
         const normalizedMob = normalizePhone10(member.mobile);
         const inviteText = `Hello ${member.fullName}! Welcome to ${gymName}.\n\nTo register and access your workouts, schedules, and consistency points, please open the GymFlow App and set your password:\n${appUrl}#register?invite=${member.id}&phone=${normalizedMob}&code=${gymCode}`;
         const waUrl = `https://wa.me/${encodeURIComponent(normalizedMob)}?text=${encodeURIComponent(inviteText)}`;

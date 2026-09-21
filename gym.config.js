@@ -1,5 +1,6 @@
 window.GYM_CONFIG = {
   appName: "Grip Gym",
+  domain: "app.gripgym.in",
 
   // Choose one of the 10 available themes. Change this value to rebrand your gym.
   colorTheme: "neon-lime",
