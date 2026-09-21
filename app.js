@@ -51,7 +51,7 @@ const nav = [
   ["my-workout", "My Workout", "fitness_center", ["member", "guest"]],
   ["trainer-checkin", "Check In", "how_to_reg", ["trainer"]],
   ["my-checkins", "My Check-ins", "history", ["trainer"]],
-  ["trainer-members", "My Clients", "group", ["trainer"]],
+  ["trainer-members", "My Clients", "group", ["trainer", "owner"]],
   ["profile", "Profile", "person", ["member", "guest"]], // owner/trainer use the sidebar profile chip
   ["settings", "Settings", "settings", ["owner"]]
 ];
@@ -1050,6 +1050,9 @@ Total members listed: ${(state.data.members || []).length}</pre>
                 <span class="material-symbols-outlined">person</span> My Profile
               </a>
               ${state.profile.role === "owner" ? `
+                <a href="#/trainer-members" class="dropdown-item">
+                  <span class="material-symbols-outlined">fitness_center</span> Trainer View (My Clients)
+                </a>
                 <a href="#/settings" class="dropdown-item">
                   <span class="material-symbols-outlined">settings</span> Settings
                 </a>
@@ -1097,7 +1100,32 @@ function makeContext() {
     (m) => m.uid === state.profile?.uid || (m.email && m.email.toLowerCase() === state.profile?.email?.toLowerCase())
   );
   const myMember = myMembers.find((m) => memberStatus(m) !== "Pending") || myMembers[0] || null;
-  const myTrainer = (state.data.trainers || []).find((t) => t.uid === state.profile?.uid) || null;
+  let trainersList = [...(state.data.trainers || [])];
+  let myTrainer = trainersList.find((t) => t.uid === state.profile?.uid) || null;
+
+  if (state.profile?.role === "owner") {
+    const ownerId = state.profile.uid || "owner";
+    if (!myTrainer) {
+      myTrainer = {
+        id: ownerId,
+        uid: state.profile.uid || "",
+        name: state.profile.name || state.settings?.ownerName || "Gym Owner",
+        specialty: "Owner & Head Coach",
+        role: "owner"
+      };
+    }
+    const alreadyListed = trainersList.some((t) => t.id === ownerId || (t.uid && t.uid === state.profile.uid));
+    if (!alreadyListed) {
+      trainersList.unshift({
+        id: ownerId,
+        uid: state.profile.uid || "",
+        name: `${state.profile.name || state.settings?.ownerName || "Gym Owner"} (Owner / Trainer)`,
+        specialty: "Owner & Head Coach",
+        status: "Active",
+        role: "owner"
+      });
+    }
+  }
 
   const services = { ...state.services };
   if (state.profile?.role === "guest") {
@@ -1131,7 +1159,10 @@ function makeContext() {
   return {
     profile: state.profile,
     settings: state.settings,
-    data: state.data,
+    data: {
+      ...state.data,
+      trainers: trainersList
+    },
     services: services,
     refresh: refreshData,
     refreshView,
