@@ -2,7 +2,9 @@ import { addDays, byName, collections, confirmDialog, dateLabel, emptyState, esc
 
 function renderMemberForm(member, plans, trainers) {
   const isEdit = !!member;
+  const currentPlanId = member?.planId || member?.membershipTypeId || member?.membershipPlanId || "";
   const emailValue = (member?.email && member.email.endsWith("@gymflow.app")) ? "" : (member?.email || "");
+  const hasMatchingPlan = plans.some(p => String(p.id) === String(currentPlanId));
   return `
     <div class="page-header" style="border-bottom: 1.5px solid var(--line); padding-bottom: 16px; margin-bottom: 15px;">
       <div style="display:flex; align-items:center; gap:12px;">
@@ -30,9 +32,10 @@ function renderMemberForm(member, plans, trainers) {
         
         <label>Join date<input name="joinDate" type="date" value="${member?.joinDate || today()}" /></label>
         <label>Membership plan
-          <select name="planId" required>
+          <select name="planId" id="member-plan-select" required>
             <option value="">Select plan</option>
-            ${plans.map(p => `<option value="${p.id}" ${member?.planId === p.id ? "selected" : ""}>${escapeHtml(p.planName)}</option>`).join("")}
+            ${plans.map(p => `<option value="${p.id}" ${currentPlanId && String(p.id) === String(currentPlanId) ? "selected" : ""}>${escapeHtml(p.planName)}</option>`).join("")}
+            ${(!hasMatchingPlan && currentPlanId) ? `<option value="${escapeHtml(currentPlanId)}" selected>${escapeHtml(member.planName || "Current Plan (" + currentPlanId + ")")}</option>` : ""}
           </select>
         </label>
         <label>Assigned trainer
@@ -489,6 +492,16 @@ export const membersModule = {
           context.toast("End date can't be before the start date.");
           return;
         }
+        if (!payload.planId) {
+          const editMemberObj = payload.id ? context.data.members.find(m => m.id === payload.id) : null;
+          if (editMemberObj?.planId || editMemberObj?.membershipTypeId) {
+            payload.planId = editMemberObj.planId || editMemberObj.membershipTypeId;
+          } else {
+            context.toast("Please select a membership plan.");
+            return;
+          }
+        }
+        payload.membershipTypeId = payload.planId;
         const isNew = !payload.id;
         const measurements = {
           weight:  payload.initWeight  || "",
