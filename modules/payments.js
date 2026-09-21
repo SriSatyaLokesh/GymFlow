@@ -248,7 +248,7 @@ async function _drawReceiptCanvas(payment, member, plan, settings) {
   return canvas;
 }
 
-function buildReceiptShareText(payment, member, plan, settings) {
+export function buildReceiptShareText(payment, member, plan, settings) {
   const currency = settings?.currency || "INR";
   const gymName = settings?.gymName || "GymFlow";
   const origPrice = Number(payment.originalPrice || (payment.amount + (payment.discountAmount || 0)));
