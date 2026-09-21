@@ -19,7 +19,7 @@ import { trainerMembersModule } from "./modules/trainer-members.js";
 import { myWorkoutModule } from "./modules/my-workout.js";
 import { profileModule } from "./modules/profile.js";
 import { leaderboardModule } from "./modules/leaderboard.js";
-import { CARTOON_AVATARS, escapeHtml, getExercises, memberStatus, getAvatarUrl } from "./modules/utils.js";
+import { CARTOON_AVATARS, escapeHtml, getExercises, memberStatus, getAvatarUrl, initials } from "./modules/utils.js";
 
 const appRoot = document.querySelector("#app");
 
@@ -1032,6 +1032,11 @@ Total members listed: ${(state.data.members || []).length}</pre>
           </a>
           <div class="topbar-profile-menu">
             <button class="topbar-profile-btn" id="topbar-profile-trigger" aria-haspopup="true" aria-expanded="false" title="User Menu">
+              <span class="avatar small topbar-avatar">
+                ${state.profile.avatarUrl 
+                  ? `<img src="${escapeHtml(getAvatarUrl(state.profile.avatarUrl))}" alt="" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;" />` 
+                  : escapeHtml(initials(state.profile.name))}
+              </span>
               <div class="topbar-user">
                 <span class="eyebrow">${state.profile.role}</span>
                 <strong>${state.profile.name}</strong>

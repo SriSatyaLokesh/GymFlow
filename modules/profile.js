@@ -325,6 +325,10 @@ export const profileModule = {
           avatarUrl: selectedAvatar,
           ...(role === "owner" ? { mobile: mobileVal } : {})
         });
+        if (context.profile) {
+          context.profile.name = name;
+          context.profile.avatarUrl = selectedAvatar;
+        }
 
         if (role === "member" && context.myMember) {
           const updatedMember = {
