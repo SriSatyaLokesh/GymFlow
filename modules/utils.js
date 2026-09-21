@@ -599,7 +599,7 @@ export function renderMemberProfileDetail(member, context) {
 
     <div class="tabs-header profile-tabs" style="margin-bottom: 15px; border-bottom: 2px solid var(--line); display:flex; gap:10px;">
       <button class="tab-btn active" data-profile-tab="info">Bio & Medical</button>
-      <button class="tab-btn" data-profile-tab="logs">Workout Logs (${logs.length})</button>
+      <button class="tab-btn" data-profile-tab="logs">Active Workout Logs (${logs.length})</button>
       <button class="tab-btn" data-profile-tab="progress">Progress Timeline</button>
       <button class="tab-btn" data-profile-tab="achievements">Achievements</button>
     </div>
@@ -620,9 +620,14 @@ export function bindMemberProfileDetail(root, member, context, onBack, onEdit) {
   const mySchedules = (context.data.workout_schedules || []).filter(s => s.memberId === member.id);
   const customRoutines = mySchedules.filter(s => s.type === "routine");
   const weeklyScheduleDoc = mySchedules.find(s => s.type === "schedule") || { schedule: {} };
-  const logs = (context.data.workout_logs || [])
+  let memberLogs = (context.data.workout_logs || [])
     .filter(l => l.memberId === member.id)
     .sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")));
+  let logs = memberLogs;
+  let logRoutineFilter = "all";
+  let logDateFilter = "all";
+  let isRefreshingLogs = false;
+  let logsAutoRefreshed = false;
 
   const METRICS = [
     { key: "weight", label: "Weight (kg)", color: "var(--teal)" },
@@ -755,52 +760,117 @@ export function bindMemberProfileDetail(root, member, context, onBack, onEdit) {
             </div>
           `).join("")
         : `<div style="text-align:center; opacity:0.7; padding:10px;">No custom routines defined.</div>`;
-
-      contentEl.innerHTML = `
-        <div class="stack" style="gap: 15px;">
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 15px; border-bottom: 1px solid var(--line); padding-bottom: 15px;">
-            <div class="panel stack" style="padding: 12px; font-size: 0.85rem; background: var(--bg-alt); border-radius: var(--r-md); border:1px solid var(--line);">
-              <h4 style="margin: 0 0 10px 0; color: var(--accent); font-size: 0.95rem; border-bottom: 1px solid var(--line); padding-bottom: 4px;">Weekly Schedule</h4>
-              <div style="display: flex; flex-direction: column; gap: 4px;">
-                ${scheduleHtml}
-              </div>
-            </div>
-            <div class="panel stack" style="padding: 12px; font-size: 0.85rem; background: var(--bg-alt); border-radius: var(--r-md); border:1px solid var(--line);">
-              <h4 style="margin: 0 0 10px 0; color: var(--accent); font-size: 0.95rem; border-bottom: 1px solid var(--line); padding-bottom: 4px;">Custom Routines</h4>
-              <div style="display: flex; flex-direction: column; gap: 4px; max-height: 200px; overflow-y: auto;">
-                ${routinesHtml}
-              </div>
-            </div>
-          </div>
-
-          <h3 style="margin: 5px 0 0 0; font-size: 1.1rem; color: var(--accent);">Completed Workout Logs</h3>
-          <div class="stack" style="gap: 12px;">
-            ${logs.length 
-              ? logs.map(log => `
-                  <div class="panel" style="padding:12px; border:1px solid var(--line); border-radius:var(--r-md); background:var(--bg-alt);">
-                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--line); padding-bottom:4px; margin-bottom:8px;">
-                      <strong style="font-size:1rem; color:var(--accent);">${escapeHtml(log.routineName || "Workout")}</strong>
-                      <small style="opacity:0.8;">${dateLabel(log.date)} • ${log.durationMinutes || 0} mins</small>
-                    </div>
-                    ${log.notes ? `<p style="font-style:italic; font-size:0.85rem; margin:4px 0;">"${escapeHtml(log.notes)}"</p>` : ""}
-                    <div style="margin-top:6px; display:flex; flex-direction:column; gap:4px;">
-                      ${(log.exercises || []).map(ex => `
-                        <div style="font-size:0.85rem;">
-                          <strong>${escapeHtml(ex.name)}</strong>
-                          <span style="opacity:0.8; padding-left:6px;">
-                            ${(ex.sets || []).map((s, idx) => `${idx + 1}: ${s.weight}kg x ${s.reps}`).join(" / ")}
-                          </span>
-                        </div>
-                      `).join("")}
-                    </div>
-                  </div>
-                `).join("")
-              : `<div class="table-empty">No workouts logged yet.</div>`
+          // Filter memberLogs based on active filters
+          const uniqueRoutines = [...new Set(memberLogs.map(l => l.routineName || "Workout"))];
+          let filteredLogs = [...memberLogs];
+          if (logRoutineFilter !== "all") {
+            filteredLogs = filteredLogs.filter(l => (l.routineName || "Workout") === logRoutineFilter);
+          }
+          if (logDateFilter !== "all") {
+            const days = parseInt(logDateFilter, 10);
+            if (!isNaN(days)) {
+              const cutoff = new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
+              filteredLogs = filteredLogs.filter(l => (l.date || "") >= cutoff);
             }
-          </div>
-        </div>
-      `;
-    } else if (activeTab === "progress") {
+          }
+
+          contentEl.innerHTML = `
+            <div class="stack" style="gap: 15px;">
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 15px; border-bottom: 1px solid var(--line); padding-bottom: 15px;">
+                <div class="panel stack" style="padding: 12px; font-size: 0.85rem; background: var(--bg-alt); border-radius: var(--r-md); border:1px solid var(--line);">
+                  <h4 style="margin: 0 0 10px 0; color: var(--accent); font-size: 0.95rem; border-bottom: 1px solid var(--line); padding-bottom: 4px;">Weekly Schedule</h4>
+                  <div style="display: flex; flex-direction: column; gap: 4px;">
+                    ${scheduleHtml}
+                  </div>
+                </div>
+                <div class="panel stack" style="padding: 12px; font-size: 0.85rem; background: var(--bg-alt); border-radius: var(--r-md); border:1px solid var(--line);">
+                  <h4 style="margin: 0 0 10px 0; color: var(--accent); font-size: 0.95rem; border-bottom: 1px solid var(--line); padding-bottom: 4px;">Custom Routines</h4>
+                  <div style="display: flex; flex-direction: column; gap: 4px; max-height: 200px; overflow-y: auto;">
+                    ${routinesHtml}
+                  </div>
+                </div>
+              </div>
+
+              <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:10px;">
+                <h3 style="margin: 0; font-size: 1.1rem; color: var(--accent); display:flex; align-items:center; gap:6px;">
+                  <span class="material-symbols-outlined" style="font-size:1.3rem; color:var(--primary);">fitness_center</span>
+                  Active Workout Logs (${filteredLogs.length})
+                </h3>
+                <div style="display:flex; flex-wrap:wrap; align-items:center; gap:8px;">
+                  <select id="log-routine-filter" style="padding: 5px 8px; border-radius: var(--r-sm); border: 1px solid var(--line); background: var(--bg-alt); color: var(--text); font-size: 0.85rem;">
+                    <option value="all" ${logRoutineFilter === "all" ? "selected" : ""}>All Routines</option>
+                    ${uniqueRoutines.map(r => `<option value="${escapeHtml(r)}" ${logRoutineFilter === r ? "selected" : ""}>${escapeHtml(r)}</option>`).join("")}
+                  </select>
+                  <select id="log-date-filter" style="padding: 5px 8px; border-radius: var(--r-sm); border: 1px solid var(--line); background: var(--bg-alt); color: var(--text); font-size: 0.85rem;">
+                    <option value="all" ${logDateFilter === "all" ? "selected" : ""}>All Time</option>
+                    <option value="7" ${logDateFilter === "7" ? "selected" : ""}>Last 7 Days</option>
+                    <option value="30" ${logDateFilter === "30" ? "selected" : ""}>Last 30 Days</option>
+                    <option value="90" ${logDateFilter === "90" ? "selected" : ""}>Last 90 Days</option>
+                  </select>
+                  <button type="button" id="refresh-logs-btn" class="ghost-button compact" style="padding: 5px 10px; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 4px;" ${isRefreshingLogs ? "disabled" : ""}>
+                    <span class="material-symbols-outlined" style="font-size: 1rem;">refresh</span>
+                    ${isRefreshingLogs ? "Syncing..." : "Sync Logs"}
+                  </button>
+                </div>
+              </div>
+
+              <div class="stack" style="gap: 12px;">
+                ${filteredLogs.length 
+                  ? filteredLogs.map(log => `
+                      <div class="panel" style="padding:12px; border:1px solid var(--line); border-radius:var(--r-md); background:var(--bg-alt);">
+                        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--line); padding-bottom:4px; margin-bottom:8px;">
+                          <strong style="font-size:1rem; color:var(--accent);">${escapeHtml(log.routineName || "Workout")}</strong>
+                          <small style="opacity:0.8;">${dateLabel(log.date)} • ${log.durationMinutes || 0} mins</small>
+                        </div>
+                        ${log.notes ? `<p style="font-style:italic; font-size:0.85rem; margin:4px 0;">"${escapeHtml(log.notes)}"</p>` : ""}
+                        <div style="margin-top:6px; display:flex; flex-direction:column; gap:4px;">
+                          ${(log.exercises || []).map(ex => `
+                            <div style="font-size:0.85rem;">
+                              <strong>${escapeHtml(ex.name)}</strong>
+                              <span style="opacity:0.8; padding-left:6px;">
+                                ${(ex.sets || []).map((s, idx) => `${idx + 1}: ${s.weight}kg x ${s.reps}`).join(" / ")}
+                              </span>
+                            </div>
+                          `).join("")}
+                        </div>
+                      </div>
+                    `).join("")
+                  : `<div class="table-empty">No workouts found for the selected filters.</div>`
+                }
+              </div>
+            </div>
+          `;
+
+          contentEl.querySelector("#log-routine-filter")?.addEventListener("change", (e) => {
+            logRoutineFilter = e.target.value;
+            renderTab();
+          });
+          contentEl.querySelector("#log-date-filter")?.addEventListener("change", (e) => {
+            logDateFilter = e.target.value;
+            renderTab();
+          });
+          contentEl.querySelector("#refresh-logs-btn")?.addEventListener("click", async () => {
+            if (isRefreshingLogs) return;
+            isRefreshingLogs = true;
+            renderTab();
+            try {
+              if (context.services?.data?.list) {
+                const freshLogs = await context.services.data.list("workout_logs");
+                context.data.workout_logs = freshLogs;
+                memberLogs = freshLogs
+                  .filter((l) => l.memberId === member.id)
+                  .sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")));
+                const tabBtn = root.querySelector('[data-profile-tab="logs"]');
+                if (tabBtn) tabBtn.textContent = `Active Workout Logs (${memberLogs.length})`;
+              }
+            } catch (err) {
+              console.warn("Error refreshing workout logs:", err);
+            } finally {
+              isRefreshingLogs = false;
+              renderTab();
+            }
+          });
+        } else if (activeTab === "progress") {
       const records = (context.data.progress_records || [])
         .filter((r) => r.memberId === member.id)
         .sort((a, b) => String(b.date).localeCompare(String(a.date)));
@@ -961,6 +1031,19 @@ export function bindMemberProfileDetail(root, member, context, onBack, onEdit) {
       root.querySelectorAll("[data-profile-tab]").forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
       activeTab = btn.dataset.profileTab;
+      if (activeTab === "logs" && !logsAutoRefreshed && context.services?.data?.list) {
+        logsAutoRefreshed = true;
+        context.services.data.list("workout_logs").then(freshLogs => {
+          if (Array.isArray(freshLogs)) {
+            context.data.workout_logs = freshLogs;
+            memberLogs = freshLogs
+              .filter((l) => l.memberId === member.id)
+              .sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")));
+            btn.textContent = `Active Workout Logs (${memberLogs.length})`;
+            if (activeTab === "logs") renderTab();
+          }
+        }).catch(() => {});
+      }
       renderTab();
     });
   });
