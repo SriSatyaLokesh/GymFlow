@@ -9,9 +9,20 @@ export const renewalsModule = {
 
     const members = data.members || [];
     const plans = data.membership_plans || [];
+    const reminders = data.reminders || [];
     const currency = settings?.currency || "INR";
     const watched = members
-      .map((member) => ({ ...member, remaining: daysUntil(member.endDate), computedStatus: memberStatus(member) }))
+      .map((member) => {
+        const memberReminders = reminders
+          .filter(r => r.memberId === member.id && (r.state === "Sent" || r.status === "sent"))
+          .sort((a, b) => String(b.sentAt || "").localeCompare(String(a.sentAt || "")));
+        return {
+          ...member,
+          remaining: daysUntil(member.endDate),
+          computedStatus: memberStatus(member),
+          latestReminder: memberReminders[0] || null
+        };
+      })
       .filter((member) => member.computedStatus !== "Paused" && member.remaining <= 7)
       .sort((a, b) => a.remaining - b.remaining);
 
@@ -170,6 +181,22 @@ function setPlanAmount(form, context) {
 }
 
 function renewalRow(member, plans, currency) {
+  const reminder = member.latestReminder;
+  let reminderBadge = "";
+  if (reminder) {
+    const isManual = reminder.sentVia === "manual" || reminder.channel === "Manual";
+    const badgeBg = isManual ? "rgba(0, 194, 255, 0.15)" : "rgba(34, 197, 94, 0.15)";
+    const badgeColor = isManual ? "var(--teal-ink)" : "var(--success, #15803d)";
+    const badgeIcon = isManual ? "check" : "check_circle";
+    const badgeText = isManual ? "Reminder Sent" : `Reminder Sent (${escapeHtml(reminder.channel || "Auto")})`;
+    reminderBadge = `
+      <small class="row-meta" style="background: ${badgeBg}; color: ${badgeColor}; font-weight: 700; padding: 2px 6px; border-radius: 12px; display: inline-flex; align-items: center; gap: 3px; margin-top: 3px;">
+        <span class="material-symbols-outlined" style="font-size: 0.85rem;">${badgeIcon}</span>
+        ${badgeText}
+      </small>
+    `;
+  }
+
   return `
     <div class="table-row">
       <span data-label="Member">
@@ -178,7 +205,10 @@ function renewalRow(member, plans, currency) {
       </span>
       <span data-label="Plan">${escapeHtml(findName(plans, member.planId))}</span>
       <span data-label="Expiry">${dateLabel(member.endDate)} <small>${member.remaining < 0 ? `${Math.abs(member.remaining)} days overdue` : `${member.remaining} days left`}</small></span>
-      <span data-label="Status"><mark class="status ${statusClass(member.computedStatus)}">${escapeHtml(member.computedStatus)}</mark></span>
+      <span data-label="Status">
+        <mark class="status ${statusClass(member.computedStatus)}">${escapeHtml(member.computedStatus)}</mark>
+        ${reminderBadge}
+      </span>
       <span class="row-actions">
         <button class="primary-button compact" data-renew-member="${escapeHtml(member.id)}">
           <span class="material-symbols-outlined" style="font-size:1rem;">autorenew</span>
