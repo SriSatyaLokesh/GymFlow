@@ -269,17 +269,19 @@ export const membersModule = {
                   </select>
                 </label>
               </div>
-              <div class="data-table members-table" data-member-list>
-                <div class="table-head">
-                  <span>Name</span>
-                  <span>Plan</span>
-                  <span>Expiry</span>
-                  <span style="text-align: center;">Consistency</span>
-                  <span style="text-align: center;">Points</span>
-                  <span>Status</span>
-                  <span></span>
+              <div class="table-responsive">
+                <div class="data-table members-table" data-member-list>
+                  <div class="table-head">
+                    <span>Name</span>
+                    <span>Plan</span>
+                    <span>Expiry</span>
+                    <span style="text-align: center;">Consistency</span>
+                    <span style="text-align: center;">Points</span>
+                    <span>Status</span>
+                    <span></span>
+                  </div>
+                  ${members.map((member) => row(member, plans, trainers)).join("")}
                 </div>
-                ${members.map((member) => row(member, plans, trainers)).join("")}
               </div>`
             : emptyState("No members yet", "Add your first member to start tracking plans, payments, and renewals.")
         }
