@@ -315,6 +315,8 @@ const GLOBAL_COLLECTIONS = ["members", "trainers", "membership_plans"];
 // Route to collection mapping
 const ROUTE_SCOPES = {
   dashboard: ["payments", "attendance"],
+  members: ["workout_logs", "workout_schedules", "workout_templates", "progress_records", "badges"],
+  "trainer-members": ["workout_logs", "workout_schedules", "workout_templates", "progress_records", "badges", "workout_assignments"],
   payments: ["payments"],
   "my-payments": ["payments"],
   workouts: ["workout_templates", "workout_assignments", "workout_sessions", "workout_logs", "exercise_library"],
