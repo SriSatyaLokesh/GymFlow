@@ -1,4 +1,5 @@
-import { addDays, collections, dateLabel, daysUntil, emptyState, escapeHtml, findName, formData, memberStatus, money, optionList, pageHeader, statusClass, today, withButtonLoading } from "./utils.js";
+import { addDays, collections, confirmDialog, dateLabel, daysUntil, emptyState, escapeHtml, findName, formData, memberStatus, money, normalizePhone10, optionList, pageHeader, statusClass, today, withButtonLoading } from "./utils.js";
+import { buildReceiptShareText } from "./payments.js";
 
 export const renewalsModule = {
   activeView: "list",
@@ -145,6 +146,34 @@ export const renewalsModule = {
           form.reset();
           context.applyChange(collections.members, savedMember);
           context.applyChange(collections.payments, savedPayment);
+
+          setTimeout(async () => {
+            const ok = await confirmDialog({
+              title: `Send Renewal Receipt to ${member.fullName}?`,
+              body: `Would you like to send an instant WhatsApp renewal receipt confirmation to ${member.fullName} (${member.mobile || "no phone"})?`,
+              confirmText: "Send Receipt",
+              danger: false
+            });
+            if (ok) {
+              const text = buildReceiptShareText(savedPayment, savedMember, plan, context.settings);
+              const phone = normalizePhone10(member.mobile);
+              const waUrl = `https://wa.me/${encodeURIComponent(phone)}?text=${encodeURIComponent(text)}`;
+              window.open(waUrl, "_blank", "noopener,noreferrer");
+
+              const receiptLog = await context.services.data.save(collections.reminders, {
+                memberId: member.id,
+                channel: "WhatsApp",
+                sentVia: "whatsapp",
+                state: "Sent",
+                status: "sent",
+                type: "renewal_confirmation",
+                receiptNumber: savedPayment.receiptNumber,
+                sentAt: new Date().toISOString(),
+                message: text
+              });
+              context.applyChange(collections.reminders, receiptLog);
+            }
+          }, 120);
         }, "Renewing...");
       });
 
