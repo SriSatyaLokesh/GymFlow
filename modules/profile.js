@@ -1,4 +1,4 @@
-import { escapeHtml, pageHeader, getAvatarUrl, renderSharedMemberFields, bindSharedBmiEvents, cmToFeetInches, calcBmi } from "./utils.js";
+import { escapeHtml, pageHeader, getAvatarUrl, renderSharedMemberFields, bindSharedBmiEvents, cmToFeetInches, calcBmi, CARTOON_AVATARS, initials } from "./utils.js";
 
 const EMOJIS = [
   "😀", "😎", "🤓", "🤠", "👽", "🤖", "👑", "🧔", "🧑", "👩", "👨", "👱‍♀️", 
@@ -155,8 +155,12 @@ export const profileModule = {
         <!-- View Mode Panel -->
         <div id="profile-view-section" class="panel stack" style="gap: 20px;">
           <div style="display: flex; gap: 20px; align-items: center; border-bottom: 1px solid var(--line); padding-bottom: 20px;">
-            <div style="width: 80px; height: 80px; border-radius: 50%; overflow: hidden; border: 2px solid var(--primary); display: flex; align-items: center; justify-content: center; background: var(--bg-light); flex-shrink: 0;">
-              <img src="${escapeHtml(getAvatarUrl(selectedAvatar))}" style="width: 100%; height: 100%; object-fit: cover;" />
+            <div id="view-avatar-trigger" style="position: relative; width: 84px; height: 84px; border-radius: 50%; overflow: hidden; border: 3px solid var(--primary); display: flex; align-items: center; justify-content: center; background: var(--bg-light); flex-shrink: 0; cursor: pointer; transition: transform 0.2s;" title="Click to change profile picture / avatar">
+              <img src="${escapeHtml(getAvatarUrl(selectedAvatar))}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null; this.parentElement.textContent='${escapeHtml(initials(context.profile.name))}';" />
+              <div style="position: absolute; inset: 0; background: rgba(0,0,0,0.45); display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; color: #fff;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0">
+                <span class="material-symbols-outlined" style="font-size: 20px;">photo_camera</span>
+                <span style="font-size: 0.62rem; font-weight: 700; letter-spacing: 0.05em; margin-top: 2px;">CHANGE</span>
+              </div>
             </div>
             <div class="stack" style="gap: 4px; flex: 1;">
               <h2 style="margin: 0; font-size: 1.5rem; word-break: break-all; overflow-wrap: break-word;">${escapeHtml(context.profile.name)}</h2>
@@ -181,15 +185,36 @@ export const profileModule = {
           
           <!-- Avatar Section -->
           <div class="stack" style="gap: 16px; border-bottom: 1px solid var(--line); padding-bottom: 20px; margin-bottom: 10px;">
-            <div style="display: flex; gap: 20px; align-items: center;">
+            <div style="display: flex; gap: 20px; align-items: center; flex-wrap: wrap;">
               <div id="avatar-preview-container" style="width: 84px; height: 84px; border-radius: 50%; overflow: hidden; border: 3px solid var(--primary); display: flex; align-items: center; justify-content: center; background: var(--bg-light); box-shadow: var(--shadow-md); flex-shrink: 0;"></div>
-              <div class="stack" style="gap: 4px;">
-                <h3 style="margin: 0; font-size: 1.15rem;">Avatar Creator</h3>
-                <span class="panel-hint">Design your custom avatar using any emoji and background color.</span>
+              <div class="stack" style="gap: 4px; flex: 1; min-width: 220px;">
+                <h3 style="margin: 0; font-size: 1.15rem;">Profile Avatar & Photo</h3>
+                <span class="panel-hint">Upload your photo or customize an avatar.</span>
+                <div style="display: flex; gap: 8px; margin-top: 6px; flex-wrap: wrap;">
+                  <label class="ghost-button compact" style="cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
+                    <span class="material-symbols-outlined" style="font-size: 18px;">upload</span> Upload Photo
+                    <input type="file" id="photo-file-input" accept="image/*" style="display: none;" />
+                  </label>
+                  <button type="button" class="ghost-button compact" id="reset-emoji-avatar-btn" style="display: inline-flex; align-items: center; gap: 4px;">
+                    <span class="material-symbols-outlined" style="font-size: 18px;">face</span> Design Emoji
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Quick Presets -->
+            <div>
+              <label style="margin-bottom: 6px; display: block; font-weight: 600; font-size: 0.85rem; color: var(--text);">Preset Cartoon Avatars</label>
+              <div style="display: flex; gap: 8px; overflow-x: auto; padding: 4px 2px; scrollbar-width: none;">
+                ${CARTOON_AVATARS.map((svg, idx) => `
+                  <button type="button" class="preset-avatar-btn" data-preset-index="${idx}" style="border: 2px solid transparent; background: transparent; padding: 2px; cursor: pointer; border-radius: 50%; width: 42px; height: 42px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: border-color 0.15s;" title="Avatar ${idx + 1}">
+                    <img src="${escapeHtml(svg)}" style="width: 100%; height: 100%; border-radius: 50%;" />
+                  </button>
+                `).join("")}
               </div>
             </div>
             
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+            <div id="emoji-creator-panel" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
               <div class="stack" style="gap: 12px;">
                 <label>Custom Emoji (Type or paste *any* emoji)
                   <input id="custom-emoji-input" maxlength="2" placeholder="Type or paste any emoji" style="width: 100%; margin-top: 6px;" value="${escapeHtml(currentEmoji)}" />
@@ -248,6 +273,8 @@ export const profileModule = {
 
     const previewContainer = root.querySelector("#avatar-preview-container");
     const emojiInput = root.querySelector("#custom-emoji-input");
+    const photoInput = root.querySelector("#photo-file-input");
+    const viewAvatarTrigger = root.querySelector("#view-avatar-trigger");
     const role = context.profile.role;
 
     let selectedAvatar = context.profile.avatarUrl || "emoji:🧔:#3a7bd5,#3a6073";
@@ -261,13 +288,16 @@ export const profileModule = {
     }
 
     function renderPreview() {
-      const spec = `emoji:${currentEmoji}:${currentBg}`;
-      selectedAvatar = spec;
-      const url = getAvatarUrl(spec);
-      previewContainer.innerHTML = `<img src="${escapeHtml(url)}" style="width: 100%; height: 100%; object-fit: cover;" />`;
+      const url = getAvatarUrl(selectedAvatar);
+      previewContainer.innerHTML = `<img src="${escapeHtml(url)}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null; this.parentElement.textContent='${escapeHtml(initials(context.profile.name))}';" />`;
     }
 
-    // Toggle Edit Mode (Set form display to block, so CSS stack works and elements render vertically!)
+    // Direct click on avatar in view mode triggers edit mode
+    viewAvatarTrigger?.addEventListener("click", () => {
+      startEditBtn?.click();
+    });
+
+    // Toggle Edit Mode
     startEditBtn?.addEventListener("click", () => {
       viewSection.style.display = "none";
       editForm.style.display = "block";
@@ -279,11 +309,68 @@ export const profileModule = {
       viewSection.style.display = "block";
     });
 
+    // Handle Photo File Upload
+    photoInput?.addEventListener("change", (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      if (!file.type.startsWith("image/")) {
+        context.toast("Please select an image file.");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (re) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          const maxDim = 256;
+          let w = img.width;
+          let h = img.height;
+          if (w > h && w > maxDim) {
+            h = Math.round((h * maxDim) / w);
+            w = maxDim;
+          } else if (h > maxDim) {
+            w = Math.round((w * maxDim) / h);
+            h = maxDim;
+          }
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, w, h);
+          selectedAvatar = canvas.toDataURL("image/jpeg", 0.85);
+          renderPreview();
+          context.toast("Photo loaded. Click 'Save Changes' to apply.");
+        };
+        img.src = re.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // Listen to quick cartoon presets click
+    root.querySelectorAll(".preset-avatar-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        root.querySelectorAll(".preset-avatar-btn").forEach((b) => (b.style.borderColor = "transparent"));
+        btn.style.borderColor = "var(--primary)";
+        const idx = Number(btn.dataset.presetIndex);
+        if (CARTOON_AVATARS[idx]) {
+          selectedAvatar = CARTOON_AVATARS[idx];
+          renderPreview();
+        }
+      });
+    });
+
+    // Switch/Reset to Emoji Avatar Creator
+    root.querySelector("#reset-emoji-avatar-btn")?.addEventListener("click", () => {
+      selectedAvatar = `emoji:${currentEmoji}:${currentBg}`;
+      renderPreview();
+      root.querySelector("#emoji-creator-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+
     // Listen to custom emoji keyboard inputs
-    emojiInput.addEventListener("input", (e) => {
+    emojiInput?.addEventListener("input", (e) => {
       const val = e.target.value.trim();
       if (val) {
         currentEmoji = val;
+        selectedAvatar = `emoji:${currentEmoji}:${currentBg}`;
         renderPreview();
       }
     });
@@ -292,7 +379,8 @@ export const profileModule = {
     root.querySelectorAll(".emoji-option-btn").forEach((btn) => {
       btn.addEventListener("click", () => {
         currentEmoji = btn.dataset.emoji;
-        emojiInput.value = currentEmoji;
+        if (emojiInput) emojiInput.value = currentEmoji;
+        selectedAvatar = `emoji:${currentEmoji}:${currentBg}`;
         renderPreview();
       });
     });
@@ -305,6 +393,7 @@ export const profileModule = {
         });
         el.style.borderColor = "var(--primary)";
         currentBg = el.dataset.colorVal;
+        selectedAvatar = `emoji:${currentEmoji}:${currentBg}`;
         renderPreview();
       });
     });
@@ -328,6 +417,7 @@ export const profileModule = {
         if (context.profile) {
           context.profile.name = name;
           context.profile.avatarUrl = selectedAvatar;
+          if (role === "owner") context.profile.mobile = mobileVal;
         }
 
         if (role === "member" && context.myMember) {
